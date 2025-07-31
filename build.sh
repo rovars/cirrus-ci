@@ -1,144 +1,129 @@
 #!/bin/bash
+set -e
 
-rclone_remote="thisfor:/rom/losq"
-base_dir="$(pwd)"
-cache_file="ccache.tar.gz"
-cache_dir="${base_dir}/ccache"
-archive_path="${base_dir}/${cache_file}"
-work_dir="${base_dir}/workdir"
-patch_dir="${work_dir}/AXP/Patches/LineageOS-17.1"
+BASE_DIR="$(pwd)"
+WORK_DIR="${BASE_DIR}/workdir"
+PATCH_DIR="${WORK_DIR}/AXP/Patches/LineageOS-17.1"
+CCACHE_DIR="${WORK_DIR}/ccache"
+CCACHE_ARCHIVE="${WORK_DIR}/ccache.tar.gz"
+CCACHE_REMOTE="remote:ccache"
+TIMEOUT_LIMIT="90m"
 
-mkdir -p "$work_dir"
-cd "$work_dir"
+mkdir -p "$WORK_DIR"
+exec > >(tee "$WORK_DIR/build.log") 2>&1
+cd "$WORK_DIR"
 
-function RepoSync() {
-    sendtl -t "Build Started! <a href='https://cirrus-ci.com/task/${CIRRUS_TASK_ID}'>View On Cirrus CI</a>"
-    echo "Initializing and syncing repositories..."
+USE_CCACHE=true
+[ -f ./ccache.sh ] && source ./ccache.sh
+
+syncAndPatch() {
+    if [ "$USE_CCACHE" = true ]; then
+        echo "[INFO] Running ccache setup in background..."
+        setupCcache &
+        CCACHE_PID=$!
+    fi
+
+    echo "[INFO] Starting repo initialization..."
     repo init --depth=1 -u https://github.com/rducks/android.git -b lineage-17.1
-    git clone -q https://github.com/rducks/rom rom
-    git clone -q https://github.com/AXP-OS/build AXP
+    git clone -q https://github.com/rducks/rom rom || exit 1
+    git clone -q https://github.com/AXP-OS/build AXP || exit 1
+
+    echo "[INFO] Moving local_manifests..."
     mkdir -p .repo/local_manifests/
     mv rom/q/los.xml .repo/local_manifests/roomservice.xml
-    repo sync -j$(nproc --all) -c --force-sync --no-clone-bundle --no-tags --prune
 
-    echo "Removing specific files..."
+    echo "[INFO] Syncing repositories..."
+    repo sync -j"$(nproc)" -c --force-sync --no-clone-bundle --no-tags --prune
+
+    echo "[INFO] Waiting for ccache setup to finish..."
+    [ "$USE_CCACHE" = true ] && wait "$CCACHE_PID"
+
+    echo "[INFO] Cleaning unwanted files..."
     rm -rf vendor/lineage/overlay/common/lineage-sdk/packages/LineageSettingsProvider/res/values/defaults.xml
     rm -rf packages/apps/LineageParts/src/org/lineageos/lineageparts/lineagestats/
-    rm -rf packages/apps/LineageParts/res/xml/anonymous_stats.xml
-    rm -rf packages/apps/LineageParts/res/xml/preview_data.xml
+    rm -rf packages/apps/LineageParts/res/xml/{anonymous_stats.xml,preview_data.xml}
 
-    echo "Applying patches from AXP-OS..."
-    cd packages/apps/LineageParts
-    patch_file="$patch_dir/android_packages_apps_LineageParts/0001-Remove_Analytics.patch"
-    git apply --verbose "$patch_file"
-    cd "$work_dir"
+    echo "[INFO] Applying patches..."
+    declare -A PATCHES=(
+        ["packages/apps/LineageParts"]="android_packages_apps_LineageParts/0001-Remove_Analytics.patch"
+        ["packages/apps/SetupWizard"]="android_packages_apps_SetupWizard/0001-Remove_Analytics.patch"
+        ["packages/apps/Settings"]="android_packages_apps_Settings/0011-LTE_Only_Mode.patch"
+        ["frameworks/opt/net/ims"]="android_frameworks_opt_net_ims/0001-Fix_Calling.patch"
+        ["build/make"]="android_build/0003-Enable_fwrapv.patch"
+        ["build/soong"]="android_build_soong/0001-Enable_fwrapv.patch android_build_soong/0002-auto_var_init.patch"
+    )
 
-    cd packages/apps/SetupWizard
-    patch_file="$patch_dir/android_packages_apps_SetupWizard/0001-Remove_Analytics.patch"
-    git apply --verbose "$patch_file"
-    cd "$work_dir"
-
-    cd packages/apps/Settings
-    patch_file="$patch_dir/android_packages_apps_Settings/0011-LTE_Only_Mode.patch"
-    git apply --verbose "$patch_file"
-    cd "$work_dir"
-
-    cd frameworks/opt/net/ims
-    patch_file="$patch_dir/android_frameworks_opt_net_ims/0001-Fix_Calling.patch"
-    git apply --verbose "$patch_file"
-    cd "$work_dir"
-
-    cd build/make
-    patch_file="$patch_dir/android_build/0003-Enable_fwrapv.patch"
-    git apply --verbose "$patch_file"
-    cd "$work_dir"
-
-    cd build/soong
-    patch_file_1="$patch_dir/android_build_soong/0001-Enable_fwrapv.patch"
-    patch_file_2="$patch_dir/android_build_soong/0002-auto_var_init.patch"
-    git apply --verbose "$patch_file_1"
-    git apply --verbose "$patch_file_2"
-    cd "$work_dir"
-
-    echo "Applying patches from rom/q (using 'patch -p1')..."
-    for patch in rom/q/{0001..0007}*; do
-        if [ -f "$patch" ]; then
-            patch -p1 < "$patch"
-        else
-            echo "Warning: Patch file $patch not found. Skipping."
-        fi
+    for dir in "${!PATCHES[@]}"; do
+        pushd "$dir" >/dev/null
+        for patch in ${PATCHES[$dir]}; do
+            git apply --verbose "$PATCH_DIR/$patch" || echo "[WARN] Failed to apply patch: $patch"
+        done
+        popd >/dev/null
     done
 
-    echo "Cleaning AXP directory..."
+    echo "[INFO] Applying extra patches from rom/q..."
+    for patch in rom/q/000{1..7}*; do
+        [ -f "$patch" ] && patch -p1 < "$patch" || echo "[WARN] Patch not found: $patch"
+    done
+
     rm -rf AXP
-    echo "Patching process completed."
+    echo "[INFO] Sync & patching completed."
 }
 
-function Build() {
+buildRom() {
     source build/envsetup.sh
-    
-    export USE_CCACHE=1
-    export CCACHE_EXEC=/usr/bin/ccache
-    export CCACHE_DIR="$cache_dir"
 
-    ccache -o compression=true
-    ccache -o compression_level=1
-    ccache -o hash_dir=true
-    ccache -o sloppiness=time_macros
-    ccache -M 10G
+    if [ "$USE_CCACHE" = true ]; then
+        export USE_CCACHE=1
+        export CCACHE_EXEC="$(which ccache)"
+        export CCACHE_DIR="$CCACHE_DIR"
+        ccache -M 50G
+    fi
 
     lunch lineage_RMX2185-user
-    mka bacon -j$(nproc --all)
-}
 
-function RestoreCache() {
-    echo "Restoring ccache from remote..."
-    rclone copy "${rclone_remote}/${cache_file}" "${base_dir}/"
-    
-    if [ -f "$archive_path" ]; then
-        echo "Cache file downloaded. Extracting..."
-        mkdir -p "$cache_dir"
-        tar -xf "$archive_path" -C "$cache_dir"
-        rm -f "$archive_path"
-        echo "Cache restored."
+    echo "[INFO] Starting build with timeout $TIMEOUT_LIMIT..."
+    if timeout --foreground "$TIMEOUT_LIMIT" bash -c "mka bacon -j$(nproc)"; then
+        echo "[INFO] Build completed successfully."
+        [ "$USE_CCACHE" = true ] && saveCcache
     else
-        echo "No remote cache found. Starting with a fresh cache."
+        if [ $? -eq 124 ]; then
+            echo "[WARN] Build was stopped due to timeout."
+            [ "$USE_CCACHE" = true ] && saveCcache
+            exit 1
+        else
+            echo "[ERROR] Build failed."
+            exit 1
+        fi
     fi
 }
 
-function UploadCache() {
-    echo "Compressing and uploading ccache..."
-    ccache -s
-    tar -I pigz -cf "$archive_path" -C "$cache_dir" .
-    rclone copy "$archive_path" "${rclone_remote}"
-    rm -f "$archive_path"
-    echo "Cache uploaded."
-}
-
-function UploadArtefak() {
-    mkdir -p ~/.config    
-    mv rom/config/* ~/.config
+uploadArtefak() {
+    mkdir -p ~/.config
+    mv rom/config/* ~/.config 2>/dev/null || true
 
     zip_file=$(find out/target/product/*/ -name "lineage-*.zip" | head -n 1)
-
     if [ -n "$zip_file" ]; then
-        echo "Build artifact found: $zip_file"
-        echo "Starting upload..."
+        echo "[INFO] Uploading zip to Telegram..."
         telegram-upload --to "$idtl" --caption "${CIRRUS_COMMIT_MESSAGE}" "$zip_file"
-        rclone copy "$zip_file" "${rclone_remote}"
-        echo "Upload commands executed."
     else
-        echo "Error: Build artifact (zip file) not found. Skipping upload."
+        echo "[WARN] No build artifact found to upload."
     fi
 }
 
 case "$1" in
-    sync) RepoSync ;;
-    build) Build ;;
-    upload) UploadArtefak ;;
-    rcache) RestoreCache ;;
-    ucache) UploadCache ;;
-    *) echo "Usage: $0 {sync|build|upload|cache}" ;;
+    sync)
+        syncAndPatch
+        ;;
+    build)
+        buildRom
+        ;;
+    upload)
+        uploadArtefak
+        ;;
+    *)
+        echo "Usage: $0 {sync|build|upload}"
+        exit 1
+        ;;
 esac
-
 
