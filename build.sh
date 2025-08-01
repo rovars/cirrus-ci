@@ -4,18 +4,23 @@ set -e
 BASE_DIR="$(pwd)"
 SRC_DIR="$BASE_DIR/src"
 PATCH_DIR="$SRC_DIR/AXP/Patches/LineageOS-17.1"
-CCACHE_DIR="$BASE_DIR/cache"
 TIMEOUT_LIMIT="90m"
 USE_CCACHE=true
 
-mkdir -p "$SRC_DIR" "$CACHE_DIR"
+export CCACHE_DIR="$BASE_DIR/ccache"
+export CCACHE_REMOTE="me:rom"
+export CCACHE_ARCHIVE_NAME="ccache-lineage-17.1.tar.gz"
+export CCACHE_ARCHIVE_PATH="$BASE_DIR/$CCACHE_ARCHIVE_NAME"
+
+mkdir -p "$SRC_DIR" "$CCACHE_DIR"
 exec > >(tee "$BASE_DIR/build.log") 2>&1
 cd "$SRC_DIR"
 
 syncAndPatch() {
+    local CCACHE_PID=""
     if [ "$USE_CCACHE" = true ]; then
-        echo "[INFO] Running ccache setup in background..."
-        "$BASE_DIR/ccache.sh" --setup &
+        echo "[INFO] Running ccache restore in background..."
+        "$BASE_DIR/ccache.sh" --restore &
         CCACHE_PID=$!
     fi
 
@@ -24,12 +29,18 @@ syncAndPatch() {
     git clone -q https://github.com/rducks/rom rom
     git clone -q https://github.com/AXP-OS/build AXP
 
-    echo "[INFO] Setting local_manifests..."
+    echo "[INFO] Setting up local_manifests..."
     mkdir -p .repo/local_manifests/
     mv rom/q/los.xml .repo/local_manifests/roomservice.xml
 
     echo "[INFO] Syncing repositories..."
     repo sync -j"$(nproc)" -c --force-sync --no-clone-bundle --no-tags --prune
+
+    if [ -n "$CCACHE_PID" ]; then
+        echo "[INFO] Waiting for ccache restore to complete..."
+        wait "$CCACHE_PID"
+        echo "[INFO] Ccache restore finished."
+    fi
 
     echo "[INFO] Cleaning unused files..."
     rm -rf vendor/lineage/overlay/common/lineage-sdk/packages/LineageSettingsProvider/res/values/defaults.xml
@@ -49,18 +60,18 @@ syncAndPatch() {
     for dir in "${!PATCHES[@]}"; do
         pushd "$dir" >/dev/null
         for patch in ${PATCHES[$dir]}; do
-            git apply --verbose "$PATCH_DIR/$patch" || echo "[WARN] Failed to apply patch: $patch"
+            git apply --verbose "$PATCH_DIR/$patch" || echo "[WARN] Failed to apply patch: $patch in $dir"
         done
         popd >/dev/null
     done
 
     echo "[INFO] Applying additional rom/q patches..."
     for patch in rom/q/000{1..7}*; do
-        [ -f "$patch" ] && patch -p1 < "$patch" || echo "[WARN] Patch not found: $patch"
+        [ -f "$patch" ] && patch -p1 < "$patch" || echo "[WARN] Patch not found or failed to apply: $patch"
     done
 
-    rm -rf AXP
-    echo "[INFO] Sync & patching complete."
+    rm -rf AXP rom
+    echo "[INFO] Sync and patching complete."
 }
 
 buildRom() {
@@ -69,8 +80,9 @@ buildRom() {
     if [ "$USE_CCACHE" = true ]; then
         export USE_CCACHE=1
         export CCACHE_EXEC="$(which ccache)"
-        export CCACHE_DIR="$CCACHE_DIR"
+        export CCACHE_DIR="$BASE_DIR/ccache"
         ccache -M 50G
+        ccache -z
     fi
 
     lunch lineage_RMX2185-user
@@ -78,30 +90,30 @@ buildRom() {
     echo "[INFO] Starting build (timeout: $TIMEOUT_LIMIT)..."
     if timeout --foreground "$TIMEOUT_LIMIT" bash -c "mka bacon -j$(nproc)"; then
         echo "[INFO] Build finished successfully."
-        [ "$USE_CCACHE" = true ] && "$BASE_DIR/ccache.sh" --save
+        [ "$USE_CCACHE" = true ] && "$BASE_DIR/ccache.sh" --upload
     else
         echo "[ERROR] Build failed or timed out."
-        [ "$USE_CCACHE" = true ] && "$BASE_DIR/ccache.sh" --save
+        [ "$USE_CCACHE" = true ] && "$BASE_DIR/ccache.sh" --upload
         exit 1
     fi
 }
 
-uploadArtefak() {
-    mkdir -p ~/.config
-    mv rom/config/* ~/.config 2>/dev/null || true
+uploadArtifact() {
+    local zip_file
+    zip_file=$(find out/target/product/*/ -maxdepth 1 -name "lineage-*.zip" | head -n 1)
 
-    zip_file=$(find out/target/product/*/ -name "lineage-*.zip" | head -n 1)
     if [ -n "$zip_file" ]; then
-        echo "[INFO] Uploading build to Telegram..."
+        echo "[INFO] Found build artifact: $zip_file"
+        echo "[INFO] Uploading artifact to Telegram..."
         telegram-upload --to "$idtl" --caption "${CIRRUS_COMMIT_MESSAGE}" "$zip_file"
     else
-        echo "[WARN] No build product found to upload."
+        echo "[WARN] No build artifact found to upload."
     fi
 }
 
 case "$1" in
     sync) syncAndPatch ;;
     build) buildRom ;;
-    upload) uploadArtefak ;;
+    upload) uploadArtifact ;;
     *) echo "Usage: $0 {sync|build|upload}" && exit 1 ;;
 esac
