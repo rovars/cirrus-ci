@@ -3,10 +3,10 @@ set -e
 
 rclone_remote="me:rom"
 archive_name="ccache.tar.gz"
-cd "$src_dir"
+cd "$workdir"
 
 retry_command() {
-    max_retry=3
+    max_retry=5
     retry_delay=10
     for i in $(seq 1 "$max_retry"); do
         "$@" && return 0
@@ -25,7 +25,7 @@ restoreCache() {
 
 uploadCache() {
     [ "$usecache" = true ] && \
-    if tar -czf "$archive_name" cache; then       
+    if tar -czf "$archive_name" ccache; then       
         retry_command rclone copy "$archive_name" "$rclone_remote" --progress
         rm -f "$archive_name"
     fi
@@ -41,7 +41,7 @@ syncAndPatch() {
     repo sync -j"$(nproc)" -c --force-sync --no-clone-bundle --no-tags --prune
 
     git clone -q https://github.com/AXP-OS/build AXP
-    patch_dir="$src_dir/AXP/Patches/LineageOS-17.1"
+    patch_dir="$workdir/AXP/Patches/LineageOS-17.1"
 
     rm -rf vendor/lineage/overlay/common/lineage-sdk/packages/LineageSettingsProvider/res/values/defaults.xml
     rm -rf packages/apps/LineageParts/src/org/lineageos/lineageparts/lineagestats/
@@ -79,8 +79,9 @@ buildRom() {
     if [ "$usecache" = true ]; then
         export USE_CCACHE=1
         export CCACHE_EXEC="$(which ccache)"
-        export CCACHE_DIR="$cachedir"
-        ccache -M 50G
+        export CCACHE_DIR="$workdir/ccache"
+        ccache -M 50G -F 0
+        ccache -o compression=true
         ccache -z
     fi
 
