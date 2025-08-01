@@ -4,6 +4,9 @@ env:
   tokentl: "ENCRYPTED[!9aa257cad95736f4897f178d239e8a6b387011bada0192a6c220f8ce4b97234be111be60eb3e5d43f227e2cefa8cc20c!]"
   idtl: "ENCRYPTED[!4508643dc06e496a5bdef35696637b616238ec9af7111e0efb265d7adbee5a3f5890d487225ccdb1d259b189cf5a567d!]"
   rcloneconfig: "ENCRYPTED[!7f40638e883461d6f53ce7505cd59a6bbbd8a27a2038ea8dbb026ccd970cb84c18fedce91aa7ee134e86e92723266dba!]"
+  src_dir: "$(pwd)/src/rom"
+  cache_dirs: "$src_dir/cache"
+  use_cache: "true"
 
 task:
   name: "Build"
@@ -15,10 +18,12 @@ task:
     greedy: true
 
   setup_script:
+    - tle -t "Build Started! <a href='https://cirrus-ci.com/task/${CIRRUS_TASK_ID}'>View On Cirrus CI</a>"
     - echo "$credensial" > ~/.git-credentials
     - echo "$gitconfigs" > ~/.gitconfig
     - echo "$rcloneconfig" > ~/.rclone.conf
-    - tle -t "Build Started! <a href='https://cirrus-ci.com/task/${CIRRUS_TASK_ID}'>View On Cirrus CI</a>"
+    - mkdir -p "$src_dir" "$cache_dir" ~/.config
+    - [ "$use_cache" = true ] && ./build.sh cache
 
   sync_script: ./build.sh sync
   build_script: ./build.sh build
@@ -26,7 +31,6 @@ task:
 
   on_failure:
     notiferror_script:
-      - cat "src/out/error.log"
       - tle -t "Build Failed!"
-      - tle -f "src/out/error.log"
-      - tle -f "build.log"
+      - tle -f "$src_dir/out/error.log"
+      - cat "$src_dir/out/error.log"
