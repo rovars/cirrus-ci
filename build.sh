@@ -4,23 +4,16 @@ set -e
 BASE_DIR="$(pwd)"
 SRC_DIR="$BASE_DIR/src/android"
 PATCH_DIR="$SRC_DIR/AXP/Patches/LineageOS-17.1"
-TIMEOUT_LIMIT=600
-USE_CCACHE=true
+TIMEOUT_LIMIT=400
+ENABLE_CCACHE=true
 
-export CCACHE_DIR="$BASE_DIR/ccache"
-export CCACHE_REMOTE="me:rom"
-export CCACHE_ARCHIVE_NAME="ccache-lineage-17.1.tar.gz"
-export CCACHE_ARCHIVE_PATH="$BASE_DIR/$CCACHE_ARCHIVE_NAME"
-
-mkdir -p "$SRC_DIR" "$CCACHE_DIR"
+mkdir -p "$SRC_DIR"
 cd "$SRC_DIR"
 
 syncAndPatch() {
-    local CCACHE_PID=""
-    if [ "$USE_CCACHE" = true ]; then
+    if [ "$ENABLE_CCACHE" = true ]; then
         echo "[INFO] Running ccache restore in background..."
         "$BASE_DIR/ccache.sh" --restore &
-        CCACHE_PID=$!
     fi
 
     echo "[INFO] Initializing repo..."
@@ -33,13 +26,7 @@ syncAndPatch() {
     mv rom/q/los.xml .repo/local_manifests/roomservice.xml
 
     echo "[INFO] Syncing repositories..."
-    repo sync -j"$(nproc)" -c --force-sync --no-clone-bundle --no-tags --prune
-
-    if [ -n "$CCACHE_PID" ]; then
-        echo "[INFO] Waiting for ccache restore to complete..."
-        wait "$CCACHE_PID"
-        echo "[INFO] Ccache restore finished."
-    fi
+    repo sync -j"$(nproc)" -c --force-sync --no-clone-bundle --no-tags --prune    
 
     echo "[INFO] Cleaning unused files..."
     rm -rf vendor/lineage/overlay/common/lineage-sdk/packages/LineageSettingsProvider/res/values/defaults.xml
@@ -76,10 +63,10 @@ syncAndPatch() {
 buildRom() {    
     source build/envsetup.sh
 
-    if [ "$USE_CCACHE" = true ]; then
+    if [ "$ENABLE_CCACHE" = true ]; then
         export USE_CCACHE=1
         export CCACHE_EXEC="$(which ccache)"
-        export CCACHE_DIR="$BASE_DIR/ccache"
+        export CCACHE_DIR="~/ccache"
         ccache -M 50G
         ccache -z
     fi
@@ -95,7 +82,7 @@ buildRom() {
             kill -9 $BUILD_PID 2>/dev/null || true
             wait $BUILD_PID 2>/dev/null || true
             echo "[ERROR] Build timed out after $TIMEOUT_LIMIT seconds."
-            [ "$USE_CCACHE" = 1 ] && "$BASE_DIR/ccache.sh" --upload
+            [ "$ENABLE_CCACHE" = true ] && "$BASE_DIR/ccache.sh" --upload
             exit 1
         fi
         sleep 1
@@ -107,7 +94,7 @@ buildRom() {
 
     if [ $BUILD_STATUS -eq 0 ]; then
         echo "[INFO] Build finished successfully."
-        [ "$USE_CCACHE" = true ] && "$BASE_DIR/ccache.sh" --upload
+        [ "$ENABLE_CCACHE" = true ] && "$BASE_DIR/ccache.sh" --upload
     else
         echo "[ERROR] Build failed with exit code $BUILD_STATUS."
         exit 1
