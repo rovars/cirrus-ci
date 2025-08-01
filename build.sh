@@ -16,6 +16,7 @@ retry_command() {
 }
 
 restoreCache() {
+    [ "$usecache" = true ] && \
     if retry_command rclone copy "$rclone_remote/$archive_name" . --progress; then
         tar -xzf "$archive_name"
         rm -f "$archive_name"
@@ -23,6 +24,7 @@ restoreCache() {
 }
 
 uploadCache() {
+    [ "$usecache" = true ] && \
     if tar -czf "$archive_name" cache; then       
         retry_command rclone copy "$archive_name" "$rclone_remote" --progress
         rm -f "$archive_name"
@@ -74,10 +76,10 @@ buildRom() {
 
     source build/envsetup.sh
 
-    if [ "$use_cache" = true ]; then
+    if [ "$usecache" = true ]; then
         export USE_CCACHE=1
         export CCACHE_EXEC="$(which ccache)"
-        export CCACHE_DIR="$ccache_dirs"
+        export CCACHE_DIR="$cachedir"
         ccache -M 50G
         ccache -z
     fi
@@ -92,7 +94,7 @@ buildRom() {
         if [ $SECONDS -ge $timeout_limit ]; then
             kill -9 $build_pid 2>/dev/null || true
             wait $build_pid 2>/dev/null || true
-            [ "$use_cache" = true ] && uploadCache
+            uploadCache
             exit 1
         fi
         sleep 1
@@ -102,7 +104,7 @@ buildRom() {
     build_status=$?
 
     if [ $build_status -eq 0 ]; then
-        [ "$use_cache" = true ] && uploadCache
+        echo "---"
     else
         exit 1
     fi
@@ -110,11 +112,12 @@ buildRom() {
 
 uploadArtifact() {
     local zip_file
+    uploadCache
     zip_file=$(find out/target/product/*/ -maxdepth 1 -name "lineage-*.zip" | head -n 1)
     if [ -n "$zip_file" ]; then
         mv rom/config/* ~/.config
         telegram-upload --to "$idtl" --caption "${CIRRUS_COMMIT_MESSAGE}" "$zip_file"
-    fi
+    fi  
 }
 
 case "$1" in
