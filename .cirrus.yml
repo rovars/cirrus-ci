@@ -26,7 +26,7 @@ task:
 
   on_failure:
     notiferror_script:
-      - cat "workdir/out/error.log"
+      - cat "src/out/error.log"
       - tle -t "Build Failed!"
-      - tle -f "workdir/out/error.log"
-      - tle -f "workdir/build.log"
+      - tle -f "src/out/error.log"
+      - tle -f "build.log"

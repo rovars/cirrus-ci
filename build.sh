@@ -2,40 +2,41 @@
 set -e
 
 BASE_DIR="$(pwd)"
-WORK_DIR="${BASE_DIR}/workdir"
-PATCH_DIR="${WORK_DIR}/AXP/Patches/LineageOS-17.1"
+SRC_DIR="$BASE_DIR/src"
+PATCH_DIR="$SRC_DIR/AXP/Patches/LineageOS-17.1"
+CACHE_DIR="$BASE_DIR/cache"
 TIMEOUT_LIMIT="90m"
 USE_CCACHE=true
 
-mkdir -p "$WORK_DIR"
-exec > >(tee "$WORK_DIR/build.log") 2>&1
-cd "$WORK_DIR"
+mkdir -p "$SRC_DIR" "$CACHE_DIR"
+exec > >(tee "$BASE_DIR/build.log") 2>&1
+cd "$SRC_DIR"
 
 syncAndPatch() {
     if [ "$USE_CCACHE" = true ]; then
         echo "[INFO] Running ccache setup in background..."
-        ./ccache.sh --setup &
+        "$BASE_DIR/ccache.sh" --setup &
         CCACHE_PID=$!
     fi
 
-    echo "[INFO] Starting repo initialization..."
+    echo "[INFO] Initializing repo..."
     repo init --depth=1 -u https://github.com/rducks/android.git -b lineage-17.1
-    git clone -q https://github.com/rducks/rom rom || exit 1
-    git clone -q https://github.com/AXP-OS/build AXP || exit 1
+    git clone -q https://github.com/rducks/rom rom
+    git clone -q https://github.com/AXP-OS/build AXP
 
-    echo "[INFO] Moving local_manifests..."
+    echo "[INFO] Setting local_manifests..."
     mkdir -p .repo/local_manifests/
     mv rom/q/los.xml .repo/local_manifests/roomservice.xml
 
     echo "[INFO] Syncing repositories..."
-    repo sync -j"$(nproc)" -c --force-sync --no-clone-bundle --no-tags --prune   
+    repo sync -j"$(nproc)" -c --force-sync --no-clone-bundle --no-tags --prune
 
-    echo "[INFO] Cleaning unwanted files..."
+    echo "[INFO] Cleaning unused files..."
     rm -rf vendor/lineage/overlay/common/lineage-sdk/packages/LineageSettingsProvider/res/values/defaults.xml
     rm -rf packages/apps/LineageParts/src/org/lineageos/lineageparts/lineagestats/
     rm -rf packages/apps/LineageParts/res/xml/{anonymous_stats.xml,preview_data.xml}
 
-    echo "[INFO] Applying patches..."
+    echo "[INFO] Applying AXP patches..."
     declare -A PATCHES=(
         ["packages/apps/LineageParts"]="android_packages_apps_LineageParts/0001-Remove_Analytics.patch"
         ["packages/apps/SetupWizard"]="android_packages_apps_SetupWizard/0001-Remove_Analytics.patch"
@@ -53,13 +54,13 @@ syncAndPatch() {
         popd >/dev/null
     done
 
-    echo "[INFO] Applying extra patches from rom/q..."
+    echo "[INFO] Applying additional rom/q patches..."
     for patch in rom/q/000{1..7}*; do
         [ -f "$patch" ] && patch -p1 < "$patch" || echo "[WARN] Patch not found: $patch"
     done
 
     rm -rf AXP
-    echo "[INFO] Sync & patching completed."
+    echo "[INFO] Sync & patching complete."
 }
 
 buildRom() {
@@ -68,23 +69,19 @@ buildRom() {
     if [ "$USE_CCACHE" = true ]; then
         export USE_CCACHE=1
         export CCACHE_EXEC="$(which ccache)"
-        export CCACHE_DIR="${WORK_DIR}/ccache"
+        export CCACHE_DIR="$CACHE_DIR"
         ccache -M 50G
     fi
 
     lunch lineage_RMX2185-user
 
-    echo "[INFO] Starting build with timeout $TIMEOUT_LIMIT..."
+    echo "[INFO] Starting build (timeout: $TIMEOUT_LIMIT)..."
     if timeout --foreground "$TIMEOUT_LIMIT" bash -c "mka bacon -j$(nproc)"; then
-        echo "[INFO] Build completed successfully."
-        [ "$USE_CCACHE" = true ] && ./ccache.sh --save
+        echo "[INFO] Build finished successfully."
+        [ "$USE_CCACHE" = true ] && "$BASE_DIR/ccache.sh" --save
     else
-        if [ $? -eq 124 ]; then
-            echo "[WARN] Build was stopped due to timeout."
-        else
-            echo "[ERROR] Build failed."
-        fi
-        [ "$USE_CCACHE" = true ] && ./ccache.sh --save
+        echo "[ERROR] Build failed or timed out."
+        [ "$USE_CCACHE" = true ] && "$BASE_DIR/ccache.sh" --save
         exit 1
     fi
 }
@@ -95,25 +92,16 @@ uploadArtefak() {
 
     zip_file=$(find out/target/product/*/ -name "lineage-*.zip" | head -n 1)
     if [ -n "$zip_file" ]; then
-        echo "[INFO] Uploading zip to Telegram..."
+        echo "[INFO] Uploading build to Telegram..."
         telegram-upload --to "$idtl" --caption "${CIRRUS_COMMIT_MESSAGE}" "$zip_file"
     else
-        echo "[WARN] No build artifact found to upload."
+        echo "[WARN] No build product found to upload."
     fi
 }
 
 case "$1" in
-    sync)
-        syncAndPatch
-        ;;
-    build)
-        buildRom
-        ;;
-    upload)
-        uploadArtefak
-        ;;
-    *)
-        echo "Usage: $0 {sync|build|upload}"
-        exit 1
-        ;;
+    sync) syncAndPatch ;;
+    build) buildRom ;;
+    upload) uploadArtefak ;;
+    *) echo "Usage: $0 {sync|build|upload}" && exit 1 ;;
 esac
