@@ -3,7 +3,7 @@
 set -e
 
 MAX_RETRY=3
-RETRY_DELAY=15
+RETRY_DELAY=10
 
 if [ -z "$CCACHE_DIR" ] || [ -z "$CCACHE_ARCHIVE_PATH" ] || [ -z "$CCACHE_REMOTE" ] || [ -z "$CCACHE_ARCHIVE_NAME" ]; then
     echo "[ERROR] Ccache environment variables are not set. Exiting."

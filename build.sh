@@ -1,4 +1,4 @@
-i#!/bin/bash
+#!/bin/bash
 set -e
 
 BASE_DIR="$(pwd)"
