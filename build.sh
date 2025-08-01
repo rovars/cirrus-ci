@@ -2,7 +2,7 @@
 set -e
 
 BASE_DIR="$(pwd)"
-SRC_DIR="$BASE_DIR/src"
+SRC_DIR="$BASE_DIR/src/android"
 PATCH_DIR="$SRC_DIR/AXP/Patches/LineageOS-17.1"
 TIMEOUT_LIMIT="90m"
 USE_CCACHE=true
@@ -13,7 +13,6 @@ export CCACHE_ARCHIVE_NAME="ccache-lineage-17.1.tar.gz"
 export CCACHE_ARCHIVE_PATH="$BASE_DIR/$CCACHE_ARCHIVE_NAME"
 
 mkdir -p "$SRC_DIR" "$CCACHE_DIR"
-exec > >(tee "$BASE_DIR/build.log") 2>&1
 cd "$SRC_DIR"
 
 syncAndPatch() {
@@ -75,28 +74,37 @@ syncAndPatch() {
 }
 
 buildRom() {
-    source build/envsetup.sh
+    timeout --foreground "$TIMEOUT_LIMIT" bash -c '
+        set -e
+        
+        source build/envsetup.sh
 
-    if [ "$USE_CCACHE" = true ]; then
-        export USE_CCACHE=1
-        export CCACHE_EXEC="$(which ccache)"
-        export CCACHE_DIR="$BASE_DIR/ccache"
-        ccache -M 50G
-        ccache -z
-    fi
+        if [ "$USE_CCACHE" = true ]; then
+            export USE_CCACHE=1
+            export CCACHE_EXEC="$(which ccache)"
+            export CCACHE_DIR="$BASE_DIR/ccache"
+            ccache -M 50G
+            ccache -z
+        fi
 
-    lunch lineage_RMX2185-user
+        lunch lineage_RMX2185-user
+        mka bacon -j$(nproc)
+    '
+    local BUILD_STATUS=$?
 
-    echo "[INFO] Starting build (timeout: $TIMEOUT_LIMIT)..."
-    if timeout --foreground "$TIMEOUT_LIMIT" bash -c "mka bacon -j$(nproc)"; then
+    if [ $BUILD_STATUS -eq 0 ]; then
         echo "[INFO] Build finished successfully."
         [ "$USE_CCACHE" = true ] && "$BASE_DIR/ccache.sh" --upload
-    else
-        echo "[ERROR] Build failed or timed out."
+    elif [ $BUILD_STATUS -eq 124 ]; then
+        echo "[ERROR] Build timed out."
         [ "$USE_CCACHE" = true ] && "$BASE_DIR/ccache.sh" --upload
+        exit 1
+    else
+        echo "[ERROR] Build failed with exit code $BUILD_STATUS."
         exit 1
     fi
 }
+
 
 uploadArtifact() {
     local zip_file
