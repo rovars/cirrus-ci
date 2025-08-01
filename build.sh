@@ -4,22 +4,17 @@ set -e
 BASE_DIR="$(pwd)"
 WORK_DIR="${BASE_DIR}/workdir"
 PATCH_DIR="${WORK_DIR}/AXP/Patches/LineageOS-17.1"
-CCACHE_DIR="${WORK_DIR}/ccache"
-CCACHE_ARCHIVE="${WORK_DIR}/ccache-losq.tar.gz"
-CCACHE_REMOTE="me:rom"
 TIMEOUT_LIMIT="90m"
+USE_CCACHE=true
 
 mkdir -p "$WORK_DIR"
 exec > >(tee "$WORK_DIR/build.log") 2>&1
 cd "$WORK_DIR"
 
-USE_CCACHE=true
-[ -f ./ccache.sh ] && source ./ccache.sh
-
 syncAndPatch() {
     if [ "$USE_CCACHE" = true ]; then
         echo "[INFO] Running ccache setup in background..."
-        setupCcache &
+        ./ccache.sh --setup &
         CCACHE_PID=$!
     fi
 
@@ -33,10 +28,7 @@ syncAndPatch() {
     mv rom/q/los.xml .repo/local_manifests/roomservice.xml
 
     echo "[INFO] Syncing repositories..."
-    repo sync -j"$(nproc)" -c --force-sync --no-clone-bundle --no-tags --prune
-
-    echo "[INFO] Waiting for ccache setup to finish..."
-    [ "$USE_CCACHE" = true ] && wait "$CCACHE_PID"
+    repo sync -j"$(nproc)" -c --force-sync --no-clone-bundle --no-tags --prune   
 
     echo "[INFO] Cleaning unwanted files..."
     rm -rf vendor/lineage/overlay/common/lineage-sdk/packages/LineageSettingsProvider/res/values/defaults.xml
@@ -76,7 +68,7 @@ buildRom() {
     if [ "$USE_CCACHE" = true ]; then
         export USE_CCACHE=1
         export CCACHE_EXEC="$(which ccache)"
-        export CCACHE_DIR="$CCACHE_DIR"
+        export CCACHE_DIR="${WORK_DIR}/ccache"
         ccache -M 50G
     fi
 
@@ -85,16 +77,15 @@ buildRom() {
     echo "[INFO] Starting build with timeout $TIMEOUT_LIMIT..."
     if timeout --foreground "$TIMEOUT_LIMIT" bash -c "mka bacon -j$(nproc)"; then
         echo "[INFO] Build completed successfully."
-        [ "$USE_CCACHE" = true ] && saveCcache
+        [ "$USE_CCACHE" = true ] && ./ccache.sh --save
     else
         if [ $? -eq 124 ]; then
             echo "[WARN] Build was stopped due to timeout."
-            [ "$USE_CCACHE" = true ] && saveCcache
-            exit 1
         else
             echo "[ERROR] Build failed."
-            exit 1
         fi
+        [ "$USE_CCACHE" = true ] && ./ccache.sh --save
+        exit 1
     fi
 }
 
@@ -126,4 +117,3 @@ case "$1" in
         exit 1
         ;;
 esac
-

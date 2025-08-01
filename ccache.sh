@@ -1,10 +1,16 @@
 #!/bin/bash
 
 MAX_RETRY=3
-RETRY_DELAY=10  # seconds
+RETRY_DELAY=10
+
+BASE_DIR="${BASE_DIR:-$(pwd)}"
+WORK_DIR="${WORK_DIR:-$BASE_DIR/workdir}"
+CCACHE_DIR="${CCACHE_DIR:-$WORK_DIR/ccache}"
+CCACHE_ARCHIVE="$WORK_DIR/ccache-losq.tar.gz"
+CCACHE_REMOTE="me:rom"
 
 setupCcache() {
-    echo "[INFO] Preparing ccache directory..."
+    echo "[INFO] Preparing ccache directory at $CCACHE_DIR..."
     mkdir -p "$CCACHE_DIR"
 
     echo "[INFO] Downloading ccache archive from remote..."
@@ -17,15 +23,17 @@ setupCcache() {
         sleep "$RETRY_DELAY"
     done
 
-    if [ ! -f "$CCACHE_ARCHIVE" ]; then
+    local archive_path="${WORK_DIR}/ccache.tar.gz"
+
+    if [ ! -f "$archive_path" ]; then
         echo "[WARN] No ccache archive found after $MAX_RETRY attempts. Skipping extraction."
         return
     fi
 
     echo "[INFO] Extracting ccache archive..."
-    if ! tar --use-compress-program=unpigz -xf "$CCACHE_ARCHIVE" -C "$CCACHE_DIR"; then
+    if ! tar --use-compress-program=unpigz -xf "$archive_path" -C "$CCACHE_DIR"; then
         echo "[ERROR] Failed to extract ccache archive. Deleting possibly corrupted file..."
-        rm -f "$CCACHE_ARCHIVE"
+        rm -f "$archive_path"
     else
         echo "[INFO] Ccache extracted successfully."
     fi
@@ -56,5 +64,15 @@ saveCcache() {
     fi
 }
 
-export -f setupCcache
-export -f saveCcache
+case "$1" in
+    -c|--create|--setup)
+        setupCcache
+        ;;
+    -s|--save)
+        saveCcache
+        ;;
+    *)
+        echo "Usage: $0 [-c|--setup] | [-s|--save]"
+        exit 1
+        ;;
+esac
