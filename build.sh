@@ -1,4 +1,4 @@
-#!/bin/bash
+i#!/bin/bash
 set -e
 
 BASE_DIR="$(pwd)"
@@ -70,7 +70,7 @@ syncAndPatch() {
         [ -f "$patch" ] && patch -p1 < "$patch" || echo "[WARN] Patch not found or failed to apply: $patch"
     done
 
-    rm -rf AXP rom
+    rm -rf AXP
     echo "[INFO] Sync and patching complete."
 }
 
@@ -101,6 +101,9 @@ buildRom() {
 uploadArtifact() {
     local zip_file
     zip_file=$(find out/target/product/*/ -maxdepth 1 -name "lineage-*.zip" | head -n 1)
+
+    mkdir -p ~/.config
+    mv rom/config/* ~/.config
 
     if [ -n "$zip_file" ]; then
         echo "[INFO] Found build artifact: $zip_file"
