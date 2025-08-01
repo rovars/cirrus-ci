@@ -3,8 +3,8 @@
 MAX_RETRY=3
 RETRY_DELAY=10
 
-BASE_DIR="${BASE_DIR:-$(pwd)}"
-CCACHE_DIR="${CCACHE_DIR:-$BASE_DIR/cache}"
+BASE_DIR="$(pwd)"
+CCACHE_DIR="$BASE_DIR/cache"
 CCACHE_ARCHIVE="$BASE_DIR/ccache-losq.tar.gz"
 CCACHE_REMOTE="me:rom"
 

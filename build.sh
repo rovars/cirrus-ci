@@ -4,7 +4,7 @@ set -e
 BASE_DIR="$(pwd)"
 SRC_DIR="$BASE_DIR/src"
 PATCH_DIR="$SRC_DIR/AXP/Patches/LineageOS-17.1"
-CACHE_DIR="$BASE_DIR/cache"
+CCACHE_DIR="$BASE_DIR/cache"
 TIMEOUT_LIMIT="90m"
 USE_CCACHE=true
 
@@ -69,7 +69,7 @@ buildRom() {
     if [ "$USE_CCACHE" = true ]; then
         export USE_CCACHE=1
         export CCACHE_EXEC="$(which ccache)"
-        export CCACHE_DIR="$CACHE_DIR"
+        export CCACHE_DIR="$CCACHE_DIR"
         ccache -M 50G
     fi
 
