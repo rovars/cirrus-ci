@@ -9,7 +9,7 @@ usecache="true"
 cachedir="$HOME/.ccache"
 
 rclone_remote="me:rom"
-archive_name="ccache.tar.gz"
+archive_name="ccache-losq.tar.gz"
 
 mkdir -p "$cachedir" "$workdir"
 cd "$workdir"
@@ -25,28 +25,35 @@ retry_command() {
 }
 
 restoreCache() {
-    [ "$usecache" = true ] && \
+    [ "$usecache" = true ] || return 0
+    
     if retry_command rclone copy "$rclone_remote/$archive_name" "$HOME" --progress; then
         cd "$HOME"
-        [ -f "$archive_name" ] && \
-        rm -rf .ccache && \
-        tar -xzf "$archive_name" && \
-        rm -f "$archive_name"
+        if [ -f "$archive_name" ]; then
+            rm -rf .ccache
+            tar -xzf "$archive_name"
+            rm -f "$archive_name"
+        fi
         cd "$workdir"
     fi
 }
 
 uploadCache() {
-    [ "$usecache" = true ] && \
-    if [ -d "$cachedir" ]; then
-        export CCACHE_DISABLE=1
-        ccache --cleanup
-        sync
-        sleep 5
-        cd "$HOME"
-        tar -czf "$archive_name" .ccache && \
-        retry_command rclone copy "$archive_name" "$rclone_remote" --progress
+    if [ "$usecache" != "true" ] || [ ! -d "$cachedir" ]; then
+        return 0
     fi
+
+    export CCACHE_DISABLE=1
+    ccache --cleanup
+    sync
+    sleep 5
+    
+    cd "$HOME"
+    tar -czf "$archive_name" .ccache --warning=no-file-changed
+    retry_command rclone copy "$archive_name" "$rclone_remote" --progress
+    rm -f "$archive_name"
+    unset CCACHE_DISABLE
+    cd "$workdir"
 }
 
 syncAndPatch() {
@@ -90,7 +97,7 @@ syncAndPatch() {
 }
 
 buildRom() {
-    timeout_limit=400
+    timeout_limit=5400
 
     source build/envsetup.sh
 
@@ -105,16 +112,13 @@ buildRom() {
 
     lunch lineage_RMX2185-user
 
-    (
-        mka bacon -j"$(nproc)"
-    ) &
+    mka bacon -j"$(nproc)" &
     local build_pid=$!
-    
+
     SECONDS=0
     while kill -0 "$build_pid" 2>/dev/null; do
         if [ $SECONDS -ge $timeout_limit ]; then
-            echo "Timeout: Build exceeded $timeout_limit seconds. Killing process..."
-            kill "$build_pid" 2>/dev/null || true
+            kill -s TERM "$build_pid" 2>/dev/null || true
             wait "$build_pid" 2>/dev/null || true
             uploadCache
             exit 1
@@ -123,14 +127,6 @@ buildRom() {
     done
 
     wait "$build_pid"
-    build_status=$?
-
-    if [ $build_status -eq 0 ]; then
-        echo "Build completed successfully."
-    else
-        echo "Build failed with status $build_status. Ccache will not be uploaded."
-        exit 1
-    fi
 }
 
 uploadArtifact() {
@@ -148,5 +144,5 @@ case "$1" in
     build) buildRom ;;
     upload) uploadArtifact ;;
     cache) restoreCache ;;
-    *) echo "Usage: $0 {sync|build|upload|cache}" && exit 1 ;;
+    *) exit 1 ;;
 esac
