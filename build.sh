@@ -4,7 +4,7 @@ set -e
 BASE_DIR="$(pwd)"
 SRC_DIR="$BASE_DIR/src/android"
 PATCH_DIR="$SRC_DIR/AXP/Patches/LineageOS-17.1"
-TIMEOUT_LIMIT="90m"
+TIMEOUT_LIMIT="20m"
 USE_CCACHE=true
 
 export CCACHE_DIR="$BASE_DIR/ccache"
