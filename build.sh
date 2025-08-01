@@ -113,7 +113,7 @@ buildRom() {
     build_status=$?
 
     if [ $build_status -eq 0 ]; then
-        echo "---"
+        uploadCache
     else
         exit 1
     fi
@@ -121,10 +121,9 @@ buildRom() {
 
 uploadArtifact() {
     local zip_file
-    uploadCache
     zip_file=$(find out/target/product/*/ -maxdepth 1 -name "lineage-*.zip" | head -n 1)
     if [ -n "$zip_file" ]; then
-        mv rom/config/* ~/.config
+        mkdir -p ~/.config && mv rom/config/* ~/.config
         telegram-upload --to "$idtl" --caption "${CIRRUS_COMMIT_MESSAGE}" "$zip_file"
     fi  
 }
