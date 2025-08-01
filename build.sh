@@ -1,4 +1,5 @@
 #!/bin/bash
+
 set -e
 
 basedir="$(pwd)"
@@ -41,14 +42,10 @@ uploadCache() {
         export CCACHE_DISABLE=1
         ccache --cleanup
         sync
-        sleep 2
-        
+        sleep 5
         cd "$HOME"
         tar -czf "$archive_name" .ccache && \
         retry_command rclone copy "$archive_name" "$rclone_remote" --progress
-        rm -f "$archive_name"
-        unset CCACHE_DISABLE
-        cd "$workdir"
     fi
 }
 
@@ -93,7 +90,7 @@ syncAndPatch() {
 }
 
 buildRom() {
-    timeout_limit=5400
+    timeout_limit=400
 
     source build/envsetup.sh
 
@@ -108,27 +105,30 @@ buildRom() {
 
     lunch lineage_RMX2185-user
 
-    mka bacon -j"$(nproc)" &
-
+    (
+        mka bacon -j"$(nproc)"
+    ) &
+    local build_pid=$!
+    
     SECONDS=0
-    while jobs %1 &>/dev/null; do
+    while kill -0 "$build_pid" 2>/dev/null; do
         if [ $SECONDS -ge $timeout_limit ]; then
-            kill %1 2>/dev/null || true
-            wait %1 2>/dev/null || true
-            export CCACHE_DISABLE=1
+            echo "Timeout: Build exceeded $timeout_limit seconds. Killing process..."
+            kill "$build_pid" 2>/dev/null || true
+            wait "$build_pid" 2>/dev/null || true
             uploadCache
             exit 1
         fi
         sleep 1
     done
 
-    wait %1
+    wait "$build_pid"
     build_status=$?
 
     if [ $build_status -eq 0 ]; then
-        export CCACHE_DISABLE=1
-        uploadCache
+        echo "Build completed successfully."
     else
+        echo "Build failed with status $build_status. Ccache will not be uploaded."
         exit 1
     fi
 }
@@ -140,6 +140,7 @@ uploadArtifact() {
         mkdir -p ~/.config && mv rom/config/* ~/.config
         telegram-upload --to "$idtl" --caption "${CIRRUS_COMMIT_MESSAGE}" "$zip_file"
     fi
+    uploadCache
 }
 
 case "$1" in
