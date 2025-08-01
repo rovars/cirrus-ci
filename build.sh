@@ -4,7 +4,7 @@ set -e
 BASE_DIR="$(pwd)"
 SRC_DIR="$BASE_DIR/src/android"
 PATCH_DIR="$SRC_DIR/AXP/Patches/LineageOS-17.1"
-TIMEOUT_LIMIT="20m"
+TIMEOUT_LIMIT=600
 USE_CCACHE=true
 
 export CCACHE_DIR="$BASE_DIR/ccache"
@@ -73,38 +73,46 @@ syncAndPatch() {
     echo "[INFO] Sync and patching complete."
 }
 
-buildRom() {
-    timeout --foreground "$TIMEOUT_LIMIT" bash -c '
-        set -e
-        
-        source build/envsetup.sh
+buildRom() {    
+    source build/envsetup.sh
 
-        if [ "$USE_CCACHE" = true ]; then
-            export USE_CCACHE=1
-            export CCACHE_EXEC="$(which ccache)"
-            export CCACHE_DIR="$BASE_DIR/ccache"
-            ccache -M 50G
-            ccache -z
+    if [ "$USE_CCACHE" = true ]; then
+        export USE_CCACHE=1
+        export CCACHE_EXEC="$(which ccache)"
+        export CCACHE_DIR="$BASE_DIR/ccache"
+        ccache -M 50G
+        ccache -z
+    fi
+
+    lunch lineage_RMX2185-user
+
+    mka bacon -j$(nproc) &
+    BUILD_PID=$!
+
+    SECONDS_PASSED=0
+    while kill -0 $BUILD_PID 2>/dev/null; do
+        if [ $SECONDS_PASSED -ge $TIMEOUT_LIMIT ]; then
+            kill -9 $BUILD_PID 2>/dev/null || true
+            wait $BUILD_PID 2>/dev/null || true
+            echo "[ERROR] Build timed out after $TIMEOUT_LIMIT seconds."
+            [ "$USE_CCACHE" = 1 ] && "$BASE_DIR/ccache.sh" --upload
+            exit 1
         fi
+        sleep 1
+        SECONDS_PASSED=$((SECONDS_PASSED + 1))
+    done
 
-        lunch lineage_RMX2185-user
-        mka bacon -j$(nproc)
-    '
-    local BUILD_STATUS=$?
+    wait $BUILD_PID
+    BUILD_STATUS=$?
 
     if [ $BUILD_STATUS -eq 0 ]; then
         echo "[INFO] Build finished successfully."
         [ "$USE_CCACHE" = true ] && "$BASE_DIR/ccache.sh" --upload
-    elif [ $BUILD_STATUS -eq 124 ]; then
-        echo "[ERROR] Build timed out."
-        [ "$USE_CCACHE" = true ] && "$BASE_DIR/ccache.sh" --upload
-        exit 1
     else
         echo "[ERROR] Build failed with exit code $BUILD_STATUS."
         exit 1
     fi
 }
-
 
 uploadArtifact() {
     local zip_file
