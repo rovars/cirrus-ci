@@ -55,3 +55,6 @@ saveCcache() {
         echo "[INFO] Ccache uploaded successfully."
     fi
 }
+
+export -f setupCcache
+export -f saveCcache
