@@ -5,12 +5,12 @@ basedir="$(pwd)"
 workdir="$basedir/src"
 
 usecache="true"
-cachedir="$workdir/ccache"
+cachedir="$HOME/.ccache"
 
 rclone_remote="me:rom"
 archive_name="ccache.tar.gz"
 
-mkdir -p "$cachedir"
+mkdir -p "$cachedir" "$workdir"
 cd "$workdir"
 
 retry_command() {
@@ -25,17 +25,30 @@ retry_command() {
 
 restoreCache() {
     [ "$usecache" = true ] && \
-    if retry_command rclone copy "$rclone_remote/$archive_name" . --progress; then
-        tar -xzf "$archive_name"
+    if retry_command rclone copy "$rclone_remote/$archive_name" "$HOME" --progress; then
+        cd "$HOME"
+        [ -f "$archive_name" ] && \
+        rm -rf .ccache && \
+        tar -xzf "$archive_name" && \
         rm -f "$archive_name"
+        cd "$workdir"
     fi
 }
 
 uploadCache() {
     [ "$usecache" = true ] && \
-    if tar -czf "$archive_name" ccache; then       
+    if [ -d "$cachedir" ]; then
+        export CCACHE_DISABLE=1
+        ccache --cleanup
+        sync
+        sleep 2
+        
+        cd "$HOME"
+        tar -czf "$archive_name" .ccache && \
         retry_command rclone copy "$archive_name" "$rclone_remote" --progress
         rm -f "$archive_name"
+        unset CCACHE_DISABLE
+        cd "$workdir"
     fi
 }
 
@@ -96,23 +109,24 @@ buildRom() {
     lunch lineage_RMX2185-user
 
     mka bacon -j"$(nproc)" &
-    build_pid=$!
 
     SECONDS=0
-    while kill -0 $build_pid 2>/dev/null; do
+    while jobs %1 &>/dev/null; do
         if [ $SECONDS -ge $timeout_limit ]; then
-            kill -9 $build_pid 2>/dev/null || true
-            wait $build_pid 2>/dev/null || true
+            kill %1 2>/dev/null || true
+            wait %1 2>/dev/null || true
+            export CCACHE_DISABLE=1
             uploadCache
             exit 1
         fi
         sleep 1
     done
 
-    wait $build_pid
+    wait %1
     build_status=$?
 
     if [ $build_status -eq 0 ]; then
+        export CCACHE_DISABLE=1
         uploadCache
     else
         exit 1
@@ -125,7 +139,7 @@ uploadArtifact() {
     if [ -n "$zip_file" ]; then
         mkdir -p ~/.config && mv rom/config/* ~/.config
         telegram-upload --to "$idtl" --caption "${CIRRUS_COMMIT_MESSAGE}" "$zip_file"
-    fi  
+    fi
 }
 
 case "$1" in
