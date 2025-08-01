@@ -12,8 +12,9 @@ cd "$SRC_DIR"
 
 syncAndPatch() {
     if [ "$ENABLE_CCACHE" = true ]; then
-        echo "[INFO] Running ccache restore in background..."
+        echo "[INFO] Restoring ccache..."
         "$BASE_DIR/ccache.sh" --restore &
+        ccache -s
     fi
 
     echo "[INFO] Initializing repo..."
@@ -66,7 +67,7 @@ buildRom() {
     if [ "$ENABLE_CCACHE" = true ]; then
         export USE_CCACHE=1
         export CCACHE_EXEC="$(which ccache)"
-        export CCACHE_DIR="~/ccache"
+        export CCACHE_DIR="$HOME/.ccache"
         ccache -M 50G
         ccache -z
     fi
