@@ -1,8 +1,16 @@
 #!/bin/bash
 set -e
 
+basedir="$(pwd)"
+workdir="$basedir/src"
+
+usecache="true"
+cachedir="$workdir/ccache"
+
 rclone_remote="me:rom"
 archive_name="ccache.tar.gz"
+
+mkdir -p "$cachedir"
 cd "$workdir"
 
 retry_command() {
@@ -79,7 +87,7 @@ buildRom() {
     if [ "$usecache" = true ]; then
         export USE_CCACHE=1
         export CCACHE_EXEC="$(which ccache)"
-        export CCACHE_DIR="$workdir/ccache"
+        export CCACHE_DIR="$cachedir"
         ccache -M 50G -F 0
         ccache -o compression=true
         ccache -z

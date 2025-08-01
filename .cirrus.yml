@@ -4,8 +4,6 @@ env:
   tokentl: "ENCRYPTED[!9aa257cad95736f4897f178d239e8a6b387011bada0192a6c220f8ce4b97234be111be60eb3e5d43f227e2cefa8cc20c!]"
   idtl: "ENCRYPTED[!4508643dc06e496a5bdef35696637b616238ec9af7111e0efb265d7adbee5a3f5890d487225ccdb1d259b189cf5a567d!]"
   rcloneconfig: "ENCRYPTED[!7f40638e883461d6f53ce7505cd59a6bbbd8a27a2038ea8dbb026ccd970cb84c18fedce91aa7ee134e86e92723266dba!]"
-  workdir: "$(pwd)/src/rom"
-  usecache: "true"
 
 task:
   name: "Build"
@@ -21,7 +19,6 @@ task:
     - echo "$credensial" > ~/.git-credentials
     - echo "$gitconfigs" > ~/.gitconfig
     - echo "$rcloneconfig" > ~/.rclone.conf
-    - mkdir -p "$workdir" "$workdir/ccache" ~/.config
     - ./build.sh cache
 
   sync_script: ./build.sh sync
