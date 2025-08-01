@@ -80,7 +80,7 @@ syncAndPatch() {
 }
 
 buildRom() {
-    timeout_limit=200
+    timeout_limit=5400
 
     source build/envsetup.sh
 
