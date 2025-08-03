@@ -19,7 +19,7 @@ task:
     - echo "$credensial" > ~/.git-credentials
     - echo "$gitconfigs" > ~/.gitconfig
     - echo "$rcloneconfig" > ~/.rclone.conf
-    - ./build.sh cache
+    - ./build.sh cache-pull
 
   sync_script: ./build.sh sync
   build_script: ./build.sh build
