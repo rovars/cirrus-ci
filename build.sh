@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
+set -e
 
 readonly WORKDIR="$PWD/src"
 readonly CACHE_DIR="$HOME/.ccache"
