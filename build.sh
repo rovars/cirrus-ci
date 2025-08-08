@@ -2,7 +2,7 @@
 
 set -e
 
-readonly WORKDIR="$PWD/src"
+readonly WORKDIR="$PWD/android"
 readonly CACHE_DIR="$HOME/.ccache"
 readonly USE_CACHE="true"
 readonly RCLONE_REMOTE="me:rom"
