@@ -102,7 +102,7 @@ setup_workspace() {
         )
     done
 
-    for patch in rom/q/000{1..3}*; do
+    for patch in ROM/q/000{1..3}*; do
         [[ -f "$patch" ]] && patch -p1 < "$patch"
     done
 
