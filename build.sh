@@ -67,7 +67,7 @@ push_cache() {
 setup_workspace() {
     repo init --depth=1 -u "https://github.com/querror/android.git" -b "lineage-17.1"
 
-    git clone -q "https://github.com/rducks/rom" ROM
+    git clone -q "https://github.com/llcpp/rom" ROM
 
     mkdir -p ~/.config .repo/local_manifests/
 
