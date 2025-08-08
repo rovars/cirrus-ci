@@ -65,7 +65,7 @@ push_cache() {
 }
 
 setup_workspace() {
-    repo init --depth=1 -u "https://github.com/rducks/android.git" -b "lineage-17.1"
+    repo init --depth=1 -u "https://github.com/querror/android.git" -b "lineage-17.1"
     git clone -q "https://github.com/rducks/rom" rom
     mkdir -p .repo/local_manifests/
     mv rom/q/los.xml .repo/local_manifests/roomservice.xml
@@ -98,7 +98,7 @@ setup_workspace() {
         )
     done
 
-    for patch in rom/q/000{1..7}*; do
+    for patch in rom/q/000{1..3}*; do
         [[ -f "$patch" ]] && patch -p1 < "$patch"
     done
 
