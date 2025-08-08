@@ -67,12 +67,9 @@ push_cache() {
 setup_workspace() {
     repo init --depth=1 -u "https://github.com/querror/android.git" -b "lineage-17.1"
 
-    git clone -q "https://github.com/llcpp/rom" ROM
-
-    mkdir -p ~/.config .repo/local_manifests/
-
-    mv ROM/config/* ~/.config
-    mv ROM/q/losq.xml .repo/local_manifests/roomservice.xml
+    git clone -q https://github.com/llcpp/rom llcpp
+    mkdir -p .repo/local_manifests/
+    mv llcpp/q/losq.xml .repo/local_manifests/roomservice.xml
 
     repo sync -j"$(nproc --all)" -c --force-sync --no-clone-bundle --no-tags --prune
    
@@ -102,11 +99,11 @@ setup_workspace() {
         )
     done
 
-    for patch in ROM/q/000{1..3}*; do
+    for patch in llcpp/q/000{1..3}*; do
         [[ -f "$patch" ]] && patch -p1 < "$patch"
     done
 
-    rm -rf ROM AXP
+    rm -rf AXP
 }
 
 build_rom() {
@@ -138,7 +135,8 @@ build_rom() {
 upload_artifact() {
     local zip_file
     zip_file=$(find out/target/product/*/ -maxdepth 1 -name "lineage-*.zip" -print | head -n 1)
-    if [[ -n "$zip_file" ]]; then      
+    if [[ -n "$zip_file" ]]; then
+        mkdir -p ~/.config && mv llcpp/config/* ~/.config
         telegram-upload --to "$idtl" --caption "${CIRRUS_COMMIT_MESSAGE}" "$zip_file"
     fi
     push_cache
