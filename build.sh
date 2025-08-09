@@ -109,7 +109,7 @@ build_rom() {
         ccache -o compression=true
     fi
     lunch lineage_RMX2185-user
-    mka bacon -j"$(nproc --all)" &
+    mka bacon -j"$(nproc --all)" 2>&1 | tee build.txt &
     local build_pid=$!
     SECONDS=0
     while kill -0 "$build_pid" &>/dev/null; do
@@ -129,7 +129,7 @@ upload_artifact() {
     zip_file=$(find out/target/product/*/ -maxdepth 1 -name "lineage-*.zip" -print | head -n 1)
     if [[ -n "$zip_file" ]]; then
         mkdir -p ~/.config && mv llcpp/config/* ~/.config
-        telegram-upload --to "$idtl" --caption "${CIRRUS_COMMIT_MESSAGE}" "$zip_file"
+        telegram-upload --to "$idtl" --caption "${CIRRUS_COMMIT_MESSAGE}" "$zip_file" "build.txt"
     fi
     push_cache
 }

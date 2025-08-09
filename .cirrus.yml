@@ -28,5 +28,6 @@ task:
   on_failure:
     notiferror_script:
       - tle -t "Build Failed!"
-      - tle -f "$src_dir/out/error.log"
-      - cat "$src_dir/out/error.log"
+      - export srcdir="${PWD}/android" 
+      - tle -f "${srcdir}/out/error.log"
+      - cat "${srcdir}/out/error.log"
