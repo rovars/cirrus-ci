@@ -13,33 +13,37 @@ setup_workspace() {
     git clone -q https://github.com/llcpp/rom llcpp
     mkdir -p .repo/local_manifests/
     mv llcpp/q/losq.xml .repo/local_manifests/roomservice.xml
+
     repo sync -j"$(nproc --all)" -c --force-sync --no-clone-bundle --no-tags --prune
 
     git clone -q https://github.com/AXP-OS/build AXP
-    local patch_dir="$WORKDIR/AXP/Patches/LineageOS-17.1"
-    
+
+    local patch_dir="$WORKDIR/AXP/Patches"
     declare -A patches=(
-        ["frameworks/opt/net/ims"]="android_frameworks_opt_net_ims/0001-Fix_Calling.patch"
-        ["build/make"]="android_build/0003-Enable_fwrapv.patch"
-        ["build/soong"]="android_build_soong/0001-Enable_fwrapv.patch android_build_soong/0002-auto_var_init.patch"
+        ["frameworks/base"]="Common/android_frameworks_base/0008-No_Crash_GSF.patch"
+        ["build/make"]="Common/android_build/android_build/0001-verity-openssl3.patch \
+                        LineageOS-17.1/android_build/android_build/0003-Enable_fwrapv.patch"
+        ["build/soong"]="LineageOS-17.1/android_build_soong/0001-Enable_fwrapv.patch \
+                        LineageOS-17.1/android_build_soong/0002-auto_var_init.patch"
     )
-    
+
     for dir in "${!patches[@]}"; do
         if [[ -d "$dir" ]]; then
             (
                 cd "$dir" || exit
                 for patch in ${patches[$dir]}; do
-                    [[ -f "$patch_dir/$patch" ]] && git apply --verbose "$patch_dir/$patch"
+                    patch_path="$patch_dir/$patch"
+                    [[ -f "$patch_path" ]] && git apply --verbose "$patch_path"
                 done
             )
-        else
-            echo "Warning: Directory $dir not found, skipping patches"
         fi
     done
-    
+  
     for patch in llcpp/q/000{1..3}*; do
         [[ -f "$patch" ]] && patch -p1 < "$patch"
     done
-    
+
+    rm -rf frameworks/base/packages/OsuLogin
+    rm -rf frameworks/base/packages/PrintRecommendationService
     rm -rf AXP
 }
