@@ -65,7 +65,7 @@ push_cache() {
 }
 
 setup_workspace() {
-    repo init --depth=1 -u "https://github.com/querror/android.git" -b "lineage-17.1"
+    repo init -u "https://github.com/querror/android.git" -b "lineage-17.1"
 
     git clone -q https://github.com/llcpp/rom llcpp
     mkdir -p .repo/local_manifests/
@@ -103,7 +103,7 @@ setup_workspace() {
         [[ -f "$patch" ]] && patch -p1 < "$patch"
     done
 
-    rm -rf AXP
+    # rm -rf AXP
 }
 
 build_rom() {

@@ -22,11 +22,3 @@ task:
     - ./build.sh cache-pull
 
   sync_script: ./build.sh sync
-  build_script: ./build.sh build
-  upload_script: ./build.sh upload
-
-  on_failure:
-    notiferror_script:
-      - tle -t "Build Failed!"
-      - tle -f "$src_dir/out/error.log"
-      - cat "$src_dir/out/error.log"
