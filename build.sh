@@ -65,7 +65,7 @@ push_cache() {
 }
 
 setup_workspace() {
-    repo init -u "https://github.com/querror/android.git" -b "lineage-17.1"
+    repo init --depth=1 -u "https://github.com/querror/android.git" -b "lineage-17.1"
 
     git clone -q https://github.com/llcpp/rom llcpp
     mkdir -p .repo/local_manifests/
@@ -76,15 +76,7 @@ setup_workspace() {
     git clone -q "https://github.com/AXP-OS/build" AXP
     local patch_dir="$WORKDIR/AXP/Patches/LineageOS-17.1"
     
-    rm -rf \
-        vendor/lineage/overlay/common/lineage-sdk/packages/LineageSettingsProvider/res/values/defaults.xml \
-        packages/apps/LineageParts/src/org/lineageos/lineageparts/lineagestats/ \
-        packages/apps/LineageParts/res/xml/{anonymous_stats.xml,preview_data.xml}
-
-    declare -A patches=(
-        ["packages/apps/LineageParts"]="android_packages_apps_LineageParts/0001-Remove_Analytics.patch"
-        ["packages/apps/SetupWizard"]="android_packages_apps_SetupWizard/0001-Remove_Analytics.patch"
-        ["packages/apps/Settings"]="android_packages_apps_Settings/0011-LTE_Only_Mode.patch"
+    declare -A patches=(        
         ["frameworks/opt/net/ims"]="android_frameworks_opt_net_ims/0001-Fix_Calling.patch"
         ["build/make"]="android_build/0003-Enable_fwrapv.patch"
         ["build/soong"]="android_build_soong/0001-Enable_fwrapv.patch android_build_soong/0002-auto_var_init.patch"
@@ -103,7 +95,7 @@ setup_workspace() {
         [[ -f "$patch" ]] && patch -p1 < "$patch"
     done
 
-    # rm -rf AXP
+    rm -rf AXP
 }
 
 build_rom() {
