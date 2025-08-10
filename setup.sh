@@ -7,13 +7,14 @@ ARCHIVE_NAME="ccache-losq.tar.gz"
 
 setup_workspace() {
     repo init --depth=1 -u https://github.com/querror/android.git -b lineage-17.1
+
     git clone -q https://github.com/llcpp/rom llcpp
+
     mkdir -p .repo/local_manifests/
     mv llcpp/q/losq.xml .repo/local_manifests/roomservice.xml
-    repo sync -j"$(nproc --all)" -c --force-sync --no-clone-bundle --no-tags --prune  
-    for patch in llcpp/q/000{1..3}*; do
-        [[ -f "$patch" ]] && patch -p1 < "$patch"
-    done
+
+    repo sync -j"$(nproc --all)" -c --force-sync --no-clone-bundle --no-tags --prune
+    
     rm -rf frameworks/base/packages/OsuLogin
     rm -rf frameworks/base/packages/PrintRecommendationService
 }

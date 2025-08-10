@@ -23,7 +23,7 @@ task:
 
   sync_script: ./build.sh sync
   build_script: ./build.sh build
-  upload_script: ./build.sh upload
+  upload_script: timeout 15m ./build.sh upload
 
   on_failure:
     notiferror_script:
