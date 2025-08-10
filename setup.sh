@@ -46,7 +46,7 @@ build_src() {
 
 upload_artifact() {
     local zip_file
-    zip_file=$(find out/target/product/*/lineage-*.zip)
+    zip_file=$(find out/target/product/*/ -maxdepth 1 -name "lineage-*.zip" -print | head -n 1)
     if [[ -n "$zip_file" ]]; then
         mkdir -p ~/.config
         mv llcpp/config/* ~/.config
