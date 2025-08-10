@@ -12,7 +12,7 @@ main() {
     cd "$WORKDIR"
     case "${1:-}" in
         sync)   setup_workspace ;;
-        build)  build_rom ;;
+        build)  build_start ;;
         upload) upload_artifact ;;
         cache-pull) pull_cache ;;
         cache-push) push_cache ;;
@@ -60,45 +60,6 @@ push_cache() {
         rm -f "$ARCHIVE_NAME"
     )
     unset CCACHE_DISABLE
-}
-
-build_rom() {
-    local -r timeout_seconds=5400
-    source build/envsetup.sh
-    if [[ "$USE_CACHE" == "true" ]]; then
-        export USE_CCACHE=1
-        export CCACHE_EXEC="$(command -v ccache)"
-        export CCACHE_DIR="$CACHE_DIR"
-        ccache -M 50G -F 0
-        ccache -o compression=true
-    fi
-    
-    $BUILDCM -j"$(nproc --all)" 2>&1 | tee build.txt &
-    local build_pid=$!
-    SECONDS=0
-    
-    while kill -0 "$build_pid" &>/dev/null; do
-        if (( SECONDS >= timeout_seconds )); then
-            kill -s TERM "$build_pid" &>/dev/null || true
-            wait "$build_pid" &>/dev/null || true
-            push_cache
-            exit 1
-        fi
-        sleep 1
-    done
-    
-    wait "$build_pid"
-}
-
-upload_artifact() {
-    local zip_file
-    zip_file=$(find out/target/product/*/ -maxdepth 1 -name "$ZIPNAME" -print | head -n 1)
-    if [[ -n "$zip_file" ]]; then
-        mkdir -p ~/.config
-        mv llcpp/config/* ~/.config || true
-        $SENDFILE
-    fi
-    push_cache
 }
 
 main "$@"
