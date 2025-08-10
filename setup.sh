@@ -18,7 +18,7 @@ setup_workspace() {
     rm -rf frameworks/base/packages/PrintRecommendationService
 }
 
-build() {
+build_src() {
     local -r timeout_seconds=5400
     source build/envsetup.sh
     if [[ "$USE_CACHE" == "true" ]]; then

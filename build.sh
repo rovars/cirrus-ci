@@ -12,7 +12,7 @@ main() {
     cd "$WORKDIR"
     case "${1:-}" in
         sync)   setup_workspace ;;
-        build)  build_start ;;
+        build)  build_src ;;
         upload) upload_artifact ;;
         cache-pull) pull_cache ;;
         cache-push) push_cache ;;
