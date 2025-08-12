@@ -38,7 +38,6 @@ setup_workspace() {
 build_src() {
     local -r timeout_seconds=5400
     source build/envsetup.sh
-
     if [[ "$USE_CACHE" == "true" ]]; then
         export USE_CCACHE=1
         export CCACHE_EXEC="$(command -v ccache)"
@@ -46,18 +45,16 @@ build_src() {
         ccache -M 50G -F 0
         ccache -o compression=true
     fi
-
     lunch lineage_RMX2185-user
     mka bacon -j"$(nproc --all)" 2>&1 | tee build.txt &
     local build_pid=$!
     SECONDS=0
     
     while kill -0 "$build_pid" &>/dev/null; do
-        if (( SECONDS >= timeout_seconds )); then
-            tle -t "Build timed out after $timeout_seconds seconds"
+        if (( SECONDS >= timeout_seconds )); then            
             kill -s TERM "$build_pid" &>/dev/null || true
             wait "$build_pid" &>/dev/null || true
-            push_cache
+            tle -t "Build timed out after $timeout_seconds seconds"
             exit 1
         fi
         sleep 1
@@ -67,8 +64,9 @@ build_src() {
     local build_status=$?
     
     if [[ $build_status -ne 0 ]]; then
-        tle -t "Build failed with exit status $build_status"      
-        exit $build_status 
+        exit 1
+    else
+        exit 0
     fi
 }
 
