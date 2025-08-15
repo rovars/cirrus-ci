@@ -15,7 +15,7 @@ task:
     greedy: true
 
   setup_script:
-    - tle -t "Build Started! <a href='https://cirrus-ci.com/task/${CIRRUS_TASK_ID}'>View On Cirrus CI</a>"
+    - tle -t "<a href='https://cirrus-ci.com/task/${CIRRUS_TASK_ID}'>Cirrus CI</a> ${CIRRUS_COMMIT_MESSAGE}"
     - echo "$credensial" > ~/.git-credentials
     - echo "$gitconfigs" > ~/.gitconfig
     - echo "$rcloneconfig" > ~/.rclone.conf
