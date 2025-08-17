@@ -35,7 +35,7 @@ retry() {
 }
 
 pull_cache() {
-    [[ "$USE_CACHE" != "true" ]] && return 0
+    [[ "$CCACHE_ROM" != "1" ]] && return 0
     if retry rclone copy "$RCLONE_REMOTE/$ARCHIVE_NAME" "$HOME" --progress; then
         if [[ -f "$HOME/$ARCHIVE_NAME" ]]; then
             (
@@ -49,7 +49,7 @@ pull_cache() {
 }
 
 push_cache() {
-    [[ "$USE_CACHE" != "true" || ! -d "$CACHE_DIR" ]] && return 0
+    [[ "$CCACHE_ROM" != "1" || ! -d "$CACHE_DIR" ]] && return 0
     export CCACHE_DISABLE=1
     ccache --cleanup
     ccache --zero-stats

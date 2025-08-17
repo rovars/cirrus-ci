@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-USE_CACHE="false"
+CCACHE_ROM=0
 RCLONE_REMOTE="me:rom"
 ARCHIVE_NAME="ccache.tar.gz"
 
@@ -14,24 +14,33 @@ setup_workspace() {
 }
 
 build_src() {
+    exec > >(tee build.txt) 2>&1
+
     local -r timeout_seconds=5400
+    
     source llcpp/rbe.env
     source build/envsetup.sh
-    export USE_CCACHE=0
-    if [[ "$USE_CACHE" == "true" ]]; then
+
+    if [[ "$CCACHE_ROM" == "1" ]]; then
         export USE_CCACHE=1
         export CCACHE_EXEC="$(command -v ccache)"
         export CCACHE_DIR="$CACHE_DIR"
         ccache -M 50G -F 0
         ccache -o compression=true
+    else
+        export CCACHE_DISABLE=1
+        unset USE_CCACHE
+        unset CCACHE_EXEC
+        unset CCACHE_DIR
     fi
+
     lunch aosp_RMX2185-userdebug
-    mka bacon -j"$(nproc --all)" 2>&1 | tee build.txt &
+    mka bacon -j"$(nproc --all)" &
     local build_pid=$!
     SECONDS=0
 
     while kill -0 "$build_pid" &>/dev/null; do
-        if (( SECONDS >= timeout_seconds )); then            
+        if (( SECONDS >= timeout_seconds )); then
             kill -s TERM "$build_pid" &>/dev/null || true
             wait "$build_pid" &>/dev/null || true
             tle -t "Build timed out after $timeout_seconds seconds"
@@ -43,11 +52,7 @@ build_src() {
     wait "$build_pid"
     local build_status=$?
 
-    if [[ $build_status -ne 0 ]]; then
-        exit 1
-    else
-        exit 0
-    fi
+    exit $build_status
 }
 
 upload_artifact() {
