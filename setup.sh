@@ -24,6 +24,7 @@ setup_workspace() {
         ["libcore"]="android_libcore/0004-constify_JNINativeMethod.patch"
         ["packages/apps/Nfc"]="android_packages_apps_Nfc/0001-constify_JNINativeMethod.patch"
         ["packages/apps/Bluetooth"]="android_packages_apps_Bluetooth/0001-constify_JNINativeMethod.patch"
+        ["prebuilts/abi-dumps/vndk"]="android_prebuilts_abi-dumps_vndk/0001-protobuf-avi.patch"
     )
     
     git clone https://github.com/AXP-OS/build.git Axp
