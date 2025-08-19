@@ -84,9 +84,10 @@ upload_artifact() {
     zip_file=$(find out/target/product/*/ -maxdepth 1 -name "lineage-*.zip" -print | head -n 1)
     if [[ -n "$zip_file" ]]; then
         mkdir -p ~/.config
-        mv llcpp/config/* ~/.config
-        telegram-upload "$zip_file" --to "$idtl" --caption "${CIRRUS_COMMIT_MESSAGE}"   
+        mv llcpp/config/* ~/.config      
+        telegram-upload "$zip_file" --to "$idtl" --caption "${CIRRUS_COMMIT_MESSAGE}"
         tle -f "build.txt"
     fi
+    retry rclone copy "$zip_file" "$RCLONE_REMOTE" --progress
     push_cache
 }
