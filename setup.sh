@@ -7,6 +7,8 @@ RCLONE_REMOTE="me:rom"
 ARCHIVE_NAME="ccache-losq.tar.gz"
 
 setup_workspace() {
+    exec > >(tee resync.txt) 2>&1
+
     repo init --depth=1 -u https://github.com/querror/android.git -b lineage-17.1
     git clone -q https://github.com/llcpp/rom llcpp
     mkdir -p .repo/local_manifests/
@@ -39,10 +41,7 @@ setup_workspace() {
 
 build_src() {
     exec > >(tee build.txt) 2>&1
-
-    local -r timeout_seconds=5400
-
-    source llcpp/rbe.env
+    local -r timeout_seconds=5400   
     source build/envsetup.sh
 
     if [[ "$CCACHE_ROM" == "1" ]]; then
@@ -80,14 +79,16 @@ build_src() {
 }
 
 upload_artifact() {
+    exec > >(tee upload.txt) 2>&1
+
     local zip_file
+    export GITHUB_TOKEN="$tkn_git"
     zip_file=$(find out/target/product/*/ -maxdepth 1 -name "lineage-*.zip" -print | head -n 1)
-    if [[ -n "$zip_file" ]]; then
+    if [[ -n "$zip_file" ]]; then       
         mkdir -p ~/.config
-        mv llcpp/config/* ~/.config      
-        telegram-upload "$zip_file" --to "$idtl" --caption "${CIRRUS_COMMIT_MESSAGE}"
-        tle -f "build.txt"
+        mv llcpp/config/* ~/.config
+        telegram-upload --to "$idtl" --caption "${CIRRUS_COMMIT_MESSAGE}" "$zip_file" "build.txt"        
     fi
-    retry rclone copy "$zip_file" "$RCLONE_REMOTE" --progress
+    ghr -u nrobx -r nrox -prerelease -replace -c main rom $zip_file
     push_cache
 }

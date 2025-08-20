@@ -4,6 +4,7 @@ env:
   tokentl: "ENCRYPTED[!9aa257cad95736f4897f178d239e8a6b387011bada0192a6c220f8ce4b97234be111be60eb3e5d43f227e2cefa8cc20c!]"
   idtl: "ENCRYPTED[!4508643dc06e496a5bdef35696637b616238ec9af7111e0efb265d7adbee5a3f5890d487225ccdb1d259b189cf5a567d!]"
   rcloneconfig: "ENCRYPTED[!7f40638e883461d6f53ce7505cd59a6bbbd8a27a2038ea8dbb026ccd970cb84c18fedce91aa7ee134e86e92723266dba!]"
+  tkn_git: "ENCRYPTED[!821ffc13ea5a6026768e5155554366e94b5d82f53f3383fc56f396a8d9a38d5bd95c52f7795e820e0093242b06fd522e!]"
 
 task:
   name: "Build"
@@ -28,4 +29,7 @@ task:
   on_failure:
     notiferror_script:
       - tle -t "Build Failed!"
+      - tle -f "${PWD}/android/resync.txt"
+      - tle -f "${PWD}/android/build.txt"
+      - tle -f "${PWD}/android/upload.txt"
       - tle -f "${PWD}/android/out/error.log"
