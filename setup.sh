@@ -72,7 +72,7 @@ build_src() {
 upload_artifact() {
     exec > >(tee upload.txt) 2>&1
     cd out/target/product/RMX2185
-    export GITHUB_TOKEN="$tkn_git"    
-    ghr -u nrobx -r nrox -prerelease -replace -c main rom lineage*.zip
+    curl bashupload.com -T lineage-*.zip || true
+    retry rclone copy lineage-*.zip $RCLONE_REMOTE
     push_cache
 }
