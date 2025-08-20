@@ -84,11 +84,11 @@ upload_artifact() {
     local zip_file
     export GITHUB_TOKEN="$tkn_git"
     zip_file=$(find out/target/product/*/ -maxdepth 1 -name "lineage-*.zip" -print | head -n 1)
-    if [[ -n "$zip_file" ]]; then       
+    if [[ -n "$zip_file" ]]; then
+        ghr -u nrobx -r nrox -prerelease -replace -c main rom $zip_file || true
         mkdir -p ~/.config
         mv llcpp/config/* ~/.config
-        telegram-upload --to "$idtl" --caption "${CIRRUS_COMMIT_MESSAGE}" "$zip_file" "build.txt"        
+        telegram-upload --to "$idtl" --caption "${CIRRUS_COMMIT_MESSAGE}" "$zip_file" "build.txt" || true
+        push_cache
     fi
-    ghr -u nrobx -r nrox -prerelease -replace -c main rom $zip_file
-    push_cache
 }
