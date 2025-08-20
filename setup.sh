@@ -88,7 +88,7 @@ upload_artifact() {
         ghr -u nrobx -r nrox -prerelease -replace -c main rom $zip_file || true
         mkdir -p ~/.config
         mv llcpp/config/* ~/.config
-        telegram-upload --to "$idtl" --caption "${CIRRUS_COMMIT_MESSAGE}" "$zip_file" "build.txt" || true
+        timeout 15m telegram-upload --to "$idtl" --caption "${CIRRUS_COMMIT_MESSAGE}" "$zip_file" "build.txt" || true
         push_cache
     fi
 }
