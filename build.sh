@@ -35,7 +35,6 @@ retry() {
 }
 
 pull_cache() {
-    [[ "$CCACHE_ROM" != "1" ]] && return 0
     if retry rclone copy "$RCLONE_REMOTE/$ARCHIVE_NAME" "$HOME" --progress; then
         if [[ -f "$HOME/$ARCHIVE_NAME" ]]; then
             (
@@ -49,7 +48,6 @@ pull_cache() {
 }
 
 push_cache() {
-    [[ "$CCACHE_ROM" != "1" || ! -d "$CACHE_DIR" ]] && return 0
     export CCACHE_DISABLE=1
     ccache --cleanup
     ccache --zero-stats
@@ -57,9 +55,7 @@ push_cache() {
         cd "$HOME"
         tar -czf "$ARCHIVE_NAME" .ccache --warning=no-file-changed
         retry rclone copy "$ARCHIVE_NAME" "$RCLONE_REMOTE" --progress
-        rm -f "$ARCHIVE_NAME"
     )
-    unset CCACHE_DISABLE
 }
 
 main "$@"

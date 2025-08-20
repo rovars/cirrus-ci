@@ -1,18 +1,19 @@
 #!/usr/bin/env bash
 set -e
 
-USE_CACHE="true"
-CCACHE_ROM=1
 RCLONE_REMOTE="me:rom"
 ARCHIVE_NAME="ccache-losq.tar.gz"
 
 setup_workspace() {
     exec > >(tee resync.txt) 2>&1
-
     repo init --depth=1 -u https://github.com/querror/android.git -b lineage-17.1
+
     git clone -q https://github.com/llcpp/rom llcpp
+    git clone https://github.com/AXP-OS/build.git Axp
+
     mkdir -p .repo/local_manifests/
     mv llcpp/q/losq.xml .repo/local_manifests/roomservice.xml
+
     repo sync -j"$(nproc --all)" -c --force-sync --no-clone-bundle --no-tags --prune
     
     rm -rf frameworks/base/packages/OsuLogin
@@ -28,9 +29,7 @@ setup_workspace() {
         ["packages/apps/Bluetooth"]="android_packages_apps_Bluetooth/0001-constify_JNINativeMethod.patch"
         ["prebuilts/abi-dumps/vndk"]="android_prebuilts_abi-dumps_vndk/0001-protobuf-avi.patch"
     )
-    
-    git clone https://github.com/AXP-OS/build.git Axp
-    
+
     for target_dir in "${!PATCHES[@]}"; do
         patch_file="${PATCHES[$target_dir]}"
         cd "$target_dir" || exit
@@ -43,19 +42,11 @@ build_src() {
     exec > >(tee build.txt) 2>&1
     local -r timeout_seconds=5400   
     source build/envsetup.sh
-
-    if [[ "$CCACHE_ROM" == "1" ]]; then
-        export USE_CCACHE=1
-        export CCACHE_EXEC="$(command -v ccache)"
-        export CCACHE_DIR="$CACHE_DIR"
-        ccache -M 50G -F 0
-        ccache -o compression=true
-    else
-        export CCACHE_DISABLE=1
-        unset USE_CCACHE
-        unset CCACHE_EXEC
-        unset CCACHE_DIR
-    fi
+    export USE_CCACHE=1
+    export CCACHE_EXEC="$(command -v ccache)"
+    export CCACHE_DIR="$CACHE_DIR"
+    ccache -M 50G -F 0
+    ccache -o compression=true
 
     lunch lineage_RMX2185-user
     mka bacon -j"$(nproc --all)" &
@@ -80,15 +71,8 @@ build_src() {
 
 upload_artifact() {
     exec > >(tee upload.txt) 2>&1
-
-    local zip_file
-    export GITHUB_TOKEN="$tkn_git"
-    zip_file=$(find out/target/product/*/ -maxdepth 1 -name "lineage-*.zip" -print | head -n 1)
-    if [[ -n "$zip_file" ]]; then
-        ghr -u nrobx -r nrox -prerelease -replace -c main rom $zip_file || true
-        mkdir -p ~/.config
-        mv llcpp/config/* ~/.config
-        timeout 15m telegram-upload --to "$idtl" --caption "${CIRRUS_COMMIT_MESSAGE}" "$zip_file" "build.txt" || true
-        push_cache
-    fi
+    cd out/target/product/RMX2185
+    export GITHUB_TOKEN="$tkn_git"    
+    ghr -u nrobx -r nrox -prerelease -replace -c main rom lineage*.zip
+    push_cache
 }
