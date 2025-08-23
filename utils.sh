@@ -21,11 +21,6 @@ copy_cache() {
             )
         fi
     fi
-    export USE_CCACHE=1
-    export CCACHE_EXEC="$(command -v ccache)"
-    export CCACHE_DIR="$CACHE_DIR"
-    ccache -M 50G -F 0
-    ccache -o compression=true
 }
 
 save_cache() {
@@ -41,6 +36,7 @@ save_cache() {
 
 
 mka_time_out() {
+
    local -r timeout_seconds=5400
    local build_pid=$!
    SECONDS=0

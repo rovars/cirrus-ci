@@ -38,6 +38,11 @@ setup_src() {
 build_src() {
     exec > >(tee build.log) 2>&1  
     source build/envsetup.sh
+    export USE_CCACHE=1
+    export CCACHE_EXEC="$(command -v ccache)"
+    export CCACHE_DIR="$CACHE_DIR"
+    ccache -M 50G -F 0
+    ccache -o compression=true
     lunch lineage_RMX2185-user
     mka bacon -j"$(nproc --all)" &
     mka_time_out
@@ -54,7 +59,7 @@ upload_src() {
 
     curl -sS https://webi.sh/gh | sh
     source ~/.config/envman/PATH.env
-    echo "$ghtkn" > token.txt
+    echo "$gittkn" > token.txt
 
     gh auth login --with-token < token.txt
     gh release create rom -R bimuafaq/rom --title rom --generate-notes
