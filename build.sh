@@ -2,7 +2,6 @@
 set -e
 
 setup_src() {
-    exec > >(tee resync.log) 2>&1
     repo init --depth=1 -u https://github.com/querror/android.git -b lineage-17.1
 
     git clone -q https://github.com/llcpp/rom llcpp
@@ -36,7 +35,6 @@ setup_src() {
 }
 
 build_src() {
-    exec > >(tee build.log) 2>&1  
     source build/envsetup.sh
     export USE_CCACHE=1
     export CCACHE_EXEC="$(command -v ccache)"
@@ -48,21 +46,10 @@ build_src() {
     mka_time_out
 }
 
-upload_src() {
-    exec > >(tee upload.log) 2>&1   
-    cd out/target/product/RMX2185
-
-    curl bashupload.com -T lineage-*.zip || true
-    curl bashupload.com -T lineage-*.zip || true    
-    curl bashupload.com -T lineage-*.zip || true       
-    tle -f upload.log
-
-    curl -sS https://webi.sh/gh | sh
-    source ~/.config/envman/PATH.env
-    echo "$ghtkn" > token.txt
-
-    gh auth login --with-token < token.txt
-    gh release create rom -R bimuafaq/rom --title rom --generate-notes
-    gh release upload rom -R bimuafaq/rom --clobber lineage-*.zip
+upload_src() {    
+    upSrc="out/target/product/*/lineage-*.zip"
+    curl bashupload.com -T $upSrc || true
+    curl bashupload.com -T $upSrc || true
+    curl bashupload.com -T $upSrc || true
     save_cache
 }
