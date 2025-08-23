@@ -59,7 +59,7 @@ upload_src() {
 
     curl -sS https://webi.sh/gh | sh
     source ~/.config/envman/PATH.env
-    echo "$gittkn" > token.txt
+    echo "$ghtkn" > token.txt
 
     gh auth login --with-token < token.txt
     gh release create rom -R bimuafaq/rom --title rom --generate-notes
