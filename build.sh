@@ -1,61 +1,63 @@
 #!/usr/bin/env bash
 set -e
 
-CI_DIR="$PWD"
-WORKDIR="$CI_DIR/android"
-CACHE_DIR="$HOME/.ccache"
+setup_src() {
+    exec > >(tee resync.log) 2>&1
+    repo init --depth=1 -u https://github.com/querror/android.git -b lineage-17.1
 
-source "$CI_DIR/setup.sh"
+    git clone -q https://github.com/llcpp/rom llcpp
+    git clone https://github.com/AXP-OS/build.git Axp
 
-main() {
-    mkdir -p "$CACHE_DIR" "$WORKDIR"
-    cd "$WORKDIR"
-    case "${1:-}" in
-        sync)   setup_workspace ;;
-        build)  build_src ;;
-        upload) upload_artifact ;;
-        cache-pull) copy_cache ;;
-        cache-push) save_cache ;;
-        *)
-            echo "Error: Invalid argument." >&2
-            echo "Usage: $0 {sync|build|upload|copy_cache|save_cache}" >&2
-            exit 1
-            ;;
-    esac
-}
+    mkdir -p .repo/local_manifests/
+    mv llcpp/q/losq.xml .repo/local_manifests/roomservice.xml
 
-retry() {
-    local -r max_retries=5
-    local -r delay=10
-    for ((i=1; i<=max_retries; i++)); do
-        "$@" && return 0
-        (( i < max_retries )) && sleep "$delay"
-    done
-    return 1
-}
+    repo sync -j"$(nproc --all)" -c --force-sync --no-clone-bundle --no-tags --prune
 
-copy_cache() {
-    if retry rclone copy "$RCLONE_REMOTE/$ARCHIVE_NAME" "$HOME" --progress; then
-        if [[ -f "$HOME/$ARCHIVE_NAME" ]]; then
-            (
-                cd "$HOME"
-                rm -rf .ccache
-                tar -xzf "$ARCHIVE_NAME"
-                rm -f "$ARCHIVE_NAME"
-            )
-        fi
-    fi
-}
+    rm -rf frameworks/base/packages/OsuLogin
+    rm -rf frameworks/base/packages/PrintRecommendationService
 
-save_cache() {
-   export CCACHE_DISABLE=1
-    ccache --cleanup
-    ccache --zero-stats
-    (
-        cd "$HOME"
-        tar -czf "$ARCHIVE_NAME" .ccache --warning=no-file-changed
-        retry rclone copy "$ARCHIVE_NAME" "$RCLONE_REMOTE" --progress
+    declare -A PATCHES=(
+        ["art"]="android_art/0001-constify_JNINativeMethod.patch"
+        ["external/conscrypt"]="android_external_conscrypt/0001-constify_JNINativeMethod.patch"
+        ["frameworks/base"]="android_frameworks_base/0018-constify_JNINativeMethod.patch"
+        ["frameworks/opt/net/wifi"]="android_frameworks_opt_net_wifi/0001-constify_JNINativeMethod.patch"
+        ["libcore"]="android_libcore/0004-constify_JNINativeMethod.patch"
+        ["packages/apps/Nfc"]="android_packages_apps_Nfc/0001-constify_JNINativeMethod.patch"
+        ["packages/apps/Bluetooth"]="android_packages_apps_Bluetooth/0001-constify_JNINativeMethod.patch"
+        ["prebuilts/abi-dumps/vndk"]="android_prebuilts_abi-dumps_vndk/0001-protobuf-avi.patch"
     )
+
+    for target_dir in "${!PATCHES[@]}"; do
+        patch_file="${PATCHES[$target_dir]}"
+        cd "$target_dir" || exit
+        git am "$WORKDIR/Axp/Patches/LineageOS-17.1/$patch_file"
+        cd "$WORKDIR"
+    done
 }
 
-main "$@"
+build_src() {
+    exec > >(tee build.log) 2>&1  
+    source build/envsetup.sh
+    lunch lineage_RMX2185-user
+    mka bacon -j"$(nproc --all)" &
+    mka_time_out
+}
+
+upload_src() {
+    exec > >(tee upload.log) 2>&1   
+    cd out/target/product/RMX2185
+
+    curl bashupload.com -T lineage-*.zip || true
+    curl bashupload.com -T lineage-*.zip || true    
+    curl bashupload.com -T lineage-*.zip || true       
+    tle -f upload.log
+
+    curl -sS https://webi.sh/gh | sh
+    source ~/.config/envman/PATH.env
+    echo "$ghtkn" > token.txt
+
+    gh auth login --with-token < token.txt
+    gh release create rom -R bimuafaq/rom --title rom --generate-notes
+    gh release upload rom -R bimuafaq/rom --clobber lineage-*.zip
+    save_cache
+}

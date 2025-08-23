@@ -5,6 +5,9 @@ env:
   idtl: "ENCRYPTED[!4508643dc06e496a5bdef35696637b616238ec9af7111e0efb265d7adbee5a3f5890d487225ccdb1d259b189cf5a567d!]"
   rcloneconfig: "ENCRYPTED[!7f40638e883461d6f53ce7505cd59a6bbbd8a27a2038ea8dbb026ccd970cb84c18fedce91aa7ee134e86e92723266dba!]"
   tkn_git: "ENCRYPTED[!821ffc13ea5a6026768e5155554366e94b5d82f53f3383fc56f396a8d9a38d5bd95c52f7795e820e0093242b06fd522e!]"
+  ghtkn: "ENCRYPTED[!ac9edbadc82a5702e177b1749e075a7c577e6e3394097725c9198215ff5f514aa110ce0a47eb26f80db4578636d2d6d8!]"
+  rclonedir: "me:rom"
+  rclonefile: "ccache-losq.tar.gz"
 
 task:
   name: "Build"
@@ -20,16 +23,13 @@ task:
     - echo "$credensial" > ~/.git-credentials
     - echo "$gitconfigs" > ~/.gitconfig
     - echo "$rcloneconfig" > ~/.rclone.conf
-    - ./build.sh cache-pull
+    - ./main.sh copy_cache
 
-  sync_script: ./build.sh sync
-  build_script: ./build.sh build
-  upload_script: ./build.sh upload
+  sync_script: ./main.sh sync
+  build_script: ./main.sh build
+  upload_script: ./main.sh upload
 
   on_failure:
     notiferror_script:
       - tle -t "Build Failed!"
-      - tle -f "${PWD}/android/resync.txt"
-      - tle -f "${PWD}/android/build.txt"
-      - tle -f "${PWD}/android/upload.txt"
       - tle -f "${PWD}/android/out/error.log"
