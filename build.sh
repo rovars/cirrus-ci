@@ -14,8 +14,8 @@ main() {
         sync)   setup_workspace ;;
         build)  build_src ;;
         upload) upload_artifact ;;
-        cache-pull) pull_cache ;;
-        cache-push) push_cache ;;
+        cache-pull) copy_cache ;;
+        cache-push) save_cache ;;
         *)
             echo "Error: Invalid argument." >&2
             echo "Usage: $0 {sync|build|upload|cache-pull|cache-push}" >&2
@@ -47,7 +47,7 @@ pull_cache() {
     fi
 }
 
-push_cache() {
+save_cache() {
     export CCACHE_DISABLE=1
     ccache --cleanup
     ccache --zero-stats

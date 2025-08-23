@@ -70,9 +70,11 @@ build_src() {
 }
 
 upload_artifact() {
-    exec > >(tee upload.txt) 2>&1
-    cd out/target/product/RMX2185
-    curl bashupload.com -T lineage-*.zip || true
-    retry rclone copy lineage-*.zip $RCLONE_REMOTE
-    push_cache
+    exec > upload.txt 2>&1
+    local filezip
+    filezip=$(find out/target/product/*/ -maxdepth 1 -name "lineage-*.zip" | head -n 1)
+    [[ -z "$filezip" ]] && return 1
+    curl bashupload.com -T "$filezip" || true
+    retry rclone copy "$filezip" "$RCLONE_REMOTE" || true
+    save_cache
 }
