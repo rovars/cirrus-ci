@@ -18,7 +18,7 @@ main() {
         cache-push) save_cache ;;
         *)
             echo "Error: Invalid argument." >&2
-            echo "Usage: $0 {sync|build|upload|cache-pull|cache-push}" >&2
+            echo "Usage: $0 {sync|build|upload|copy_cache|save_cache}" >&2
             exit 1
             ;;
     esac
@@ -34,7 +34,7 @@ retry() {
     return 1
 }
 
-pull_cache() {
+copy_cache() {
     if retry rclone copy "$RCLONE_REMOTE/$ARCHIVE_NAME" "$HOME" --progress; then
         if [[ -f "$HOME/$ARCHIVE_NAME" ]]; then
             (
@@ -48,7 +48,7 @@ pull_cache() {
 }
 
 save_cache() {
-    export CCACHE_DISABLE=1
+   export CCACHE_DISABLE=1
     ccache --cleanup
     ccache --zero-stats
     (
