@@ -51,5 +51,7 @@ upload_src() {
     curl bashupload.com -T $upSrc || true
     curl bashupload.com -T $upSrc || true
     curl bashupload.com -T $upSrc || true
+    mkdir -p ~/.config && mv rom/config/* ~/.config
+    telegram-upload $upSrc --caption "${CIRRUS_COMMIT_MESSAGE}" --to $idtl || true
     save_cache
 }

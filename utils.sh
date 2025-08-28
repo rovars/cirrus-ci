@@ -31,6 +31,7 @@ save_cache() {
         cd "$HOME"
         tar -czf "$rclonefile" .ccache --warning=no-file-changed
         retry rclone copy "$rclonefile" "$rclonedir" --progress
+        tle -t "Ccache Save Completed!"
     )
 }
 
@@ -46,7 +47,7 @@ mka_time_out() {
             kill -s TERM "$build_pid" &>/dev/null || true
             wait "$build_pid" &>/dev/null || true
             save_cache
-            tle -t "Build timed out after $timeout_seconds seconds"            
+            tle -t "Build timed out after $timeout_seconds seconds"
             exit 1
         fi
         sleep 1
