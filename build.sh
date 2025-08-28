@@ -1,65 +1,57 @@
 #!/usr/bin/env bash
 set -e
 
-CI_DIR="$PWD"
-WORKDIR="$CI_DIR/android"
-CACHE_DIR="$HOME/.ccache"
+setup_src() {
+    repo init --depth=1 -u https://github.com/querror/android.git -b lineage-17.1
 
-source "$CI_DIR/setup.sh"
+    git clone -q https://github.com/llcpp/rom llcpp
+    git clone https://github.com/AXP-OS/build.git Axp
 
-main() {
-    mkdir -p "$CACHE_DIR" "$WORKDIR"
-    cd "$WORKDIR"
-    case "${1:-}" in
-        sync)   setup_workspace ;;
-        build)  build_src ;;
-        upload) upload_artifact ;;
-        cache-pull) pull_cache ;;
-        cache-push) push_cache ;;
-        *)
-            echo "Error: Invalid argument." >&2
-            echo "Usage: $0 {sync|build|upload|cache-pull|cache-push}" >&2
-            exit 1
-            ;;
-    esac
-}
+    mkdir -p .repo/local_manifests/
+    mv llcpp/q/losq.xml .repo/local_manifests/roomservice.xml
 
-retry() {
-    local -r max_retries=5
-    local -r delay=10
-    for ((i=1; i<=max_retries; i++)); do
-        "$@" && return 0
-        (( i < max_retries )) && sleep "$delay"
-    done
-    return 1
-}
+    repo sync -j"$(nproc --all)" -c --force-sync --no-clone-bundle --no-tags --prune
 
-pull_cache() {
-    [[ "$CCACHE_ROM" != "1" ]] && return 0
-    if retry rclone copy "$RCLONE_REMOTE/$ARCHIVE_NAME" "$HOME" --progress; then
-        if [[ -f "$HOME/$ARCHIVE_NAME" ]]; then
-            (
-                cd "$HOME"
-                rm -rf .ccache
-                tar -xzf "$ARCHIVE_NAME"
-                rm -f "$ARCHIVE_NAME"
-            )
-        fi
-    fi
-}
+    rm -rf frameworks/base/packages/OsuLogin
+    rm -rf frameworks/base/packages/PrintRecommendationService
 
-push_cache() {
-    [[ "$CCACHE_ROM" != "1" || ! -d "$CACHE_DIR" ]] && return 0
-    export CCACHE_DISABLE=1
-    ccache --cleanup
-    ccache --zero-stats
-    (
-        cd "$HOME"
-        tar -czf "$ARCHIVE_NAME" .ccache --warning=no-file-changed
-        retry rclone copy "$ARCHIVE_NAME" "$RCLONE_REMOTE" --progress
-        rm -f "$ARCHIVE_NAME"
+    declare -A PATCHES=(
+        ["art"]="android_art/0001-constify_JNINativeMethod.patch"
+        ["external/conscrypt"]="android_external_conscrypt/0001-constify_JNINativeMethod.patch"
+        ["frameworks/base"]="android_frameworks_base/0018-constify_JNINativeMethod.patch"
+        ["frameworks/opt/net/wifi"]="android_frameworks_opt_net_wifi/0001-constify_JNINativeMethod.patch"
+        ["libcore"]="android_libcore/0004-constify_JNINativeMethod.patch"
+        ["packages/apps/Nfc"]="android_packages_apps_Nfc/0001-constify_JNINativeMethod.patch"
+        ["packages/apps/Bluetooth"]="android_packages_apps_Bluetooth/0001-constify_JNINativeMethod.patch"
+        ["prebuilts/abi-dumps/vndk"]="android_prebuilts_abi-dumps_vndk/0001-protobuf-avi.patch"
     )
-    unset CCACHE_DISABLE
+
+    for target_dir in "${!PATCHES[@]}"; do
+        patch_file="${PATCHES[$target_dir]}"
+        cd "$target_dir" || exit
+        git am "$WORKDIR/Axp/Patches/LineageOS-17.1/$patch_file"
+        cd "$WORKDIR"
+    done
 }
 
-main "$@"
+build_src() {
+    source build/envsetup.sh
+    export USE_CCACHE=1
+    export CCACHE_EXEC="$(command -v ccache)"
+    export CCACHE_DIR="$CACHE_DIR"
+    ccache -M 50G -F 0
+    ccache -o compression=true
+    lunch lineage_RMX2185-user
+    mka bacon -j"$(nproc --all)" &
+    mka_time_out
+}
+
+upload_src() {    
+    upSrc="out/target/product/*/lineage-*.zip"
+    curl bashupload.com -T $upSrc || true
+    curl bashupload.com -T $upSrc || true
+    curl bashupload.com -T $upSrc || true
+    mkdir -p ~/.config && mv rom/config/* ~/.config
+    telegram-upload $upSrc --caption "${CIRRUS_COMMIT_MESSAGE}" --to $idtl || true
+    save_cache
+}
