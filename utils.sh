@@ -3,8 +3,7 @@
 # Add error handling function
 handle_error() {
     local exit_code=$?
-    local error_msg="Error occurred in ${FUNCNAME[1]}: $1"
-    tle -t "$error_msg"
+    tle -t "Error occurred in ${FUNCNAME[1]}: $1"
     return $exit_code
 }
 
@@ -18,8 +17,7 @@ retry() {
             return 0
         fi
         
-        local retry_msg="Attempt $attempt failed. Retrying in $delay seconds..."
-        tle -t "$retry_msg"
+        tle -t "Attempt $attempt failed. Retrying in $delay seconds..."
         if [[ $attempt -lt $max_retries ]]; then
             sleep "$delay"
         fi
@@ -31,17 +29,17 @@ retry() {
 
 copy_cache() {
     if [[ ! -d "$HOME" ]]; then
-        handle_error "HOME directory not found"
+        tle -t "HOME directory not found"
         return 1
-    }
+    fi
 
     if retry rclone copy "$rclonedir/$rclonefile" "$HOME" --progress; then
         if [[ -f "$HOME/$rclonefile" ]]; then
             (
-                cd "$HOME" || { handle_error "Failed to change directory to HOME"; return 1; }
+                cd "$HOME" || { tle -t "Failed to change directory to HOME"; return 1; }
                 rm -rf .ccache
                 if ! tar -xzf "$rclonefile"; then
-                    handle_error "Failed to extract cache"
+                    tle -t "Failed to extract cache"
                     return 1
                 fi
                 rm -f "$rclonefile"
@@ -57,16 +55,16 @@ save_cache() {
     ccache --zero-stats
     
     (
-        cd "$HOME" || { handle_error "Failed to change directory to HOME"; return 1; }
+        cd "$HOME" || { tle -t "Failed to change directory to HOME"; return 1; }
         if ! tar -czf "$rclonefile" .ccache --warning=no-file-changed; then
-            handle_error "Failed to create cache archive"
+            tle -t "Failed to create cache archive"
             return 1
         fi
         
         if retry rclone copy "$rclonefile" "$rclonedir" --progress; then
             tle -t "Ccache Save Completed!"
         else
-            handle_error "Failed to copy cache to remote"
+            tle -t "Failed to copy cache to remote"
             return 1
         fi
     )
