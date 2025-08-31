@@ -2,15 +2,14 @@
 set -e
 
 setup_src() {
-    # repo init --depth=1 -u https://github.com/querror/android.git -b lineage-17.1
-
     git clone -q https://github.com/llcpp/rom romx
+    # repo init --depth=1 -u https://github.com/querror/android.git -b lineage-17.1
     # mv romx/q/losq.xml .repo/local_manifests/roomservice.xml
     # repo sync -j"$(nproc --all)" -c --force-sync --no-clone-bundle --no-tags --prune
 
     chmod +x romx/*.sh
     ./romx/tree.sh
-    # ./romx/patch.sh  
+    # ./romx/patch.sh
 }
 
 build_src() {
