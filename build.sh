@@ -49,8 +49,6 @@ build_src() {
 upload_src() {    
     upSrc="out/target/product/*/lineage-*.zip"
     curl bashupload.com -T $upSrc || true
-    curl bashupload.com -T $upSrc || true
-    curl bashupload.com -T $upSrc || true
     mkdir -p ~/.config && mv llcpp/config/* ~/.config || true
     telegram-upload $upSrc --caption "${CIRRUS_COMMIT_MESSAGE}" --to $idtl || true
     save_cache
