@@ -63,10 +63,13 @@ make_time_out() {
     local pid=$!
     
     while kill -0 $pid 2>/dev/null; do
-        if ! sleep 10m; then
+        if ! sleep 5m; then
             break
-        fi    
-        kill %1 2>/dev/null
+        fi
+        kill -TERM -$pid 2>/dev/null
+        sleep 3
+        kill -KILL -$pid 2>/dev/null
+        sleep 2
         save_cache
         return
     done    
