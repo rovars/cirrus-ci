@@ -17,10 +17,11 @@ copy_cache() {
                 cd "$HOME"
                 rm -rf .ccache
                 tar -xzf "$rclonefile"
-                rm -f "$rclonefile"      
-            )
+                rm -f "$rclonefile"
+            )   
         fi
     fi
+    mkdir -p $HOME/.ccache
 }
 
 save_cache() {
@@ -45,7 +46,7 @@ envr_cache() {
 
 make_time_out() {
 
-   local -r timeout_seconds=2400
+   local -r timeout_seconds=1400
    local build_pid=$!
    SECONDS=0
 
