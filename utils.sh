@@ -38,7 +38,7 @@ save_cache() {
 
 mka_time_out() {
 
-   local -r timeout_seconds=5400
+   local -r timeout_seconds=2400
    local build_pid=$!
    SECONDS=0
 

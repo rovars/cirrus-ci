@@ -2,10 +2,11 @@
 set -e
 
 setup_src() {
-    repo init --depth=1 -u https://github.com/querror/android.git -b lineage-17.1
+    repo init --depth=1 -u https://github.com/LineageOS/android.git -b lineage-18.1 --git-lfs
+    # repo init --depth=1 -u https://github.com/querror/android.git -b lineage-17.1
 
     git clone -q https://github.com/llcpp/rom llcpp
-    git clone https://github.com/AXP-OS/build.git Axp
+    git clone -q https://github.com/AXP-OS/build Axp
 
     mkdir -p .repo/local_manifests/
     mv llcpp/q/losq.xml .repo/local_manifests/roomservice.xml
@@ -29,7 +30,7 @@ setup_src() {
     for target_dir in "${!PATCHES[@]}"; do
         patch_file="${PATCHES[$target_dir]}"
         cd "$target_dir" || exit
-        git am "$WORKDIR/Axp/Patches/LineageOS-17.1/$patch_file"
+        # git am "$WORKDIR/Axp/Patches/LineageOS-17.1/$patch_file"
         cd "$WORKDIR"
     done
 }
@@ -41,7 +42,7 @@ build_src() {
     export CCACHE_DIR="$CACHE_DIR"
     ccache -M 50G -F 0
     ccache -o compression=true
-    lunch lineage_RMX2185-user
+    lunch lineage_RMX2185-userdebug
     mka bacon -j"$(nproc --all)" &
     mka_time_out
 }
