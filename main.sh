@@ -3,13 +3,12 @@ set -e
 
 CI_DIR="$PWD"
 WORKDIR="$CI_DIR/android"
-CACHE_DIR="$HOME/.ccache"
 
 source "$CI_DIR/utils.sh"
 source "$CI_DIR/build.sh"
 
 main() {
-    mkdir -p "$CACHE_DIR" "$WORKDIR"
+    mkdir -p "$WORKDIR"
     cd "$WORKDIR"
     case "${1:-}" in
         sync)   setup_src ;;
