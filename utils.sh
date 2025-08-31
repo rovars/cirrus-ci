@@ -35,6 +35,13 @@ save_cache() {
     )
 }
 
+cache_envr() {
+  export USE_CCACHE=1
+  export CCACHE_EXEC="$(command -v ccache)"
+  export CCACHE_DIR="$CACHE_DIR"
+  ccache -M 50G -F 0
+  ccache -o compression=true
+}
 
 mka_time_out() {
 
