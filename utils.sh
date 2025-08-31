@@ -9,7 +9,6 @@ retry() {
         if "$@"; then
             return 0
         fi
-        tle -t "Attempt $attempt failed. Retrying in $delay seconds..."
         if [[ $attempt -lt $max_retries ]]; then
             sleep "$delay"
         fi
@@ -20,7 +19,7 @@ retry() {
 
 copy_cache() {
     mkdir -p ~/cache
-    if rclone copy "$rclonedir/$rclonefile" ~/ --progress; then
+    if retry rclone copy "$rclonedir/$rclonefile" ~/ --progress; then
         tar -xzf ~/"$rclonefile" -C ~/ || { tle -t "Failed to extract cache"; return 1; }
         rm -f ~/"$rclonefile"
         tle -t "Cache copied and extracted successfully"
@@ -51,51 +50,30 @@ save_cache() {
 }
 
 setup_ccache() {
-    tle -t "Setting up ccache..."
     export USE_CCACHE=1
     export CCACHE_EXEC="$(command -v ccache)"
     export CCACHE_DIR=~/cache
     ccache -M 50G -F 0
     ccache -o compression=true
-    tle -t "Ccache setup completed"
 }
 
 make_time_out() {
-    local -r timeout_seconds=1400
     local build_cmd="$*"
-    local build_pid
-    local build_status
-
-    tle -t "Starting build with timeout: $timeout_seconds seconds"
-
     eval "$build_cmd" &
-    build_pid=$!
-
-    SECONDS=0
-    while kill -0 "$build_pid" 2>/dev/null; do
-        if (( SECONDS >= timeout_seconds )); then
-            tle -t "Build is taking too long, initiating timeout..."
-            kill -TERM "$build_pid" 2>/dev/null || true
-            sleep 5
-            if kill -0 "$build_pid" 2>/dev/null; then
-                kill -KILL "$build_pid" 2>/dev/null || true
-            fi
-            save_cache || tle -t "Failed to save cache during timeout"
-            tle -t "Build timed out after $timeout_seconds seconds"
-            return 1
-        fi
-        sleep 1
-    done
-
-    wait "$build_pid"
-    build_status=$?
-
-    if [[ $build_status -eq 0 ]]; then
-        tle -t "Build completed successfully"
-    else
-        tle -t "Build failed with status $build_status"
+    local pid=$!
+    
+    while kill -0 $pid 2>/dev/null; do
+        if ! sleep 10m; then
+            break
+        fi    
+        kill %1 2>/dev/null
+        save_cache
+        return
+    done    
+    
+    wait $pid
+    local exit_code=$?
+    if [ $exit_code -ne 0 ]; then       
+        return $exit_code
     fi
-
-    save_cache || tle -t "Failed to save cache after build"
-    return $build_status
 }
