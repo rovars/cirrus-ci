@@ -12,7 +12,7 @@ setup_src() {
 
 build_src() {
     source build/envsetup.sh
-    envr_cache
+    setup_ccache
     lunch dot_RMX2185-userdebug
     make_time_out "make bacon -j16"
 }
