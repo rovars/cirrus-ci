@@ -35,7 +35,7 @@ save_cache() {
     )
 }
 
-cache_envr() {
+envr_cache() {
   export USE_CCACHE=1
   export CCACHE_EXEC="$(command -v ccache)"
   export CCACHE_DIR="$CACHE_DIR"
