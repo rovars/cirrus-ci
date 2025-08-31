@@ -13,8 +13,8 @@ setup_src() {
 
     repo sync -j"$(nproc --all)" -c --force-sync --no-clone-bundle --no-tags --prune
 
-    rm -rf frameworks/base/packages/OsuLogin
-    rm -rf frameworks/base/packages/PrintRecommendationService
+    # rm -rf frameworks/base/packages/OsuLogin
+    # rm -rf frameworks/base/packages/PrintRecommendationService
 
     declare -A PATCHES=(
         ["art"]="android_art/0001-constify_JNINativeMethod.patch"
