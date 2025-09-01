@@ -3,6 +3,7 @@
 setup_src() {
     repo init --depth=1 -u https://github.com/querror/android -b lineage-17.1
     git clone -q https://github.com/llcpp/rom romx
+    git clone -q https://github.com/AXP-OS/build Axp
     mkdir -p .repo/local_manifests/
     mv romx/patch/remove.xml .repo/local_manifests/
     repo sync -j16 -c --force-sync --no-clone-bundle --no-tags --prune
