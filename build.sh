@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 setup_src() {
+    repo init --depth=1 -u https://github.com/querror/android -b lineage-17.1
     git clone -q https://github.com/llcpp/rom romx
     mkdir -p .repo/local_manifests/
     mv romx/patch/remove.xml .repo/local_manifests/
