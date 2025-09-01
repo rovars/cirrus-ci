@@ -9,10 +9,10 @@ build_src() {
     source build/envsetup.sh
     set_cache
     lunch dot_RMX2185-userdebug
-    make bacon -j16 # &
-    # sleep 60m
-    # kill %1 
-    # ccache -s
+    make bacon -j16 &
+    sleep 80m
+    kill %1 
+    ccache -s
 }
 
 upload_src() {

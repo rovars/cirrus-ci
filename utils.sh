@@ -54,7 +54,7 @@ save_cache() {
 set_cache() {
     export USE_CCACHE=1
     export CCACHE_EXEC="$(command -v ccache)"
-    export CCACHE_DIR=~/cache
+    export CCACHE_DIR=~/.ccache
     ccache -M 50G -F 0
     ccache -o compression=true
 }
