@@ -17,13 +17,14 @@ retry_rc() {
 }
 
 copy_cache() {
-    mkdir -p ~/cache
-    if retry_rc rclone copy "$rclonedir/$rclonefile" ~/ --progress; then
-        tar -xzf ~/"$rclonefile" -C ~/ || { tle -t "Failed to extract cache"; return 1; }
-        rm -f ~/"$rclonefile"
+    mkdir -p ~/.ccache
+    cd ~/ && \
+    if retry_rc rclone copy "$rclonedir/$rclonefile" . --progress; then
+        tar -xzf "$rclonefile" -C .
+        rm -f "$rclonefile"
         tle -t "Cache copied and extracted successfully"
     else
-        rm -f ~/"$rclonefile"
+        rm -f "$rclonefile"
         tle -t "Cache not found on remote, proceeding without cache"
     fi
 }
@@ -33,12 +34,15 @@ save_cache() {
     export CCACHE_DISABLE=1
     ccache --cleanup
     ccache --zero-stats
-    if ! tar -czf ~/"$rclonefile" -C ~/ cache --warning=no-file-changed; then 
+    
+    cd ~/ && \
+    if ! tar -czf "$rclonefile" -C . .ccache --warning=no-file-changed; then
         tle -t "Failed to create cache archive"
         return 1
     fi
-    if retry_rc rclone copy ~/"$rclonefile" "$rclonedir" --progress; then
-        rm -f ~/"$rclonefile"
+
+    if retry_rc rclone copy "$rclonefile" "$rclonedir" --progress; then
+        rm -f "$rclonefile"
         tle -t "Ccache Save Completed!"
         return 0
     else

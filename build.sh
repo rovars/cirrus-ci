@@ -5,21 +5,13 @@ setup_src() {
     ./romx/resync.sh   
 }
 
-xbuild_src() {
-    source build/envsetup.sh
-    set_cache
-    lunch dot_RMX2185-userdebug
-    make bacon -j16
-}
-
 build_src() {
     source build/envsetup.sh
     set_cache
     lunch dot_RMX2185-userdebug
     make bacon -j16 &
-    sleep 5m
-    kill %1 
-    ccache -s
+    # sleep 5m && kill %1 
+    # ccache -s
 }
 
 upload_src() {
