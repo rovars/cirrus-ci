@@ -6,17 +6,14 @@ setup_src() {
     mkdir -p .repo/local_manifests/
     mv romx/patch/remove.xml .repo/local_manifests/
     repo sync -j16 -c --force-sync --no-clone-bundle --no-tags --prune
-    # ./romx/resync.sh   
+    ./romx/patches.sh   
 }
 
 build_src() {
     source build/envsetup.sh
     set_cache
     lunch lineage_RMX2185-user
-    make bacon -j16 &
-    sleep 90m
-    kill %1 
-    ccache -s
+    mka bacon # & sleep 90m; kill %1; ccache -s
 }
 
 upload_src() {
