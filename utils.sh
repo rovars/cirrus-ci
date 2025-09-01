@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-retry() {
+
+retry_rc() {
     local -r max_retries=5
     local -r delay=10
     local attempt=1
@@ -14,9 +15,10 @@ retry() {
     done
     return 1
 }
+
 copy_cache() {
     mkdir -p ~/cache
-    if retry rclone copy "$rclonedir/$rclonefile" ~/ --progress; then
+    if retry_rc rclone copy "$rclonedir/$rclonefile" ~/ --progress; then
         tar -xzf ~/"$rclonefile" -C ~/ || { tle -t "Failed to extract cache"; return 1; }
         rm -f ~/"$rclonefile"
         tle -t "Cache copied and extracted successfully"
@@ -25,17 +27,17 @@ copy_cache() {
         tle -t "Cache not found on remote, proceeding without cache"
     fi
 }
+
 save_cache() {
     tle -t "Saving cache to remote..."
-    export USE_CCACHE=0
-    unset CCACHE_EXEC
+    export CCACHE_DISABLE=1
     ccache --cleanup
     ccache --zero-stats
     if ! tar -czf ~/"$rclonefile" -C ~/ cache --warning=no-file-changed; then 
         tle -t "Failed to create cache archive"
         return 1
     fi
-    if retry rclone copy ~/"$rclonefile" "$rclonedir" --progress; then
+    if retry_rc rclone copy ~/"$rclonefile" "$rclonedir" --progress; then
         rm -f ~/"$rclonefile"
         tle -t "Ccache Save Completed!"
         return 0
@@ -44,49 +46,12 @@ save_cache() {
         return 1
     fi
 }
-setup_ccache() {
+
+set_cache() {
     export USE_CCACHE=1
     export CCACHE_EXEC="$(command -v ccache)"
     export CCACHE_DIR=~/cache
     ccache -M 50G -F 0
     ccache -o compression=true
 }
-make_time_out() {
-    local cmd="$1"
-    local last_percentage=0
-    
-    $cmd | tee build.log &
-    local mka_pid=$!
-    local tee_pid=$!
-    
-    while kill -0 $mka_pid 2>/dev/null; do
-        if [ -f build.log ] && [ -s build.log ]; then
-            local log_lines=$(tail -n 5 build.log)
-            while IFS= read -r line; do
-                if [[ $line =~ \[([0-9]+)% ]]; then
-                    local current_percentage=${BASH_REMATCH[1]}
-                    if [ "$current_percentage" -gt "$last_percentage" ]; then
-                        last_percentage=$current_percentage
-                    fi
-                fi
-            done <<< "$log_lines"
-            
-            if [ "$last_percentage" -ge 10 ]; then
-                tle -t "Build reached $last_percentage%, stopping process"
-                kill $mka_pid 2>/dev/null
-                kill $tee_pid 2>/dev/null
-                wait $mka_pid 2>/dev/null
-                wait $tee_pid 2>/dev/null
-                save_cache
-                return 1
-            fi
-        fi
-        sleep 2
-    done
-    
-    wait $mka_pid
-    local exit_code=$?
-    wait $tee_pid
-    tle -t "Build failed with exit code $exit_code, not saving cache"
-    return $exit_code
-}
+

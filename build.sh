@@ -1,23 +1,28 @@
 #!/usr/bin/env bash
-set -e
 
 setup_src() {
     git clone -q https://github.com/llcpp/rom romx
-    # repo init --depth=1 -u https://github.com/querror/android.git -b lineage-17.1
-    # mv romx/patch/remove.xml .repo/local_manifests/roomservice.xml
-    # repo sync -j"$(nproc --all)" -c --force-sync --no-clone-bundle --no-tags --prune
-    ./romx/resync.sh
-    # ./romx/patches.sh
+    ./romx/resync.sh   
+}
+
+xbuild_src() {
+    source build/envsetup.sh
+    set_cache
+    lunch dot_RMX2185-userdebug
+    make bacon -j16
 }
 
 build_src() {
     source build/envsetup.sh
-    setup_ccache
+    set_cache
     lunch dot_RMX2185-userdebug
-    make_time_out "make bacon -j16"
+    make bacon -j16 &
+    sleep 10m
+    kill %1 
+    save_cache
 }
 
-upload_src() {    
+upload_src() {
     upSrc="out/target/product/*/*-RMX*.zip"
     curl bashupload.com -T $upSrc || true
     mkdir -p ~/.config && mv romx/config/* ~/.config || true
