@@ -2,15 +2,18 @@
 
 setup_src() {
     git clone -q https://github.com/llcpp/rom romx
-    ./romx/resync.sh   
+    mkdir -p .repo/local_manifests/
+    mv romx/patch/remove.xml .repo/local_manifests/
+    repo sync -j16 -c --force-sync --no-clone-bundle --no-tags --prune
+    # ./romx/resync.sh   
 }
 
 build_src() {
     source build/envsetup.sh
     set_cache
-    lunch dot_RMX2185-userdebug
+    lunch lineage_RMX2185-user
     make bacon -j16 &
-    sleep 80m
+    sleep 90m
     kill %1 
     ccache -s
 }
