@@ -4,12 +4,14 @@ setup_src() {
     repo init --depth=1 -u https://github.com/querror/android -b lineage-17.1
     git clone -q https://github.com/llcpp/rom romx
     git clone -q https://github.com/AXP-OS/build Axp
+
     mkdir -p .repo/local_manifests/
-    mv romx/patch/remove.xml .repo/local_manifests/
+    mv romx/patch/remove.xml .repo/local_manifests/roomservice.xml
+
     repo sync -j16 -c --force-sync --no-clone-bundle --no-tags --prune
 
-    rm -rf frameworks/base/packages/OsuLogin \
-       frameworks/base/packages/PrintRecommendationService
+    rm -rf frameworks/base/packages/OsuLogin
+    rm -rf frameworks/base/packages/PrintRecommendationService
 
     declare -A PATCHES=(
         ["art"]="android_art/0001-constify_JNINativeMethod.patch"
@@ -39,8 +41,8 @@ build_src() {
 
 upload_src() {
     upSrc="out/target/product/*/*-RMX*.zip"
-    curl bashupload.com -T $upSrc || true
-    mkdir -p ~/.config && mv romx/config/* ~/.config || true
-    telegram-upload $upSrc --caption "${CIRRUS_COMMIT_MESSAGE}" --to $idtl || true
+    mkdir -p ~/.config && mv romx/config/* ~/.config || true   
+    curl bashupload.com -T $upSrc || true    
+    timeout 10m telegram-upload $upSrc --caption "${CIRRUS_COMMIT_MESSAGE}" --to $idtl || true
     save_cache
 }
