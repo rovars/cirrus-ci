@@ -6,7 +6,7 @@ setup_src() {
     git clone -q https://github.com/AXP-OS/build Axp
 
     mkdir -p .repo/local_manifests/
-    mv romx/patch/remove.xml .repo/local_manifests/roomservice.xml
+    mv romx/A10/remove.xml .repo/local_manifests/roomservice.xml
 
     repo sync -j16 -c --force-sync --no-clone-bundle --no-tags --prune
 
