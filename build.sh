@@ -34,7 +34,7 @@ setup_src() {
 
 build_src() {
     source build/envsetup.sh
-    set_cache
+    set_ccache_vars
     lunch lineage_RMX2185-user
     mka bacon # & sleep 90m; kill %1; ccache -s
 }
