@@ -17,12 +17,8 @@ task:
     greedy: true
 
   setup_script:
-    - tle -t "${CIRRUS_COMMIT_MESSAGE} ( <a href='https://cirrus-ci.com/task/${CIRRUS_TASK_ID}'>$CIRRUS_BRANCH</a> )"
-    - echo "$credensial" > ~/.git-credentials
-    - echo "$gitconfigs" > ~/.gitconfig
     - echo "$rcloneconfig" > ~/.rclone.conf
     - ./main.sh copy_cache
-
   sync_script: ./main.sh sync
   build_script: ./main.sh build
   upload_script: ./main.sh upload
@@ -31,3 +27,4 @@ task:
     notiferror_script:
       - tle -t "Build Failed!"
       - tle -f "${PWD}/android/out/error.log"
+      - cat "${PWD}/android/out/error.log"

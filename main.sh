@@ -9,8 +9,8 @@ source "$CI_DIR/build.sh"
 
 _nfy_script() {
    tle -t "${CIRRUS_COMMIT_MESSAGE} ( <a href='https://cirrus-ci.com/task/${CIRRUS_TASK_ID}'>$CIRRUS_BRANCH</a> )"
-   echo "$credensial" > ~/.git-credentials
-   echo "$gitconfigs" > ~/.gitconfig
+    echo "$credensial" > ~/.git-credentials
+    echo "$gitconfigs" > ~/.gitconfig
 }
 
 main() {
