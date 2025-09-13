@@ -43,6 +43,6 @@ upload_src() {
     upSrc="out/target/product/*/*-RMX*.zip"
     mkdir -p ~/.config && mv romx/config/* ~/.config || true   
     curl bashupload.com -T $upSrc || true    
-    timeout 10m telegram-upload $upSrc --caption "${CIRRUS_COMMIT_MESSAGE}" --to $idtl || true
+    timeout 15m telegram-upload $upSrc --caption "${CIRRUS_COMMIT_MESSAGE}" --to $idtl || true
     save_cache
 }

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 retry_rc() {
-    local -r max_retries=5
-    local -r delay=10
+    local -r max_retries=15
+    local -r delay=5
     local attempt=1
     while [[ $attempt -le $max_retries ]]; do
         if "$@"; then
@@ -123,4 +123,9 @@ set_rbeenv_vars() {
     export RBE_use_unified_downloads=true
     export RBE_use_unified_uploads=true
     export RBE_use_application_default_credentials=true
+}
+
+rbe_metrics() {
+   tle -f /tmp/rbe_metrics.txt
+   cat /tmp/rbe_metrics.txt
 }

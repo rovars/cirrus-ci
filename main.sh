@@ -28,6 +28,8 @@ main() {
             copy_cache;;
         save_cache) 
             save_cache;;
+        results) 
+            rbe_metrics;;
         *)
             echo "Error: Invalid argument." >&2
             echo "Usage: $0 {sync|build|upload|copy_cache|save_cache}" >&2
