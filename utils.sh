@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 retry_rc() {
-    local -r max_retries=15
-    local -r delay=5
+    local -r max_retries=10
+    local -r delay=60
     local attempt=1
     while [[ $attempt -le $max_retries ]]; do
         if "$@"; then

@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -e
 
+export KBUILD_BUILD_USER=android
+export KBUILD_BUILD_HOST=localhost
+export BUILD_USERNAME=android
+export BUILD_HOSTNAME=localhost
+
 CI_DIR="$PWD"
 WORKDIR="$CI_DIR/android"
 
