@@ -30,8 +30,6 @@ setup_src() {
         git am "$WORKDIR/Axp/Patches/LineageOS-17.1/$patch_file"
         cd "$WORKDIR"
     done
-    rm -rf build/make
-    git clone --depth=1 https://github.com/querror/android_build -b rovars-patch-1 build/make
 }
 
 build_src() {
