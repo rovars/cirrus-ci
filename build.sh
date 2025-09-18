@@ -33,9 +33,9 @@ setup_src() {
 }
 
 build_src() {
-    source build/envsetup.sh
     export PRODUCT_DISABLE_SCUDO=true
     export TARGET_VNDK_USE_CORE_VARIANT=true
+    source build/envsetup.sh
     set_ccache_vars
     lunch lineage_RMX2185-user
     mka bacon # & sleep 90m; kill %1; ccache -s
