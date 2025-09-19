@@ -27,6 +27,7 @@ task:
   build_script:
     - cd /tmp/kernel
     - export PATH="/tmp/llvm-18.1.8-x86_64/bin:/tmp/gcc64/bin:/tmp/gcc32/bin:$PATH"
+    - sed -i 's/^CONFIG_COMPAT_VDSO=y/CONFIG_COMPAT_VDSO=n/' arch/arm64/configs/RMX2185_defconfig
     - export ARCH=arm64 SUBARCH=arm64 HEADER_ARCH=arm64
     - export KBUILD_BUILD_USER=nobody KBUILD_BUILD_HOST=android-build
     - export TARGET_BUILD_VARIANT=user
