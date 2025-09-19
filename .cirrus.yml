@@ -21,12 +21,12 @@ task:
     - git clone --depth=1 -b rducks https://github.com/rducks/rom /tmp/AnyKernel3
     - git clone --depth=1 -b lineage-17.1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9 /tmp/gcc64
     - git clone --depth=1 -b lineage-17.1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9 /tmp/gcc32
-    - wget -O xx https://mirrors.edge.kernel.org/pub/tools/llvm/files/llvm-11.1.0-x86_64.tar.gz
+    - wget -O xx https://mirrors.edge.kernel.org/pub/tools/llvm/files/llvm-18.1.8-x86_64.tar.gz
     - tar -xf xx -C /tmp/
 
   build_script:
     - cd /tmp/kernel
-    - export PATH="/tmp/llvm-11.1.0-x86_64/bin:/tmp/gcc64/bin:/tmp/gcc32/bin:$PATH"
+    - export PATH="/tmp/llvm-18.1.8-x86_64/bin:/tmp/gcc64/bin:/tmp/gcc32/bin:$PATH"
     - export ARCH=arm64 SUBARCH=arm64 HEADER_ARCH=arm64
     - export KBUILD_BUILD_USER=nobody KBUILD_BUILD_HOST=android-build
     - export TARGET_BUILD_VARIANT=user
