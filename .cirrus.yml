@@ -19,7 +19,6 @@ task:
     - echo "$gitconfigs" > ~/.gitconfig
     - git clone --depth=1 -b ksux https://github.com/rducks/kernel_realme_RMX2185 /tmp/kernel
     - git clone --depth=1 -b rducks https://github.com/rducks/rom /tmp/AnyKernel3
-    - git clone --depth=1 https://github.com/picasso09/clang-9.0.3-r353983c1 /tmp/clang
     - git clone --depth=1 -b lineage-17.1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9 /tmp/gcc64
     - git clone --depth=1 -b lineage-17.1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9 /tmp/gcc32
     - wget -O xx https://mirrors.edge.kernel.org/pub/tools/llvm/files/llvm-11.1.0-x86_64.tar.gz
