@@ -21,23 +21,16 @@ task:
     - git clone --depth=1 -b rducks https://github.com/rducks/rom /tmp/AnyKernel3
     - git clone --depth=1 -b lineage-17.1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9 /tmp/gcc64
     - git clone --depth=1 -b lineage-17.1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9 /tmp/gcc32
-    - wget -O xa https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r522817.tar.gz
-    - mkdir -p /tmp/aospclang
-    - tar -xf xa -C /tmp/aospclang
+    - wget -O xx https://mirrors.edge.kernel.org/pub/tools/llvm/files/llvm-11.1.0-x86_64.tar.gz
+    - tar -xf xx -C /tmp/
 
   build_script:
     - cd /tmp/kernel
-    - export PATH="/tmp/aospclang/bin:$PATH"
-    - sed -i '/^ifeq ($(cc-name),clang)/, /^else/ s/-no-integrated-as //' arch/arm64/kernel/vdso32/Makefile && sed -i '/CLANG_FLAGS/ s/-no-integrated-as //' Makefile
-    - sed -i 's/^CONFIG_COMPAT_VDSO=y/CONFIG_COMPAT_VDSO=n/' arch/arm64/configs/RMX2185_defconfig
-    - sed -i -e '431s/ui32RGXDevIdx/g_psDevNode/' -e '438s/ui32RGXDevIdx/g_psDevNode/' -e '452s/ui32RGXDevIdx/g_psDevNode/' -e '464s/ui32RGXDevIdx/g_psDevNode/' drivers/misc/mediatek/gpu/gpu_rgx/m1.11ED5425693/services/system/rgx_mtk/mt6765/mtk_mfgsys.c
-    - sed -i '1031s/sprintf/snprintf/' drivers/input/touchscreen/mediatek/NT36525B/nt36xxx_ext_proc.c
-    - sed -i '/#include "rgx_mtk.h"/a extern PVRSRV_DEVICE_NODE *g_psDevNode;' drivers/misc/mediatek/gpu/gpu_rgx/m1.11ED5425693/services/system/rgx_mtk/mt6765/mtk_mfgsys.c
+    - export PATH="/tmp/llvm-11.1.0-x86_64/bin:/tmp/gcc64/bin:/tmp/gcc32/bin:$PATH"
     - export ARCH=arm64 SUBARCH=arm64 HEADER_ARCH=arm64
     - export KBUILD_BUILD_USER=nobody KBUILD_BUILD_HOST=android-build
     - make O=out ARCH=arm64 RMX2185_defconfig
-    - make O=out CC="clang" -j16 O=out ARCH=arm64 CC=clang AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip CLANG_TRIPLE="aarch64-linux-gnu-" CROSS_COMPILE="aarch64-linux-gnu-" CROSS_COMPILE_ARM32="arm-linux-gnueabi-" 2>&1 | tee build.txt
-    - echo "-" # make O=out CC="clang" -j16 CLANG_TRIPLE="aarch64-linux-gnu-" CROSS_COMPILE="aarch64-linux-android-" CROSS_COMPILE_ARM32="arm-linux-androideabi-" 2>&1 | tee build.txt
+    - make O=out CC="clang" -j16 CLANG_TRIPLE="aarch64-linux-gnu-" CROSS_COMPILE="aarch64-linux-android-" CROSS_COMPILE_ARM32="arm-linux-androideabi-" 2>&1 | tee build.txt
 
   package_script:
     - cp /tmp/kernel/out/arch/arm64/boot/Image.gz-dtb /tmp/AnyKernel3/
