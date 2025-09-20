@@ -24,6 +24,7 @@ task:
     - wget -O xx https://mirrors.edge.kernel.org/pub/tools/llvm/files/llvm-21.1.1-x86_64.tar.gz
     - tar -xf xx -C /tmp/
     - wget -O xa https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r522817.tar.gz
+    - mkdir -p /tmp/aospclang
     - tar -xf xa -C /tmp/aospclang
 
   build_script:
