@@ -26,9 +26,7 @@ task:
 
   build_script:
     - cd /tmp/kernel
-    - export PATH="/tmp/llvm-21.1.1-x86_64/bin"
-    - echo "-" # sed -i 's/^CONFIG_COMPAT_VDSO=y/CONFIG_COMPAT_VDSO=n/' arch/arm64/configs/RMX2185_defconfig
-    - sed -i '/^ifeq ($(cc-name),clang)/, /^else/ s/-no-integrated-as //' arch/arm64/kernel/vdso32/Makefile && sed -i '/CLANG_FLAGS/ s/-no-integrated-as //' Makefile
+    - export PATH="/tmp/llvm-21.1.1-x86_64/bin:$PATH"
     - export ARCH=arm64 SUBARCH=arm64 HEADER_ARCH=arm64
     - export KBUILD_BUILD_USER=nobody KBUILD_BUILD_HOST=android-build
     - make O=out ARCH=arm64 RMX2185_defconfig
