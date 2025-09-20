@@ -32,6 +32,7 @@ task:
     - sed -i 's/^CONFIG_COMPAT_VDSO=y/CONFIG_COMPAT_VDSO=n/' arch/arm64/configs/RMX2185_defconfig
     - sed -i -e '431s/ui32RGXDevIdx/g_psDevNode/' -e '438s/ui32RGXDevIdx/g_psDevNode/' -e '452s/ui32RGXDevIdx/g_psDevNode/' -e '464s/ui32RGXDevIdx/g_psDevNode/' drivers/misc/mediatek/gpu/gpu_rgx/m1.11ED5425693/services/system/rgx_mtk/mt6765/mtk_mfgsys.c
     - sed -i '1031s/sprintf/snprintf/' drivers/input/touchscreen/mediatek/NT36525B/nt36xxx_ext_proc.c
+    - sed -i '/#include "rgx_mtk.h"/a extern PVRSRV_DEVICE_NODE *g_psDevNode;' drivers/misc/mediatek/gpu/gpu_rgx/m1.11ED5425693/services/system/rgx_mtk/mt6765/mtk_mfgsys.c
     - export ARCH=arm64 SUBARCH=arm64 HEADER_ARCH=arm64
     - export KBUILD_BUILD_USER=nobody KBUILD_BUILD_HOST=android-build
     - make O=out ARCH=arm64 RMX2185_defconfig
