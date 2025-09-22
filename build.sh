@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
 
 setup_src() {
-    git clone -q https://github.com/rovars/rom romx
-    chmod +x romx/ruerror.sh
-    source romx/ruerror.sh
-    exit 1
-
     repo init -u https://github.com/LineageOS/android.git -b lineage-18.1 --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
     git clone -q https://github.com/rovars/rom romx
     mkdir -p .repo/local_manifests
