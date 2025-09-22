@@ -11,6 +11,8 @@ setup_src() {
 }
 
 build_src() {    
+    export PRODUCT_DISABLE_SCUDO=true
+    export SKIP_ABI_CHECKS=true
     source build/envsetup.sh
     set_rbeenv_vars
     lunch lineage_RMX2185-user
