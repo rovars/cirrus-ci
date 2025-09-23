@@ -8,6 +8,7 @@ setup_src() {
     mv romx/A11/los/* .repo/local_manifests
     retry_rc repo sync -c -j16 --force-sync --no-clone-bundle --no-tags --prune
     source patch.sh
+    git clone -q https://github.com/rovars/rom rovarsx
 }
 
 build_src() {
