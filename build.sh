@@ -13,10 +13,11 @@ setup_src() {
 build_src() {    
     export PRODUCT_DISABLE_SCUDO=true
     export SKIP_ABI_CHECKS=true
+    export OWN_KEYS_DIR=$WORKDIR/rovarsx/keys
+    export RELEASE_TYPE=UNOFFICIAL-signed
     source build/envsetup.sh
     set_rbeenv_vars
-    lunch lineage_RMX2185-user
-    mka bacon
+    brunch RMX2185 user
 }
 
 upload_src() {
