@@ -4,7 +4,7 @@ setup_src() {
     repo init -u https://github.com/LineageOS/android.git -b lineage-18.1 --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
     git clone -q https://github.com/rovars/rom romx
     mkdir -p .repo/local_manifests
-    mv romx/A11/los/* .repo/local_manifests
+    mv romx/A11/lineage/* .repo/local_manifests
     retry_rc repo sync -c -j16 --force-sync --no-clone-bundle --no-tags --prune
     mv romx/A11/patch/patch.sh .
     source patch.sh
