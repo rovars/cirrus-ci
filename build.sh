@@ -10,14 +10,25 @@ setup_src() {
     source patch.sh
 }
 
-build_src() {    
-    export PRODUCT_DISABLE_SCUDO=true
-    export SKIP_ABI_CHECKS=true
-    export OWN_KEYS_DIR=$WORKDIR/rovarsx/keys
-    export RELEASE_TYPE=UNOFFICIAL-signed
-    source build/envsetup.sh
-    set_rbeenv_vars
-    brunch RMX2185 user
+build_src() {
+  source build/envsetup.sh
+
+  export PRODUCT_DISABLE_SCUDO=true
+  export SKIP_ABI_CHECKS=true
+  export OWN_KEYS_DIR=$WORKDIR/rovarsx/keys
+  export RELEASE_TYPE=UNOFFICIAL-GmsCompat-signed
+
+  if [ ! -e $OWN_KEYS_DIR/testkey.pk8 ] ; then
+    ln -s $OWN_KEYS_DIR/releasekey.pk8 $OWN_KEYS_DIR/testkey.pk8
+    echo "Symlink testkey.pk8 created"
+  fi
+  if [ ! -e $OWN_KEYS_DIR/testkey.x509.pem ] ; then
+    ln -s $OWN_KEYS_DIR/releasekey.x509.pem $OWN_KEYS_DIR/testkey.x509.pem
+    echo "Symlink testkey.x509.pem created"
+  fi
+
+  set_rbeenv_vars
+  brunch RMX2185 user
 }
 
 upload_src() {
