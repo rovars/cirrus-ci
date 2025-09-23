@@ -7,8 +7,9 @@ setup_src() {
     mv romx/A11/los/patch.sh .
     mv romx/A11/los/* .repo/local_manifests
     retry_rc repo sync -c -j16 --force-sync --no-clone-bundle --no-tags --prune
+    source romx/create-signed-env.sh
     source patch.sh
-    git clone -q https://github.com/rovars/rom rovarsx
+    
 }
 
 build_src() {
@@ -16,7 +17,7 @@ build_src() {
 
   export PRODUCT_DISABLE_SCUDO=true
   export SKIP_ABI_CHECKS=true
-  export OWN_KEYS_DIR=$WORKDIR/rovarsx/keys
+  export OWN_KEYS_DIR=$WORKDIR/romx/keys
   export RELEASE_TYPE=UNOFFICIAL-GmsCompat-signed
 
   if [ ! -e $OWN_KEYS_DIR/testkey.pk8 ] ; then
