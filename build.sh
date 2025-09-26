@@ -3,7 +3,7 @@
 setup_src() {
     repo init --depth=1 -u https://github.com/querror/android -b lineage-17.1
     git clone -q https://github.com/rovars/rom romx
-    git clone -q https://github.com/AXP-OS/build Axp
+    git clone -q https://github.com/rovars/build r_patch
 
     mkdir -p .repo/local_manifests/
     mv romx/A10/remove.xml .repo/local_manifests/roomservice.xml
@@ -24,27 +24,35 @@ setup_src() {
         ["prebuilts/abi-dumps/vndk"]="android_prebuilts_abi-dumps_vndk/0001-protobuf-avi.patch"
     )
 
+    rm -rf frameworks/base
+    git clone https://github.com/querror/android_frameworks_base -b lineage-17.1-q --depth=1 frameworks/base
+
     for target_dir in "${!PATCHES[@]}"; do
         patch_file="${PATCHES[$target_dir]}"
         cd "$target_dir" || exit
-        git am "$WORKDIR/Axp/Patches/LineageOS-17.1/$patch_file"
+        git am "$WORKDIR/r_patch/Patches/LineageOS-17.1/$patch_file"
         cd "$WORKDIR"
     done
 }
 
 build_src() {
-    export PRODUCT_DISABLE_SCUDO=true
-    
     source build/envsetup.sh
+    export PRODUCT_DISABLE_SCUDO=true
+    export TARGET_UNOFFICIAL_BUILD_ID=signed
+    export OWN_KEYS_DIR=$WORKDIR/romx/A10/keys
+
+    [ ! -e $OWN_KEYS_DIR/testkey.pk8 ] && ln -s $OWN_KEYS_DIR/releasekey.pk8 $OWN_KEYS_DIR/testkey.pk8
+    [ ! -e $OWN_KEYS_DIR/testkey.x509.pem ] && ln -s $OWN_KEYS_DIR/releasekey.x509.pem $OWN_KEYS_DIR/testkey.x509.pem
+
     set_ccache_vars
-    lunch lineage_RMX2185-user
-    mka bacon # & sleep 90m; kill %1; ccache -s
+    brunch RMX2185 user # & sleep 90m; kill %1
 }
+
 
 upload_src() {
     upSrc="out/target/product/*/*-RMX*.zip"
-    mkdir -p ~/.config && mv romx/config/* ~/.config || true   
-    curl bashupload.com -T $upSrc || true    
+    mkdir -p ~/.config && mv romx/config/* ~/.config || true
+    curl bashupload.com -T $upSrc || true
     timeout 15m telegram-upload $upSrc --caption "${CIRRUS_COMMIT_MESSAGE}" --to $idtl || true
     save_cache
 }
