@@ -10,7 +10,7 @@ setup_src() {
 
     retry_rc repo sync -c -j16 --force-sync --no-clone-bundle --no-tags --prune
 
-    zpatch=$SRC_DIR/z_patchs
+    zpatch=$SRC_DIR/z_patches
     xpatch=$SRC_DIR/romx/patch
 
     cd frameworks/base
