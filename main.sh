@@ -56,13 +56,11 @@ set_ccache_vars() {
     ccache -o compression=true
 }
 
-unset_ccache_vars() {
-    unset USE_CCACHE CCACHE_EXEC CCACHE_DIR USE_GOMA
-}
-
-set_rbe_vars() {
+set_remote_vars() {
+git clone -q https://github.com/rovars/reclient
 mkdir -p /tmp/rbe_log_dir
-unset_ccache_vars
+
+unset USE_CCACHE CCACHE_EXEC CCACHE_DIR USE_GOMA
 
 export USE_RBE=1
 export RBE_DIR="reclient"

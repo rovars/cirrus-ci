@@ -13,6 +13,8 @@ setup_src() {
     zpatch=$SRC_DIR/z_patches
     xpatch=$SRC_DIR/romx/patch
 
+    patch -p1 < $xpatch/lin11-allow-permissive-user-build.patch
+
     cd vendor/lineage
     git am $zpatch/patch_002_vendor-lineage.patch
     git am $zpatch/patch_004_vendor-lineage.patch
@@ -27,9 +29,7 @@ setup_src() {
     cd packages/apps/Settings
     git am $zpatch/patch_005_Settings.patch
     git am $zpatch/patch_006_Settings.patch
-    cd $SRC_DIR
-
-    patch -p1 < romx/patch/lin11-allow-permissive-user-build.patch
+    cd $SRC_DIR    
 }
 
 build_src() {
@@ -43,7 +43,7 @@ build_src() {
     [ ! -e $OWN_KEYS_DIR/testkey.pk8 ] && ln -s $OWN_KEYS_DIR/releasekey.pk8 $OWN_KEYS_DIR/testkey.pk8
     [ ! -e $OWN_KEYS_DIR/testkey.x509.pem ] && ln -s $OWN_KEYS_DIR/releasekey.x509.pem $OWN_KEYS_DIR/testkey.x509.pem
 
-    set_rbe_vars
+    set_remote_vars
     brunch RMX2185 user
 }
 
