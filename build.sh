@@ -13,6 +13,12 @@ setup_src() {
     zpatch=$SRC_DIR/z_patches
     xpatch=$SRC_DIR/romx/patch
 
+    cd vendor/lineage
+    git am $zpatch/patch_002_vendor-lineage.patch
+    git am $zpatch/patch_004_vendor-lineage.patch
+    git am $xpatch/lin11-Vendor*.patch
+    cd $SRC_DIR
+
     cd frameworks/base
     git am $zpatch/patch_001_base.patch
     git am $xpatch/lin11-Base*.patch
@@ -23,13 +29,6 @@ setup_src() {
     git am $zpatch/patch_006_Settings.patch
     cd $SRC_DIR
 
-    cd vendor/lineage
-    git am $zpatch/patch_002_vendor-lineage.patch
-    git am $zpatch/patch_003_vendor-lineage.patch
-    git am $zpatch/patch_004_vendor-lineage.patch
-    git am $xpatch/lin11-Vendor*.patch
-    cd $SRC_DIR
-
     patch -p1 < romx/patch/lin11-allow-permissive-user-build.patch
 }
 
@@ -38,7 +37,7 @@ build_src() {
 
     export PRODUCT_DISABLE_SCUDO=true
     export SKIP_ABI_CHECKS=true
-    export OWN_KEYS_DIR=$WORKDIR/romx/keys
+    export OWN_KEYS_DIR=$SRC_DIR/romx/keys
     export RELEASE_TYPE=signed
 
     [ ! -e $OWN_KEYS_DIR/testkey.pk8 ] && ln -s $OWN_KEYS_DIR/releasekey.pk8 $OWN_KEYS_DIR/testkey.pk8
