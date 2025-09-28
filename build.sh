@@ -38,11 +38,8 @@ xsetup_src() {
     cd $SRC_DIR    
 }
 
-build_src() {
-    export PRODUCT_DISABLE_SCUDO=true
-}
-
 xbuild_src() {
+    exit 0
     source build/envsetup.sh
 
     export PRODUCT_DISABLE_SCUDO=true
