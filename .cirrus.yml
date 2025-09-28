@@ -26,5 +26,5 @@ task:
   on_failure:
     notiferror_script:
       - xc -x "Build Failed!"
-      - xc -c "${PWD}/android/out/error.log"
-      - cat "${PWD}/android/out/error.log"
+      - xc -c "$SRC_DIR/out/error.log"
+      - cat "$SRC_DIR/out/error.log"
