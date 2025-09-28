@@ -38,7 +38,7 @@ xsetup_src() {
     cd $SRC_DIR    
 }
 
-xbuild_src() {
+build_src() {
     exit 0
     source build/envsetup.sh
 
