@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 
-setup_src() {
+setup_src() {  
+    git clone -q https://github.com/rovars/rom romx
+    chmod +x romx/script/nun
+    source romx/script/nun
+}
+
+xsetup_src() {
     repo init -u https://github.com/LineageOS/android.git -b lineage-18.1 --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
 
     git clone -q https://github.com/rovars/rom romx
@@ -33,6 +39,10 @@ setup_src() {
 }
 
 build_src() {
+    export PRODUCT_DISABLE_SCUDO=true
+}
+
+xbuild_src() {
     source build/envsetup.sh
 
     export PRODUCT_DISABLE_SCUDO=true
