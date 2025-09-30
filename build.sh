@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 setup_src() {
-    repo init -u https://github.com/LineageOS/android_manifest.git -b lineage-19.1 --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
+    repo init -u https://github.com/LineageOS/android.git -b lineage-19.1 --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
     git clone -q https://github.com/rovars/rom romx
     mkdir -p .repo/local_manifests
     mv romx/manifest/lin12.xml .repo/local_manifests
