@@ -13,7 +13,7 @@ setup_src() {
 
 build_src() {   
     source build/envsetup.sh
-    set_rbeenv_vars
+    set_remote_vars
     export SKIP_ABI_CHECKS=true
     brunh RMX2185 user
 }
