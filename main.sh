@@ -1,6 +1,18 @@
 #!/usr/bin/env bash
 set -e
+
+export USE_DEX2OAT_DEBUG=false
+export WITH_DEXPREOPT_DEBUG_INFO=false
+export NINJA_HIGHMEM_NUM_JOBS=1
+
 source "$PWD/build.sh"
+
+set_ccache_vars() {
+    export USE_CCACHE=1
+    export CCACHE_EXEC="$(command -v ccache)"
+    export CCACHE_DIR="$HOME/.ccache"
+    ccache -M 50G -F 0
+}
 
 retry_rc() {
     local max_retries=20
@@ -18,10 +30,10 @@ retry_rc() {
 copy_cache() {
     mkdir -p ~/.ccache
     cd ~/
-    
+    set_ccache_vars
     if retry_rc rclone copy "$rclonedir/$rclonefile" . --progress; then
         tar -xzf "$rclonefile" -C .
-        rm -f "$rclonefile"       
+        rm -f "$rclonefile"
     else
         rm -f "$rclonefile"
         xc -x "no remote ccache!"
@@ -46,14 +58,6 @@ save_cache() {
         xc -x "Failed to copy cache to remote"
         return 1
     fi
-}
-
-set_ccache_vars() {
-    export USE_CCACHE=1
-    export CCACHE_EXEC="$(command -v ccache)"
-    export CCACHE_DIR="$HOME/.ccache"
-    ccache -M 50G -F 0
-    ccache -o compression=true
 }
 
 set_remote_vars() {
