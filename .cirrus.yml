@@ -11,7 +11,7 @@ task:
   name: "Build"
   timeout_in: 120m
   container:
-    image: thisfor/ubuntu:latest
+    image: thisfor/ubuntu:test
     cpu: 8
     memory: 32G
     greedy: true
