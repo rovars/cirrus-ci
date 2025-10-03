@@ -3,10 +3,10 @@
 setup_src() {
     repo init --depth=1 -u https://github.com/querror/android -b lineage-17.1
     git clone -q https://github.com/rovars/rom romx
-    git clone -q https://github.com/rovars/build r_patch
+    git clone -q https://github.com/rovars/build npatch
 
     mkdir -p .repo/local_manifests/
-    mv romx/A10/remove.xml .repo/local_manifests/roomservice.xml
+    mv romx/manifest/lin10.xml .repo/local_manifests/roomservice.xml
 
     repo sync -j16 -c --force-sync --no-clone-bundle --no-tags --prune
 
@@ -24,35 +24,34 @@ setup_src() {
         ["prebuilts/abi-dumps/vndk"]="android_prebuilts_abi-dumps_vndk/0001-protobuf-avi.patch"
     )
 
-    rm -rf frameworks/base
-    git clone https://github.com/querror/android_frameworks_base -b lineage-17.1-q --depth=1 frameworks/base
-
     for target_dir in "${!PATCHES[@]}"; do
         patch_file="${PATCHES[$target_dir]}"
         cd "$target_dir" || exit
-        git am "$WORKDIR/r_patch/Patches/LineageOS-17.1/$patch_file"
-        cd "$WORKDIR"
+        git am "$SRC_DIR/npatch/Patches/LineageOS-17.1/$patch_file"
+        cd "$SRC_DIR"
     done
 }
 
 build_src() {
     source build/envsetup.sh
-    export PRODUCT_DISABLE_SCUDO=true
-    export TARGET_UNOFFICIAL_BUILD_ID=signed
-    export OWN_KEYS_DIR=$WORKDIR/romx/A10/keys
+    export KBUILD_BUILD_USER=nobody
+    export KBUILD_BUILD_HOST=android-build
+    export BUILD_USERNAME=nobody
+    export BUILD_HOSTNAME=android-build
+    export RELEASE_TYPE=FE
+    export EXCLUDE_SYSTEMUI_TESTS=true
+    export OWN_KEYS_DIR=$SRC_DIR/romx/keys
 
-    [ ! -e $OWN_KEYS_DIR/testkey.pk8 ] && ln -s $OWN_KEYS_DIR/releasekey.pk8 $OWN_KEYS_DIR/testkey.pk8
-    [ ! -e $OWN_KEYS_DIR/testkey.x509.pem ] && ln -s $OWN_KEYS_DIR/releasekey.x509.pem $OWN_KEYS_DIR/testkey.x509.pem
+    ln -s $OWN_KEYS_DIR/releasekey.pk8 $OWN_KEYS_DIR/testkey.pk8
+    ln -s $OWN_KEYS_DIR/releasekey.x509.pem $OWN_KEYS_DIR/testkey.x509.pem
 
     set_ccache_vars
-    brunch RMX2185 user # & sleep 90m; kill %1
+    brunch RMX2185 user
 }
 
 
 upload_src() {
     upSrc="out/target/product/*/*-RMX*.zip"
     mkdir -p ~/.config && mv romx/config/* ~/.config || true
-    curl bashupload.com -T $upSrc || true
     timeout 15m telegram-upload $upSrc --caption "${CIRRUS_COMMIT_MESSAGE}" --to $idtl || true
-    save_cache
 }

@@ -1,14 +1,20 @@
 #!/usr/bin/env bash
 set -e
 
-CI_DIR=$PWD
-WORKDIR=$CI_DIR/android
-source "$CI_DIR/build.sh"
+export USE_DEX2OAT_DEBUG=false
+export WITH_DEXPREOPT_DEBUG_INFO=false
+export NINJA_HIGHMEM_NUM_JOBS=1
+export DISABLE_ROBO_RUN_TESTS=true
+export TZ=Asia/Jakarta
 
-_nfy_script() {
-    tle -t "${CIRRUS_COMMIT_MESSAGE} ( <a href='https://cirrus-ci.com/task/${CIRRUS_TASK_ID}'>$CIRRUS_BRANCH</a> )"
-    echo "$credensial" > ~/.git-credentials
-    echo "$gitconfigs" > ~/.gitconfig
+source "$PWD/build.sh"
+
+set_ccache_vars() {
+    export USE_CCACHE=1
+    export CCACHE_EXEC="$(command -v ccache)"
+    export CCACHE_DIR="$HOME/.ccache"
+    ccache -M 50G -F 0
+    ccache -o compression=true
 }
 
 retry_rc() {
@@ -27,106 +33,71 @@ retry_rc() {
 copy_cache() {
     mkdir -p ~/.ccache
     cd ~/
-    
-    if retry_rc rclone copy "$rclonedir/$rclonefile" . --progress; then
+    set_ccache_vars
+    if retry_rc rclone copy "$rclonedir/$rclonefile" . &> /dev/null; then
         tar -xzf "$rclonefile" -C .
         rm -f "$rclonefile"
-        tle -t "Cache copied and extracted successfully"
+        echo "setup ccache done!"
     else
         rm -f "$rclonefile"
-        tle -t "Cache not found on remote, proceeding without cache"
+        echo "no ccache? skip"
+        xc -x "no ccache? skip"
     fi
 }
 
 save_cache() {
-    tle -t "Saving cache to remote..."
     export CCACHE_DISABLE=1
     ccache -s    
     ccache --cleanup
     ccache --zero-stats
-    
+
     cd ~/
     tar -czf "$rclonefile" -C . .ccache --warning=no-file-changed || {
-        tle -t "Failed to create cache archive"
+        xc -x "create ccache archive failure!"
         return 1
     }
 
-    if retry_rc rclone copy "$rclonefile" "$rclonedir" --progress; then
+    if retry_rc rclone copy "$rclonefile" "$rclonedir" &> /dev/null; then
         rm -f "$rclonefile"
-        tle -t "Ccache Save Completed!"
+        echo "ccache save done!"
     else
-        tle -t "Failed to copy cache to remote"
+        echo "ccache not save!"
+        xc -x "ccache not save!"
         return 1
     fi
 }
 
-set_ccache_vars() {
-    export USE_CCACHE=1
-    export CCACHE_EXEC="$(command -v ccache)"
-    export CCACHE_DIR="$HOME/.ccache"
-    ccache -M 50G -F 0
-    ccache -o compression=true
-}
+set_remote_vars() {
+    git clone -q https://github.com/rovars/reclient
 
-unset_ccache_vars() {
     unset USE_CCACHE CCACHE_EXEC CCACHE_DIR USE_GOMA
-}
 
-set_rbeenv_vars() {
-    git clone -q https://github.com/rovars/reclient reclient
-    unset_ccache_vars   
-    
-    export USE_RBE=1
-    export RBE_DIR="reclient"
-    export RBE_instance="rovars.buildbuddy.io"
-    export RBE_service="rovars.buildbuddy.io:443"
-    export RBE_remote_headers="x-buildbuddy-api-key=yaDX7CznLv0XcEqk0wee"
-    
-    export RBE_R8_EXEC_STRATEGY=remote_local_fallback
-    export RBE_CXX_EXEC_STRATEGY=remote_local_fallback
-    export RBE_D8_EXEC_STRATEGY=remote_local_fallback
-    export RBE_JAVAC_EXEC_STRATEGY=remote_local_fallback
-    export RBE_JAR_EXEC_STRATEGY=remote_local_fallback
-    export RBE_ZIP_EXEC_STRATEGY=remote_local_fallback
-    export RBE_TURBINE_EXEC_STRATEGY=remote_local_fallback
-    export RBE_SIGNAPK_EXEC_STRATEGY=remote_local_fallback
-    export RBE_CXX_LINKS_EXEC_STRATEGY=remote_local_fallback
-    export RBE_ABI_LINKER_EXEC_STRATEGY=remote_local_fallback
-    export RBE_CLANG_TIDY_EXEC_STRATEGY=remote_local_fallback
-    export RBE_METALAVA_EXEC_STRATEGY=remote_local_fallback
-    export RBE_LINT_EXEC_STRATEGY=remote_local_fallback
-    export RBE_ABI_DUMPER_EXEC_STRATEGY=""
-    
-    export RBE_JAVAC=1 RBE_R8=1 RBE_D8=1 RBE_JAR=1 RBE_ZIP=1
-    export RBE_TURBINE=1 RBE_SIGNAPK=1 RBE_CXX_LINKS=1 RBE_CXX=1
+    export USE_RBE=1 RBE_DIR="reclient" RBE_instance="rovars.buildbuddy.io" RBE_service="rovars.buildbuddy.io:443" RBE_remote_headers="x-buildbuddy-api-key=yaDX7CznLv0XcEqk0wee"
+    export RBE_R8_EXEC_STRATEGY=remote_local_fallback RBE_CXX_EXEC_STRATEGY=remote_local_fallback RBE_D8_EXEC_STRATEGY=remote_local_fallback RBE_JAVAC_EXEC_STRATEGY=remote_local_fallback
+    export RBE_JAR_EXEC_STRATEGY=remote_local_fallback RBE_ZIP_EXEC_STRATEGY=remote_local_fallback RBE_TURBINE_EXEC_STRATEGY=remote_local_fallback RBE_SIGNAPK_EXEC_STRATEGY=remote_local_fallback
+    export RBE_CXX_LINKS_EXEC_STRATEGY=remote_local_fallback RBE_ABI_LINKER_EXEC_STRATEGY=remote_local_fallback RBE_CLANG_TIDY_EXEC_STRATEGY=remote_local_fallback RBE_METALAVA_EXEC_STRATEGY=remote_local_fallback
+    export RBE_LINT_EXEC_STRATEGY=remote_local_fallback RBE_ABI_DUMPER_EXEC_STRATEGY=""
+    export RBE_JAVAC=1 RBE_R8=1 RBE_D8=1 RBE_JAR=1 RBE_ZIP=1 RBE_TURBINE=1 RBE_SIGNAPK=1 RBE_CXX_LINKS=1 RBE_CXX=1
     export RBE_ABI_LINKER=1 RBE_CLANG_TIDY=1 RBE_METALAVA=1 RBE_LINT=1 RBE_ABI_DUMPER=""
-    
     export RBE_JAVA_POOL=default RBE_METALAVA_POOL=default RBE_LINT_POOL=default
     export RBE_log_dir="/tmp" RBE_output_dir="/tmp" RBE_proxy_log_dir="/tmp"
-    export RBE_service_no_auth=true RBE_use_rpc_credentials=false
-    export RBE_use_unified_cas_ops=true RBE_use_unified_downloads=true
+    export RBE_service_no_auth=true RBE_use_rpc_credentials=false RBE_use_unified_cas_ops=true RBE_use_unified_downloads=true
     export RBE_use_unified_uploads=true RBE_use_application_default_credentials=true
-}
 
-rbe_metrics() {
-    tle -f /tmp/rbe_metrics.txt
-    cat /tmp/rbe_metrics.txt
+    echo "(RBE) setup done!"
 }
 
 main() {
-    mkdir -p "$WORKDIR"
-    cd "$WORKDIR"
-    
+    cd "$SRC_DIR"
     case "${1:-}" in
-        sync) _nfy_script; setup_src ;;
+        sync) setup_src ;;
         build) build_src ;;
         upload) upload_src ;;
         copy_cache) copy_cache ;;
         save_cache) save_cache ;;
-        results) rbe_metrics ;;
         *)
             echo "Error: Invalid argument." >&2
-            echo "Usage: $0 {sync|build|upload|copy_cache|save_cache|results}" >&2
+            echo "Usage: $0 {sync|build|upload|copy_cache|save_cache}" >&2
             exit 1
             ;;
     esac
