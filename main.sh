@@ -75,6 +75,7 @@ save_cache() {
 set_remote_vars() {
     echo "===== Remote Build Execution ====="
     git clone -q https://github.com/rovars/reclient
+    mkdir -p /tmp/rbe_log_dir
 
     unset USE_CCACHE CCACHE_EXEC CCACHE_DIR USE_GOMA
     export USE_RBE=1 RBE_DIR="reclient" RBE_instance="rovars.buildbuddy.io" RBE_service="rovars.buildbuddy.io:443" RBE_remote_headers="x-buildbuddy-api-key=yaDX7CznLv0XcEqk0wee"
@@ -85,6 +86,7 @@ set_remote_vars() {
     export RBE_JAVAC=1 RBE_R8=1 RBE_D8=1 RBE_JAR=1 RBE_ZIP=1 RBE_TURBINE=1 RBE_SIGNAPK=1 RBE_CXX_LINKS=1 RBE_CXX=1
     export RBE_ABI_LINKER=1 RBE_CLANG_TIDY=1 RBE_METALAVA=1 RBE_LINT=1 RBE_ABI_DUMPER=""
     export RBE_JAVA_POOL=default RBE_METALAVA_POOL=default RBE_LINT_POOL=default
+    export RBE_log_dir="/tmp/rbe_log_dir" RBE_output_dir="/tmp/rbe_log_dir" RBE_proxy_log_dir="/tmp/rbe_log_dir"
     export RBE_service_no_auth=true RBE_use_rpc_credentials=false RBE_use_unified_cas_ops=true RBE_use_unified_downloads=true
     export RBE_use_unified_uploads=true RBE_use_application_default_credentials=true
 }
