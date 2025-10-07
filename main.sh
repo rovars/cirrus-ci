@@ -7,7 +7,6 @@ export NINJA_HIGHMEM_NUM_JOBS=1
 export DISABLE_ROBO_RUN_TESTS=true
 
 MSG_XC1="( <a href='https://cirrus-ci.com/task/${CIRRUS_TASK_ID}'>Cirrus CI</a> ) - $CIRRUS_COMMIT_MESSAGE ( $CIRRUS_BRANCH )"
-MSG_XC2="( <a href='https://cirrus-ci.com/task/${CIRRUS_TASK_ID}'>Cirrus CI</a> ) - $CIRRUS_COMMIT_MESSAGE ( <a href='$ROM_X'>$(basename "$CIRRUS_BRANCH")</a> )"
 
 source "$PWD/build.sh"
 
@@ -40,13 +39,11 @@ setup_cache() {
         tar -xzf "$rclonefile" -C .
         rm -f "$rclonefile"
         echo "===== ccache setup done ====="
-        xc -s "$MSG_XC1
-( ccache setup done )"
+        xc -s2 "( ccache setup done )"
     else
         rm -f "$rclonefile"
         echo "===== no ccache? ah skip ====="
-        xc -s "$MSG_XC1
-( no ccache? ah skip )"
+        xc -s2 "( no ccache? ah skip )"
     fi
     cd $SRC_DIR
 }
@@ -66,12 +63,10 @@ save_cache() {
     if retry_rc rclone copy "$rclonefile" "$rclonedir" &> /dev/null; then
         rm -f "$rclonefile"
         echo "===== ccache save success ====="
-        xc -s "$MSG_XC2
-( ccache save success )"
+        xc -s2 "( ccache save success )"
     else
         echo "===== ccache save failure ====="
-        xc -s "$MSG_XC2
-( ccache save failure )"
+        xc -s2 "( ccache save failure )"
         return 1
     fi
     cd $SRC_DIR
@@ -100,7 +95,7 @@ main() {
     mkdir -p $SRC_DIR
     cd "$SRC_DIR"
     case "${1:-}" in
-        sync) xc -s "$MSG_XC1"
+        sync) xc -s1 "$MSG_XC1"
               setup_src ;;
         build) build_src ;;
         upload) upload_src ;;
