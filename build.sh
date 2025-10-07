@@ -6,6 +6,7 @@ setup_src() {
     mkdir -p .repo/local_manifests    
     mv romx/script/rom/lin12* .repo/local_manifests/
     retry_rc repo sync -j8 -c --force-sync --no-clone-bundle --no-tags --prune
+    patch -p1 romx/script/rom/patch/lin12*
 }
 
 build_src() {
