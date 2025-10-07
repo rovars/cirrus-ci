@@ -7,7 +7,7 @@ setup_src() {
     mkdir -p .repo/local_manifests
     mv romx/script/rom/lin11* .repo/local_manifests/
 
-    retry_rc repo sync -c -j16 --force-sync --no-clone-bundle --no-tags --prune
+    retry_rc repo sync -c -j8 --force-sync --no-clone-bundle --no-tags --prune
 
     zpatch=$SRC_DIR/z_patches
     xpatch=$SRC_DIR/romx/script/rom/patch
