@@ -3,8 +3,8 @@
 setup_src() {
     repo init -u https://github.com/LineageOS/android.git -b lineage-19.1 --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
     git clone -q https://github.com/rovars/rom romx
-    mkdir -p .repo/local_manifests
-    mv romx/manifest/lin12.xml .repo/local_manifests
+    mkdir -p .repo/local_manifests    
+    mv romx/script/rom/lin12* .repo/local_manifests/
     retry_rc repo sync -j8 -c --force-sync --no-clone-bundle --no-tags --prune
 }
 

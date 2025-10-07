@@ -95,7 +95,7 @@ main() {
     mkdir -p $SRC_DIR
     cd "$SRC_DIR"
     case "${1:-}" in
-        sync) xc -s1 "$MSG_XC1"
+        sync) xc -s "$MSG_XC1"
               setup_src ;;
         build) build_src ;;
         upload) upload_src ;;
