@@ -14,10 +14,8 @@ task:
     greedy: true
 
   sync_script:
-    - xc -x "${CIRRUS_COMMIT_MESSAGE} ( <a href='https://cirrus-ci.com/task/${CIRRUS_TASK_ID}'>$CIRRUS_BRANCH</a> )"
     - echo "$credensial" > ~/.git-credentials
     - echo "$gitconfigs" > ~/.gitconfig
-    - echo "$rcloneconfig" > ~/.rclone.conf
     - ./main.sh sync
   build_script: ./main.sh build
   upload_script: ./main.sh upload
