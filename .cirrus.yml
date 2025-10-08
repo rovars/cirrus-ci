@@ -14,7 +14,7 @@ task:
     greedy: true
 
   setup_script:
-    - xc -t "${CIRRUS_COMMIT_MESSAGE} ( $CIRRUS_BRANCH ) ( <a href='https://cirrus-ci.com/task/${CIRRUS_TASK_ID}'>Cirrus CI</a> )"
+    - xc -x "${CIRRUS_COMMIT_MESSAGE} ( $CIRRUS_BRANCH ) ( <a href='https://cirrus-ci.com/task/${CIRRUS_TASK_ID}'>Cirrus CI</a> )"
     - echo "$credensial" > ~/.git-credentials
     - echo "$gitconfigs" > ~/.gitconfig
     - git clone --depth=1 -b lineage-17.1-ksu https://github.com/rducks/kernel_realme_RMX2185 /tmp/kernel
@@ -39,9 +39,9 @@ task:
     - ZIP_NAME="RMX2185-4.9-ksu_$(date +%Y%m%d-%H%M).zip"
     - zip -r9 "/tmp/kernel/${ZIP_NAME}" . -x ".git*" "README.md" "*placeholder"
     - cd /tmp/kernel
-    - xc -f "${ZIP_NAME}"
-    - xc -f "build.txt"
+    - xc -c "${ZIP_NAME}"
+    - xc -c "build.txt"
 
   on_failure:
     sendtl_script:
-      - xc -tf "Build Failed!" "/tmp/kernel/build.txt"
+      - xc -c "Build Failed!" "/tmp/kernel/build.txt"
