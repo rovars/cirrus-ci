@@ -24,6 +24,7 @@ task:
 
   on_failure:
     notiferror_script:
+      - export SRC_DIR=$PWD/src
       - xc -x "Build Failed!"
       - xc -c "$SRC_DIR/out/error.log"
       - cat "$SRC_DIR/out/error.log"

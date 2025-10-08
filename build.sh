@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 setup_src() {
-    repo init -u https://github.com/exthmui-legacy/android.git -b exthm-11 --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
+    repo init -u https://github.com/Havoc-OS-Revived/android_manifest.git -b eleven --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
+
     git clone -q https://github.com/rovars/rom romx
 
     mkdir -p .repo/local_manifests
@@ -14,16 +15,20 @@ setup_src() {
 
     xpatch=$SRC_DIR/romx/script/rom/patch
     patch -p1 < $xpatch/lin11-allow-permissive-user-build.patch
+
     cd frameworks/base
     git am $xpatch/lin11-base-Revert-New-activity-transitions.patch
+    sed -i 's#<item name="config_wallpaperMaxScale" format="float" type="dimen">[^<]*</item>#<item name="config_wallpaperMaxScale" format="float" type="dimen">1</item>#' core/res/res/values/config.xml
     cd $SRC_DIR
 
-    sed -i 's/lineage_/exthm_/g' device/realme/RMX2185/AndroidProducts.mk
-    sed -i 's/lineage_/exthm_/g' device/realme/RMX2185/lineage_RMX2185.mk
-    sed -i 's|$(call inherit-product, vendor/lineage/config/common_full_phone.mk)|$(call inherit-product, vendor/exthm/config/common_full_phone.mk)|g' device/realme/RMX2185/lineage_RMX2185.mk
-    mv device/realme/RMX2185/lineage_RMX2185.mk device/realme/RMX2185/exthm_RMX2185.mk
+    cd device/realme/RMX2185
+    sed -i 's/lineage_/havoc_/g' AndroidProducts.mk
+    sed -i 's/lineage_/havoc_/g' lineage_RMX2185.mk
+    sed -i 's|$(call inherit-product, vendor/lineage/config/common_full_phone.mk)|$(call inherit-product, vendor/havoc/config/common_full_phone.mk)|g' lineage_RMX2185.mk
+    mv lineage_RMX2185.mk havoc_RMX2185.mk
+    cd $SRC_DIR
 
-    sed -i 's#<item name="config_wallpaperMaxScale" format="float" type="dimen">[^<]*</item>#<item name="config_wallpaperMaxScale" format="float" type="dimen">1</item>#' frameworks/base/core/res/res/values/config.xml
+    sed -i '/PRODUCT_PACKAGES += \/{N;/adb_root/d;}' vendor/havoc/config/common.mk
 }
 
 build_src() {
@@ -31,6 +36,10 @@ build_src() {
     set_remote_vars
 
     export SKIP_ABI_CHECKS=true
+    export WITH_GAPPS=false
+    export TARGET_FACE_UNLOCK_SUPPORTED=false
+    export TARGET_INCLUDE_LAWNCHAIR=false
+    export TARGET_NOT_USES_BLUR=true
     export OWN_KEYS_DIR=$SRC_DIR/romx/keys
 
     ln -s $OWN_KEYS_DIR/releasekey.pk8 $OWN_KEYS_DIR/testkey.pk8
@@ -44,7 +53,7 @@ build_src() {
 
 upload_src() {
     REPO="rovars/vars"
-    RELEASE_TAG="lineage-18.1"
+    RELEASE_TAG="Android-11"
     ROM_FILE=$(find out/target/product -name "*-RMX*.zip" -print -quit)
     ROM_X="https://github.com/$REPO/releases/download/$RELEASE_TAG/$(basename "$ROM_FILE")"
 
