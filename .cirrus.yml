@@ -8,16 +8,16 @@ task:
   name: "Build Kernel"
   timeout_in: 120m
   container:
-    image: thisfor/ubuntu:latest
+    image: ghcr.io/rovars/docker:ubuntu
     cpu: 8
     memory: 32G
     greedy: true
 
   setup_script:
-    - tle -t "${CIRRUS_COMMIT_MESSAGE} ( $CIRRUS_BRANCH ) ( <a href='https://cirrus-ci.com/task/${CIRRUS_TASK_ID}'>Cirrus CI</a> )"
+    - xc -t "${CIRRUS_COMMIT_MESSAGE} ( $CIRRUS_BRANCH ) ( <a href='https://cirrus-ci.com/task/${CIRRUS_TASK_ID}'>Cirrus CI</a> )"
     - echo "$credensial" > ~/.git-credentials
     - echo "$gitconfigs" > ~/.gitconfig
-    - git clone --depth=1 -b ksux https://github.com/rducks/kernel_realme_RMX2185 /tmp/kernel
+    - git clone --depth=1 -b lineage-17.1-ksu https://github.com/rducks/kernel_realme_RMX2185 /tmp/kernel
     - git clone --depth=1 -b rducks https://github.com/rducks/rom /tmp/AnyKernel3
     - git clone --depth=1 -b lineage-17.1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9 /tmp/gcc64
     - git clone --depth=1 -b lineage-17.1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9 /tmp/gcc32
@@ -39,9 +39,9 @@ task:
     - ZIP_NAME="RMX2185-4.9-ksu_$(date +%Y%m%d-%H%M).zip"
     - zip -r9 "/tmp/kernel/${ZIP_NAME}" . -x ".git*" "README.md" "*placeholder"
     - cd /tmp/kernel
-    - tle -f "${ZIP_NAME}"
-    - tle -f "build.txt"
+    - xc -f "${ZIP_NAME}"
+    - xc -f "build.txt"
 
   on_failure:
     sendtl_script:
-      - tle -tf "Build Failed!" "/tmp/kernel/build.txt"
+      - xc -tf "Build Failed!" "/tmp/kernel/build.txt"
