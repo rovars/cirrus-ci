@@ -1,12 +1,21 @@
 #!/usr/bin/env bash
 
 setup_src() {
-    repo init -u https://github.com/LineageOS/android.git -b lineage-19.1 --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
+    repo init -u https://github.com/exthmui/android.git -b exthm-11 --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
     git clone -q https://github.com/rovars/rom romx
-    mkdir -p .repo/local_manifests    
-    mv romx/script/rom/lin12* .repo/local_manifests/
-    retry_rc repo sync -j8 -c --force-sync --no-clone-bundle --no-tags --prune
-    patch -p1 < romx/script/rom/patch/lin12*
+
+    mkdir -p .repo/local_manifests
+    mv romx/script/rom/11* .repo/local_manifests/
+
+    retry_rc repo sync -c -j8 --force-sync --no-clone-bundle --no-tags --prune
+
+    xpatch=$SRC_DIR/romx/script/rom/patch
+    patch -p1 < $xpatch/lin11-allow-permissive-user-build.patch
+
+    sed -i 's/lineage_/exthm_/g' device/realme/RMX2185/AndroidProducts.mk
+    sed -i 's/lineage_/exthm_/g' device/realme/RMX2185/lineage_RMX2185.mk
+    sed -i 's|$(call inherit-product, vendor/lineage/config/common_full_phone.mk)|$(call inherit-product, vendor/exthm/config/common_full_phone.mk)|g' device/realme/RMX2185/lineage_RMX2185.mk
+    mv device/realme/RMX2185/lineage_RMX2185.mk device/realme/RMX2185/exthm_RMX2185.mk
 }
 
 build_src() {
@@ -18,16 +27,16 @@ build_src() {
 
     ln -s $OWN_KEYS_DIR/releasekey.pk8 $OWN_KEYS_DIR/testkey.pk8
     ln -s $OWN_KEYS_DIR/releasekey.x509.pem $OWN_KEYS_DIR/testkey.x509.pem
-    
+
     ln -sf "$OWN_KEYS_DIR" user-keys
     sed -i "1s;^;PRODUCT_DEFAULT_DEV_CERTIFICATE := user-keys/releasekey\nPRODUCT_OTA_PUBLIC_KEYS := user-keys/releasekey\n\n;" "vendor/lineage/config/common.mk"
-
+    
     brunch RMX2185 user
 }
 
 upload_src() {
     REPO="rovars/vars"
-    RELEASE_TAG="lineage-19.1"
+    RELEASE_TAG="lineage-18.1"
     ROM_FILE=$(find out/target/product -name "*-RMX*.zip" -print -quit)
     ROM_X="https://github.com/$REPO/releases/download/$RELEASE_TAG/$(basename "$ROM_FILE")"
 
