@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 setup_src() {
-    repo init -u https://github.com/Havoc-OS-Revived/android_manifest.git -b eleven --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
+    repo init -u https://gitlab.iode.tech/os/public/manifests/android.git -b v2.37 --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
 
     git clone -q https://github.com/rovars/rom romx
 
@@ -9,6 +9,10 @@ setup_src() {
     mv romx/script/rom/11* .repo/local_manifests/
 
     retry_rc repo sync -c -j8 --force-sync --no-clone-bundle --no-tags --prune
+
+    cd vendor/extra
+    git lfs pull iode v2.37
+    cd $SRC_DIR
 
     rm -rf external/chromium-webview
     git clone -q --depth=1 https://github.com/LineageOS/android_external_chromium-webview -b master external/chromium-webview
@@ -21,39 +25,31 @@ setup_src() {
     sed -i 's#<item name="config_wallpaperMaxScale" format="float" type="dimen">[^<]*</item>#<item name="config_wallpaperMaxScale" format="float" type="dimen">1</item>#' core/res/res/values/config.xml
     cd $SRC_DIR
 
-    cd device/realme/RMX2185
-    sed -i 's/lineage_/havoc_/g' AndroidProducts.mk
-    sed -i 's/lineage_/havoc_/g' lineage_RMX2185.mk
-    sed -i 's|$(call inherit-product, vendor/lineage/config/common_full_phone.mk)|$(call inherit-product, vendor/havoc/config/common_full_phone.mk)|g' lineage_RMX2185.mk
-    mv lineage_RMX2185.mk havoc_RMX2185.mk
+    cd vendor/lineage
+    git am $xpatch/lin11-vendor-*
     cd $SRC_DIR
 
-    sed -i '/PRODUCT_PACKAGES += \/{N;/adb_root/d;}' vendor/havoc/config/common.mk
 }
 
 build_src() {
     source build/envsetup.sh
     set_remote_vars
 
-    export SKIP_ABI_CHECKS=true
-    export WITH_GAPPS=false
-    export TARGET_FACE_UNLOCK_SUPPORTED=false
-    export TARGET_INCLUDE_LAWNCHAIR=false
-    export TARGET_NOT_USES_BLUR=true
+    export SKIP_ABI_CHECKS=true    
     export OWN_KEYS_DIR=$SRC_DIR/romx/keys
 
     ln -s $OWN_KEYS_DIR/releasekey.pk8 $OWN_KEYS_DIR/testkey.pk8
     ln -s $OWN_KEYS_DIR/releasekey.x509.pem $OWN_KEYS_DIR/testkey.x509.pem
 
     ln -sf "$OWN_KEYS_DIR" user-keys
-    sed -i "1s;^;PRODUCT_DEFAULT_DEV_CERTIFICATE := user-keys/releasekey\nPRODUCT_OTA_PUBLIC_KEYS := user-keys/releasekey\n\n;" "vendor/exthm/config/common.mk"
+    sed -i "1s;^;PRODUCT_DEFAULT_DEV_CERTIFICATE := user-keys/releasekey\nPRODUCT_OTA_PUBLIC_KEYS := user-keys/releasekey\n\n;" "vendor/lineage/config/common.mk"
     
     brunch RMX2185 user
 }
 
 upload_src() {
     REPO="rovars/vars"
-    RELEASE_TAG="Android-11"
+    RELEASE_TAG="iodéOS"
     ROM_FILE=$(find out/target/product -name "*-RMX*.zip" -print -quit)
     ROM_X="https://github.com/$REPO/releases/download/$RELEASE_TAG/$(basename "$ROM_FILE")"
 
