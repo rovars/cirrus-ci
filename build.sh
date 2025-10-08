@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 setup_src() {
-    repo init -u https://gitlab.iode.tech/os/public/manifests/android.git -b v2.37 --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
+    repo init -u https://gitlab.iode.tech/os/public/manifests/android.git -b v2.36 --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
 
     git clone -q https://github.com/rovars/rom romx
 
@@ -11,7 +11,7 @@ setup_src() {
     retry_rc repo sync -c -j8 --force-sync --no-clone-bundle --no-tags --prune
 
     cd vendor/extra
-    git lfs pull iode v2.37
+    git lfs pull iode v2.36
     cd $SRC_DIR
 
     rm -rf external/chromium-webview
@@ -21,8 +21,7 @@ setup_src() {
     patch -p1 < $xpatch/lin11-allow-permissive-user-build.patch
 
     cd frameworks/base
-    git am $xpatch/lin11-base-Revert-New-activity-transitions.patch
-    sed -i 's#<item name="config_wallpaperMaxScale" format="float" type="dimen">[^<]*</item>#<item name="config_wallpaperMaxScale" format="float" type="dimen">1</item>#' core/res/res/values/config.xml
+    git am $xpatch/lin11-base-Revert-New-activity-transitions.patch 
     cd $SRC_DIR
 
     cd vendor/lineage
