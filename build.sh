@@ -9,6 +9,9 @@ setup_src() {
 
     retry_rc repo sync -c -j8 --force-sync --no-clone-bundle --no-tags --prune
 
+    rm -rf external/chromium-webview
+    git clone -q --depth=1 https://github.com/LineageOS/android_external_chromium-webview -b master external/chromium-webview
+
     xpatch=$SRC_DIR/romx/script/rom/patch
     patch -p1 < $xpatch/lin11-allow-permissive-user-build.patch
     cd frameworks/base
