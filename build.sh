@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 setup_src() {
-    repo init -u https://gitlab.iode.tech/os/public/manifests/android.git -b v2.36 --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
+    repo init -u https://gitlab.e.foundation/e/os/android.git -b v1-r --git-lfs --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
 
     git clone -q https://github.com/rovars/rom romx
 
@@ -10,12 +10,13 @@ setup_src() {
 
     retry_rc repo sync -c -j8 --force-sync --no-clone-bundle --no-tags --prune
 
-    cd vendor/extra
-    git lfs pull iode v2.36
-    cd $SRC_DIR
-
     rm -rf external/chromium-webview
     git clone -q --depth=1 https://github.com/LineageOS/android_external_chromium-webview -b master external/chromium-webview
+
+    cd prebuilts/prebuiltapks
+    git lfs pull
+    rm -rf Browser
+    cd $SRC_DIR
 
     xpatch=$SRC_DIR/romx/script/rom/patch
     patch -p1 < $xpatch/lin11-allow-permissive-user-build.patch
@@ -25,7 +26,7 @@ setup_src() {
     cd $SRC_DIR
 
     cd vendor/lineage
-    git am $xpatch/lin11-vendor-*
+    # git am $xpatch/lin11-vendor-*
     cd $SRC_DIR
 
 }
@@ -48,7 +49,7 @@ build_src() {
 
 upload_src() {
     REPO="rovars/vars"
-    RELEASE_TAG="iodéOS"
+    RELEASE_TAG="e/OS"
     ROM_FILE=$(find out/target/product -name "*-RMX*.zip" -print -quit)
     ROM_X="https://github.com/$REPO/releases/download/$RELEASE_TAG/$(basename "$ROM_FILE")"
 
