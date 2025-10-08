@@ -11,11 +11,16 @@ setup_src() {
 
     xpatch=$SRC_DIR/romx/script/rom/patch
     patch -p1 < $xpatch/lin11-allow-permissive-user-build.patch
+    cd frameworks/base
+    git am $xpatch/lin11-base-Revert-New-activity-transitions.patch
+    cd ../..
 
     sed -i 's/lineage_/exthm_/g' device/realme/RMX2185/AndroidProducts.mk
     sed -i 's/lineage_/exthm_/g' device/realme/RMX2185/lineage_RMX2185.mk
     sed -i 's|$(call inherit-product, vendor/lineage/config/common_full_phone.mk)|$(call inherit-product, vendor/exthm/config/common_full_phone.mk)|g' device/realme/RMX2185/lineage_RMX2185.mk
     mv device/realme/RMX2185/lineage_RMX2185.mk device/realme/RMX2185/exthm_RMX2185.mk
+
+    sed -i 's#`<item name="config_(w)allpaperMaxScale" format="float" type="dimen">`1\.10`</item>`#\11\2#' frameworks/base/core/core/res/values/config.xml
 }
 
 build_src() {
