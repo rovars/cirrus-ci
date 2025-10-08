@@ -13,10 +13,7 @@ setup_src() {
     rm -rf external/chromium-webview
     git clone -q --depth=1 https://github.com/LineageOS/android_external_chromium-webview -b master external/chromium-webview
 
-    cd prebuilts/prebuiltapks
-    git lfs pull
-    rm -rf Browser
-    cd $SRC_DIR
+    rm -rf prebuilts/prebuiltapks
 
     xpatch=$SRC_DIR/romx/script/rom/patch
     patch -p1 < $xpatch/lin11-allow-permissive-user-build.patch
