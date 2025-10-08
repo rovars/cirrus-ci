@@ -23,7 +23,7 @@ setup_src() {
     sed -i 's|$(call inherit-product, vendor/lineage/config/common_full_phone.mk)|$(call inherit-product, vendor/exthm/config/common_full_phone.mk)|g' device/realme/RMX2185/lineage_RMX2185.mk
     mv device/realme/RMX2185/lineage_RMX2185.mk device/realme/RMX2185/exthm_RMX2185.mk
 
-    sed -i 's#`<item name="config_(w)allpaperMaxScale" format="float" type="dimen">`1\.10`</item>`#\11\2#' frameworks/base/core/core/res/values/config.xml
+    sed -i 's#<item name="config_wallpaperMaxScale" format="float" type="dimen">[^<]*</item>#<item name="config_wallpaperMaxScale" format="float" type="dimen">1</item>#' frameworks/base/core/core/res/values/config.xml
 }
 
 build_src() {
