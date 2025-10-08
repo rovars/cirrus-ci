@@ -1,22 +1,25 @@
 #!/usr/bin/env bash
 
 setup_src() {
-    repo init -u https://gitlab.e.foundation/e/os/android.git -b v1-r --git-lfs --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
-
+    repo init -u https://gitlab.e.foundation/e/os/android.git -b v1-s --git-lfs --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
     git clone -q https://github.com/rovars/rom romx
 
     mkdir -p .repo/local_manifests
-    mv romx/script/rom/11* .repo/local_manifests/
+    mv romx/script/rom/*12* .repo/local_manifests/
 
     retry_rc repo sync -c -j8 --force-sync --no-clone-bundle --no-tags --prune
 
     rm -rf external/chromium-webview
     git clone -q --depth=1 https://github.com/LineageOS/android_external_chromium-webview -b master external/chromium-webview
 
-    rm -rf prebuilts/prebuiltapks
+    cd prebuilts/prebuiltapks
+    git lfs pull
+    rm -rf Browser
+    cd $SRC_DIR
 
     xpatch=$SRC_DIR/romx/script/rom/patch
-    patch -p1 < $xpatch/lin11-allow-permissive-user-build.patch
+
+    # patch -p1 < $xpatch/lin11-allow-permissive-user-build.patch
 
     cd frameworks/base
     git am $xpatch/lin11-base-Revert-New-activity-transitions.patch 
@@ -41,7 +44,7 @@ build_src() {
     ln -sf "$OWN_KEYS_DIR" user-keys
     sed -i "1s;^;PRODUCT_DEFAULT_DEV_CERTIFICATE := user-keys/releasekey\nPRODUCT_OTA_PUBLIC_KEYS := user-keys/releasekey\n\n;" "vendor/lineage/config/common.mk"
     
-    brunch RMX2185 user
+    brunch RMX2185
 }
 
 upload_src() {
