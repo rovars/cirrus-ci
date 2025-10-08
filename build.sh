@@ -14,12 +14,13 @@ setup_src() {
 
     cd prebuilts/prebuiltapks
     git lfs pull
-    rm -rf Browser
+    rm -rf Browser Notes Mail Camera eDrive
     cd $SRC_DIR
 
     xpatch=$SRC_DIR/romx/script/rom/patch
 
     # patch -p1 < $xpatch/lin11-allow-permissive-user-build.patch
+    patch -p1 < $xpatch/init_fatal_reboot_target_recovery.patch
 
     cd frameworks/base
     git am $xpatch/lin11-base-Revert-New-activity-transitions.patch 
@@ -28,7 +29,6 @@ setup_src() {
     cd vendor/lineage
     # git am $xpatch/lin11-vendor-*
     cd $SRC_DIR
-
 }
 
 build_src() {

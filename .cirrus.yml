@@ -19,8 +19,7 @@ task:
     - echo "$gitconfigs" > ~/.gitconfig
     - ./main.sh sync
   build_script: ./main.sh build
-  upload_script: ./main.sh upload
-  rbe_logs_script: cat /tmp/rbe_metrics.txt
+  upload_script: ./main.sh upload  
 
   on_failure:
     notiferror_script:
