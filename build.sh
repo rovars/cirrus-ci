@@ -13,7 +13,7 @@ setup_src() {
     patch -p1 < $xpatch/lin11-allow-permissive-user-build.patch
     cd frameworks/base
     git am $xpatch/lin11-base-Revert-New-activity-transitions.patch
-    cd ../..
+    cd $SRC_DIR
 
     sed -i 's/lineage_/exthm_/g' device/realme/RMX2185/AndroidProducts.mk
     sed -i 's/lineage_/exthm_/g' device/realme/RMX2185/lineage_RMX2185.mk
