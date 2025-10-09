@@ -4,7 +4,7 @@ setup_src() {
     repo init -u https://gitlab.e.foundation/e/os/android.git -b v1-s --git-lfs --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
     git clone -q https://github.com/rovars/rom romx
     mkdir -p .repo/local_manifests
-    mv romx/script/rom/lin12* .repo/local_manifests/
+    mv romx/script/rom/12* .repo/local_manifests/
     retry_rc repo sync -c -j8 --force-sync --no-clone-bundle --no-tags --prune
 
     rm -rf external/chromium-webview
