@@ -22,6 +22,7 @@ setup_src() {
 
     cd frameworks/base
     git am $xpatch/lin11-base-Revert-New-activity-transitions.patch
+    rm -rf $zpatch/patches_platform/frameworks_base/0011*
     git am $zpatch/patches_platform/frameworks_base/0*
     cd $SRC_DIR
 
