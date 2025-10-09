@@ -3,10 +3,8 @@
 setup_src() {
     repo init -u https://gitlab.e.foundation/e/os/android.git -b v1-s --git-lfs --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
     git clone -q https://github.com/rovars/rom romx
-
     mkdir -p .repo/local_manifests
-    mv romx/script/rom/*12* .repo/local_manifests/
-
+    mv romx/script/rom/lin12* .repo/local_manifests/
     retry_rc repo sync -c -j8 --force-sync --no-clone-bundle --no-tags --prune
 
     rm -rf external/chromium-webview
@@ -14,26 +12,41 @@ setup_src() {
 
     cd prebuilts/prebuiltapks
     git lfs pull
-    rm -rf Browser Notes Mail Camera eDrive
+    rm -rf Browser Notes Mail
     cd $SRC_DIR
 
     xpatch=$SRC_DIR/romx/script/rom/patch
+    zpatch=$SRC_DIR/romx/script/rom/patch/lin12
 
-    # patch -p1 < $xpatch/lin11-allow-permissive-user-build.patch
     patch -p1 < $xpatch/init_fatal_reboot_target_recovery.patch
 
     cd frameworks/base
-    git am $xpatch/lin11-base-Revert-New-activity-transitions.patch 
+    git am $xpatch/lin11-base-Revert-New-activity-transitions.patch
+    git am $zpatch/patches_platform/frameworks_base/0*
     cd $SRC_DIR
 
-    cd vendor/lineage
-    # git am $xpatch/lin11-vendor-*
+    cd system/core
+    git am $zpatch/patches_treble_phh/platform_system_core/0001*
+    git am $zpatch/patches_treble_phh/platform_system_core/0002*
+    git am $zpatch/patches_treble_phh/platform_system_core/0003*
+    git am $zpatch/patches_treble_phh/platform_system_core/0006*    
     cd $SRC_DIR
+
+    cd external/selinux
+    git am $zpatch/patches_treble_phh/platform_external_selinux/0002-*
+    cd $SCR_DIR
 }
 
 build_src() {
     source build/envsetup.sh
     set_remote_vars
+
+    export RBE_CXX_EXEC_STRATEGY="racing"
+    export RBE_JAVAC_EXEC_STRATEGY="racing"
+    export RBE_R8_EXEC_STRATEGY="racing"
+    export RBE_D8_EXEC_STRATEGY="racing"
+
+    export RELEASE_TYPE=community
 
     export SKIP_ABI_CHECKS=true    
     export OWN_KEYS_DIR=$SRC_DIR/romx/keys
