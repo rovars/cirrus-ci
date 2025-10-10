@@ -40,6 +40,9 @@ setup_src() {
 build_src() {
     source build/envsetup.sh
     set_remote_vars
+    export RBE_instance="nano.buildbuddy.io"
+    export RBE_service="nano.buildbuddy.io:443"
+    export RBE_remote_headers="x-buildbuddy-api-key=$nanokeyvars"
     brunch RMX2185 user
 }
 
