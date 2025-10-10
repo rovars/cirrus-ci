@@ -32,7 +32,7 @@ setup_src() {
     mv lineage_RMX2185.mk aicp_RMX2185.mk
     cd $SRC_DIR
 
-    patch -p1 < $xpatch/init_fatal_reboot_target_recovery.patch
+    patch -p1 < $xp/init_fatal_reboot_target_recovery.patch
     awk -i inplace '!/true cannot be used in user builds/' system/sepolicy/Android.mk
 
 }
