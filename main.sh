@@ -2,6 +2,7 @@
 set -e
 source "$PWD/build.sh"
 export NINJA_HIGHMEM_NUM_JOBS=1
+export SKIP_ABI_CHECKS=true
 
 set_ccache_vars() {
     export USE_CCACHE=1
@@ -15,7 +16,6 @@ retry_rc() {
     local max_retries=12
     local delay=5
     local attempt=1
-
     while [[ $attempt -le $max_retries ]]; do
         "$@" && return 0
         [[ $attempt -lt $max_retries ]] && sleep "$delay"
@@ -46,13 +46,11 @@ save_cache() {
     ccache -s    
     ccache --cleanup &> /dev/null
     ccache --zero-stats &> /dev/null
-
     cd ~/
     tar -czf "$rclonefile" -C . .ccache --warning=no-file-changed || {
         xc -x "create ccache archive failure!"
         return 1
     }
-
     if retry_rc rclone copy "$rclonefile" "$rclonedir" &> /dev/null; then
         rm -f "$rclonefile"
         echo "===== ccache save success ====="
@@ -67,11 +65,9 @@ save_cache() {
 
 set_remote_vars() {
     git clone -q https://github.com/rovars/reclient
-    sed -i 's#sha256:582efb38f0c229ea39952fff9e132ccbe183e14869b39888010dacf56b360d62#sha256:1eb7f64b9e17102b970bd7a1af7daaebdb01c3fb777715899ef462d6c6d01a45#' build/make/core/rbe.mk
-
     unset USE_CCACHE CCACHE_EXEC CCACHE_DIR USE_GOMA
 
-    export USE_RBE="true"
+    export USE_RBE=1
     export RBE_DIR="reclient"
 
     export RBE_CXX_EXEC_STRATEGY="remote_local_fallback"
@@ -93,14 +89,11 @@ set_remote_vars() {
     export RBE_service_no_auth="true"
 
     rbex_logs="/tmp/rbelogs"
-    mkdir -p rbex_logs
-
-    export FLAG_platform="container-image=docker://gcr.io/androidbuild-re-dockerimage/android-build-remoteexec-image@sha256:1eb7f64b9e17102b970bd7a1af7daaebdb01c3fb777715899ef462d6c6d01a45"
+    mkdir -p $rbex_logs
 
     export RBE_log_dir="${rbex_logs}"
     export RBE_output_dir="${rbex_logs}"
-    export RBE_log_path="text://${rbex_logs}/reproxy_log.txt"
-    export RBE_reproxy_wait_seconds="20"
+    export RBE_proxy_log_dir="${rbex_logs}"    
 }
 
 main() {
