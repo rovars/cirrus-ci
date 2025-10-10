@@ -14,13 +14,14 @@ setup_src() {
     zpatch=$SRC_DIR/romx/script/rom/patch/lin12
 
     patch -p1 < $xpatch/init_fatal_reboot_target_recovery.patch
-    patch -p1 < $xpatch/12*
+    awk -i inplace '!/true cannot be used in user builds/' system/sepolicy/Android.mk
   
     cd system/core
     git am $zpatch/patches_treble_phh/platform_system_core/0001*
     git am $zpatch/patches_treble_phh/platform_system_core/0002*
     git am $zpatch/patches_treble_phh/platform_system_core/0003*
     git am $zpatch/patches_treble_phh/platform_system_core/0006*
+    git am $xpatch/12-allow-per*
     cd $SRC_DIR
 
     cd external/selinux
