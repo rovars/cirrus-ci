@@ -17,7 +17,7 @@ setup_src() {
     git clone -q --depth=1 https://github.com/LineageOS/android_external_chromium-webview -b master external/chromium-webview
   
     cd system/core
-    git am $zp/patches_treble_phh/platform_system_core/0001*    
+    git am $zp/patches_treble_phh/platform_system_core/0001*
     git am $xp/12-allow-per*
     cd $SRC_DIR
 
