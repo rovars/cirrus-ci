@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 setup_src() {
-    repo init -u https://github.com/AICP/platform_manifest.git -b s12.1 --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
-
+    repo init -u https://github.com/rovars/android.git -b lineage-19.1 --git-lfs --groups=all,-notdefault,-darwin,-mips --depth=1
+ 
     git clone -q https://github.com/rovars/rom r
 
     xp=$SRC_DIR/r/12
@@ -10,12 +10,15 @@ setup_src() {
 
     mkdir -p .repo/local_manifests
     mv $xp/12.xml .repo/local_manifests
-
+   
     retry_rc repo sync --no-tags --no-clone-bundle -j8
 
     rm -rf external/chromium-webview
     git clone -q --depth=1 https://github.com/LineageOS/android_external_chromium-webview -b master external/chromium-webview
-  
+
+    rm -rf system/core
+    git clone -q --depth=1 https://github.com/droid-legacy/android_system_core system/core -b lineage-19.1
+
     cd system/core
     git am $zp/patches_treble_phh/platform_system_core/0001*
     git am $xp/12-allow-per*
@@ -25,15 +28,10 @@ setup_src() {
     git am $zp/patches_treble_phh/platform_external_selinux/0002-*
     cd $SRC_DIR
 
-    cd device/realme/RMX2185
-    sed -i 's/lineage_/aicp_/g' AndroidProducts.mk
-    sed -i 's/lineage_/aicp_/g' lineage_RMX2185.mk
-    sed -i 's|$(call inherit-product, vendor/lineage/config/common_full_phone.mk)|$(call inherit-product, vendor/aicp/config/common_full_phone.mk)|g' lineage_RMX2185.mk
-    mv lineage_RMX2185.mk aicp_RMX2185.mk
-    cd $SRC_DIR
-
     patch -p1 < $xp/init_fatal_reboot_target_recovery.patch
+    patch -p1 < $xp/12.patch
     awk -i inplace '!/true cannot be used in user builds/' system/sepolicy/Android.mk
+    sed -i '$ a PRODUCT_SYSTEM_DEFAULT_PROPERTIES += persist.sys.disable_rescue=true' vendor/lineage/config/common.mk
 
 }
 
@@ -52,7 +50,7 @@ build_src() {
 
 upload_src() {
     REPO="rovars/vars"
-    RELEASE_TAG="AICP"
+    RELEASE_TAG="lineage-19.1"
     ROM_FILE=$(find out/target/product -name "*UNOFFICIAL*.zip" -print -quit)
     ROM_X="https://github.com/$REPO/releases/download/$RELEASE_TAG/$(basename "$ROM_FILE")"
 
