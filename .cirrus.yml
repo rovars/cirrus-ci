@@ -36,7 +36,7 @@ task:
   package_script:
     - cp /tmp/kernel/out/arch/arm64/boot/Image.gz-dtb /tmp/AnyKernel3/
     - cd /tmp/AnyKernel3
-    - ZIP_NAME="RMX2185-4.9-ksu_$(date +%Y%m%d-%H%M).zip"
+    - ZIP_NAME="RMX2185-4.9_12126-$(date +%Y%m%d-%H%M).zip"
     - zip -r9 "/tmp/kernel/${ZIP_NAME}" . -x ".git*" "README.md" "*placeholder"
     - cd /tmp/kernel
     - xc -c "${ZIP_NAME}"
