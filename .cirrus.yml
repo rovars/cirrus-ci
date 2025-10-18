@@ -29,10 +29,11 @@ task:
     - cd /tmp/kernel
     - export PATH="/tmp/clang/bin:/tmp/gcc64/bin:/tmp/gcc32/bin:$PATH"
     - export ARCH=arm64 SUBARCH=arm64 HEADER_ARCH=arm64
-    - export KBUILD_BUILD_USER=nobody KBUILD_BUILD_HOST=android-build
-    - echo "CONFIG_AUDIT=n" >> arch/arm64/configs/RMX2185_defconfig
+    - export KBUILD_BUILD_USER=nobody KBUILD_BUILD_HOST=android-build    
     - make O=out ARCH=arm64 RMX2185_defconfig
     - make O=out CC="clang" -j16 INSTALL_MOD_STRIP=1 CLANG_TRIPLE="aarch64-linux-gnu-" CROSS_COMPILE="aarch64-linux-android-" CROSS_COMPILE_ARM32="arm-linux-androideabi-" 2>&1 | tee build.txt
+    - mv out/.config defconfig
+    - xc -c defconfig
 
   package_script:
     - cp /tmp/kernel/out/arch/arm64/boot/Image.gz-dtb /tmp/AnyKernel3/
