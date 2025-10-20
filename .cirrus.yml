@@ -44,4 +44,5 @@ task:
 
   on_failure:
     sendtl_script:
-      - xc -c "Build Failed!" "/tmp/kernel/build.txt"
+      - cd "/tmp/kernel"
+      - xc -c build.txt "Build Failed!"
