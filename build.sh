@@ -40,14 +40,25 @@ build_src() {
     source build/envsetup.sh
     set_remote_vars
 
-    export SKIP_ABI_CHECKS=true
+    export INSTALL_MOD_STRIP=1
+    export BOARD_USES_MTK_HARDWARE=true
+    export MTK_HARDWARE=true
+    export USE_OPENGL_RENDERER=true
+    export USE_MINIKIN=true
+    export EXTENDED_FONT_FOOTPRINT=true
+
+    export KBUILD_BUILD_USER=nobody
+    export KBUILD_BUILD_HOST=android-build
+    export BUILD_USERNAME=nobody
+    export BUILD_HOSTNAME=android-build
+
     export OWN_KEYS_DIR=$SRC_DIR/romx/keys
     export RELEASE_TYPE=UNOFFICIAL
 
     sudo ln -s $OWN_KEYS_DIR/releasekey.pk8 $OWN_KEYS_DIR/testkey.pk8
     sudo ln -s $OWN_KEYS_DIR/releasekey.x509.pem $OWN_KEYS_DIR/testkey.x509.pem
     
-    brunch RMX2185 user
+    brunch RMX2185 user 2>&1 | tee build.txt
 }
 
 upload_src() {
@@ -64,6 +75,8 @@ upload_src() {
     fi
 
     gh release upload "$RELEASE_TAG" "$ROM_FILE" -R "$REPO" --clobber
+
+    xc -c "build.txt"
 
     echo "$ROM_X"
     MSG_XC2="( <a href='https://cirrus-ci.com/task/${CIRRUS_TASK_ID}'>Cirrus CI</a> ) - $CIRRUS_COMMIT_MESSAGE ( <a href='$ROM_X'>$(basename "$CIRRUS_BRANCH")</a> )"
