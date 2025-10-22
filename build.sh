@@ -15,7 +15,7 @@ setup_src() {
     git clone -q --depth=1 https://github.com/LineageOS/android_external_chromium-webview -b master external/chromium-webview
 
     zpatch=$SRC_DIR/z_patches
-    xpatch=$SRC_DIR/romx/A11
+    xpatch=$SRC_DIR/romx/11
 
     patch -p1 < $xpatch/*build.patch
 
