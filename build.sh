@@ -17,7 +17,7 @@ setup_src() {
     zpatch=$SRC_DIR/z_patches
     xpatch=$SRC_DIR/romx/A11
 
-    patch -p1 < $xpatch/*user-build.patch
+    patch -p1 < $xpatch/*build.patch
 
     cd vendor/lineage
     git am $zpatch/patch_002_vendor-lineage.patch
@@ -27,7 +27,7 @@ setup_src() {
 
     cd frameworks/base
     git am $zpatch/patch_001_base.patch
-    git am $xpatch/*base*.patch
+    git am $xpatch/*11-base*.patch
     cd $SRC_DIR
 
     cd packages/apps/Settings
@@ -52,7 +52,7 @@ build_src() {
 
 upload_src() {
     REPO="rovars/vars"
-    RELEASE_TAG="lineage-17.1"
+    RELEASE_TAG="lineage-18.1"
     ROM_FILE=$(find out/target/product -name "*-RMX*.zip" -print -quit)
     ROM_X="https://github.com/$REPO/releases/download/$RELEASE_TAG/$(basename "$ROM_FILE")"
 
