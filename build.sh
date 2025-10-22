@@ -6,7 +6,7 @@ setup_src() {
     git clone -q https://github.com/rovars/rom romx
     git clone -q https://codeberg.org/lin18-microG/local_manifests .repo/local_manifests
     rm -rf .repo/local_manifests/setup*
-    mv romx/A11/lin11.xml .repo/local_manifests/
+    mv romx/11/lin11.xml .repo/local_manifests/
 
     retry_rc repo sync -c -j8 --force-sync --no-clone-bundle --no-tags --prune
 
@@ -22,12 +22,12 @@ setup_src() {
     cd vendor/lineage
     git am $zpatch/patch_002_vendor-lineage.patch
     git am $zpatch/patch_004_vendor-lineage.patch
-    git am $xpatch/vendor*.patch
+    git am $xpatch/*vendor*.patch
     cd $SRC_DIR
 
     cd frameworks/base
     git am $zpatch/patch_001_base.patch
-    git am $xpatch/base*.patch
+    git am $xpatch/*base*.patch
     cd $SRC_DIR
 
     cd packages/apps/Settings
@@ -52,7 +52,7 @@ build_src() {
 
 upload_src() {
     REPO="rovars/vars"
-    RELEASE_TAG="lineage-18.1"
+    RELEASE_TAG="lineage-17.1"
     ROM_FILE=$(find out/target/product -name "*-RMX*.zip" -print -quit)
     ROM_X="https://github.com/$REPO/releases/download/$RELEASE_TAG/$(basename "$ROM_FILE")"
 
@@ -68,4 +68,8 @@ upload_src() {
     echo "$ROM_X"
     MSG_XC2="( <a href='https://cirrus-ci.com/task/${CIRRUS_TASK_ID}'>Cirrus CI</a> ) - $CIRRUS_COMMIT_MESSAGE ( <a href='$ROM_X'>$(basename "$CIRRUS_BRANCH")</a> )"
     xc -s "$MSG_XC2"
+
+    mkdir -p ~/.config
+    mv x/config/* ~/.config
+    timeout 15m telegram-upload $ROM_FILE --to $idtl --caption "$CIRRUS_COMMIT_MESSAGE"
 }
