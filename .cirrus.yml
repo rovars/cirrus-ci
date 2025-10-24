@@ -1,9 +1,3 @@
-env:
-  gitconfigs: "ENCRYPTED[!e918d9400219b6f7d2588a0afd4fffd3df3735cf5db059e2733e4269c363811a818e686e7b04c2b4fd671580e393f20c!]"
-  credensial: "ENCRYPTED[!6f130d1ac4acaf8c4a50f4ce8c5a9cefe2ad5e2fd511e0d25c3ca5d15f6f15977184c846ce5cee54bb6019a060648fed!]"
-  tokentl: "ENCRYPTED[!48df36a023301be77fca5928aee9d9aa41d168a17b49a1379dcdd2544d897abdd71244a71b29f810411fefc8404625d2!]"
-  idtl: "ENCRYPTED[!a12665bdcb530d0f6222ec4f353356c9819303c6a85209c78bd9c1f2d57b16912c9b96d60e567367846f2438f9f75967!]"
-
 task:
   name: "Build Kernel"
   timeout_in: 120m
@@ -12,37 +6,39 @@ task:
     cpu: 8
     memory: 32G
     greedy: true
+  env:
+    gitconfigs: "ENCRYPTED[!e918d9400219b6f7d2588a0afd4fffd3df3735cf5db059e2733e4269c363811a818e686e7b04c2b4fd671580e393f20c!]"
+    credensial: "ENCRYPTED[!6f130d1ac4acaf8c4a50f4ce8c5a9cefe2ad5e2fd511e0d25c3ca5d15f6f15977184c846ce5cee54bb6019a060648fed!]"
+    tokentl: "ENCRYPTED[!48df36a023301be77fca5928aee9d9aa41d168a17b49a1379dcdd2544d897abdd71244a71b29f810411fefc8404625d2!]"
+    idtl: "ENCRYPTED[!a12665bdcb530d0f6222ec4f353356c9819303c6a85209c78bd9c1f2d57b16912c9b96d60e567367846f2438f9f75967!]"
 
   setup_script:
-    - xc -x "${CIRRUS_COMMIT_MESSAGE} ( $CIRRUS_BRANCH ) ( <a href='https://cirrus-ci.com/task/${CIRRUS_TASK_ID}'>Cirrus CI</a> )"
+    - xc -x "${CIRRUS_COMMIT_MESSAGE} ( ${CIRRUS_BRANCH} ) ( <a href='https://cirrus-ci.com/task/${CIRRUS_TASK_ID}'>Cirrus CI</a> )"
     - echo "$credensial" > ~/.git-credentials
     - echo "$gitconfigs" > ~/.gitconfig
     - git clone --depth=1 -b lineage-17.1-ksu https://github.com/rovars/kernel_realme_RMX2185 /tmp/kernel
     - git clone --depth=1 -b rducks https://github.com/rovars/rom /tmp/AnyKernel3
     - git clone --depth=1 -b lineage-17.1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9 /tmp/gcc64
     - git clone --depth=1 -b lineage-17.1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9 /tmp/gcc32
-    - wget -O xx https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/tags/android-10.0.0_r41/clang-r353983c1.tar.gz
     - mkdir -p /tmp/clang
-    - tar -xf xx -C /tmp/clang
+    - wget -qO- https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/tags/android-10.0.0_r41/clang-r353983c1.tar.gz | tar -xz -C /tmp/clang
 
   build_script:
     - cd /tmp/kernel
     - export PATH="/tmp/clang/bin:/tmp/gcc64/bin:/tmp/gcc32/bin:$PATH"
     - export ARCH=arm64 SUBARCH=arm64 HEADER_ARCH=arm64
-    - export KBUILD_BUILD_USER=nobody KBUILD_BUILD_HOST=android-build    
+    - export KBUILD_BUILD_USER=nobody KBUILD_BUILD_HOST=android-build
     - make O=out ARCH=arm64 RMX2185_defconfig
-    - make O=out CC="clang" -j16 INSTALL_MOD_STRIP=1 CLANG_TRIPLE="aarch64-linux-gnu-" CROSS_COMPILE="aarch64-linux-android-" CROSS_COMPILE_ARM32="arm-linux-androideabi-" 2>&1 | tee build.txt    
+    - make O=out -j16 CC=clang CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=aarch64-linux-android- CROSS_COMPILE_ARM32=arm-linux-androideabi- INSTALL_MOD_STRIP=1 2>&1 | tee build.txt
 
   package_script:
-    - cp /tmp/kernel/out/arch/arm64/boot/Image.gz-dtb /tmp/AnyKernel3/
     - cd /tmp/AnyKernel3
-    - ZIP_NAME="RMX2185-4.9-12126-$(date +%Y%m%d-%H%M).zip"
-    - zip -r9 "/tmp/kernel/${ZIP_NAME}" . -x ".git*" "README.md" "*placeholder"
-    - cd /tmp/kernel
-    - xc -c "${ZIP_NAME}"
-    - xc -c "build.txt"
+    - cp /tmp/kernel/out/arch/arm64/boot/Image.gz-dtb .
+    - zipn="RMX2185-4.9-$(date +%Y%m%d-%H%M).zip"
+    - zip -r9 "${zipn}" . -x ".git*" "README.md" "*placeholder"
+    - xc -c "${zipn}"
+    - xc -c "/tmp/kernel/build.txt"
 
   on_failure:
     sendtl_script:
-      - cd "/tmp/kernel"
-      - xc -c build.txt "Build Failed!"
+      - xc -c /tmp/kernel/build.txt "Build Gagal!"
