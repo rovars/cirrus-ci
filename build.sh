@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 
 setup_src() {
-    repo init -u https://github.com/exthmui-legacy/android.git -b exthm-11 --groups=all,-notdefault,-darwin,-mips --git-lfs
+    repo init -u https://github.com/exthmui-legacy/android.git -b exthm-11 --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
 
     git clone -q https://github.com/rovars/rom x
     mkdir -p  .repo/local_manifests
     mv x/11/*.xml .repo/local_manifests/
 
     retry_rc repo sync -j8 -c --no-clone-bundle --no-tags
+
+    rm -rf external/chromium-webview
+    git clone -q --depth=1 https://github.com/LineageOS/android_external_chromium-webview -b master external/chromium-webview
 
     chmod +x x/sync.sh
     source x/sync.sh
