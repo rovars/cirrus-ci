@@ -31,12 +31,6 @@ build_src() {
     export KBUILD_BUILD_HOST=android-build
     export BUILD_USERNAME=nobody
     export BUILD_HOSTNAME=android-build
-
-    export OWN_KEYS_DIR=$SRC_DIR/romx/keys
-    export RELEASE_TYPE=UNOFFICIAL
-
-    sudo ln -s $OWN_KEYS_DIR/releasekey.pk8 $OWN_KEYS_DIR/testkey.pk8
-    sudo ln -s $OWN_KEYS_DIR/releasekey.x509.pem $OWN_KEYS_DIR/testkey.x509.pem
     
     brunch RMX2185 user 2>&1 | tee build.txt
 }
