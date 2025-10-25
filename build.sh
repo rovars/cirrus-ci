@@ -11,7 +11,7 @@ setup_src() {
 
     rm -rf external/chromium-webview
     git clone -q --depth=1 https://github.com/LineageOS/android_external_chromium-webview -b master external/chromium-webview
-
+    patch -p1 < $xpatch/*build.patch
     chmod +x x/sync.sh
     source x/sync.sh
 }
@@ -37,7 +37,7 @@ build_src() {
 
 upload_src() {
     REPO="rovars/vars"
-    RELEASE_TAG="lineage-18.1"
+    RELEASE_TAG="ExthmUI"
     ROM_FILE=$(find out/target/product -name "*-RMX*.zip" -print -quit)
     ROM_X="https://github.com/$REPO/releases/download/$RELEASE_TAG/$(basename "$ROM_FILE")"
 
