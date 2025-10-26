@@ -31,12 +31,18 @@ build_src() {
     export KBUILD_BUILD_HOST=android-build
     export BUILD_USERNAME=nobody
     export BUILD_HOSTNAME=android-build
+
+    export OWN_KEYS_DIR=$rom_dir/romx/keys
+    export EXTHM_EXTRAVERSION=signed
+
+    sudo ln -s $OWN_KEYS_DIR/releasekey.pk8 $OWN_KEYS_DIR/testkey.pk8
+    sudo ln -s $OWN_KEYS_DIR/releasekey.x509.pem $OWN_KEYS_DIR/testkey.x509.pem
     
     brunch RMX2185 user 2>&1 | tee build.txt
 }
 
 upload_src() {
-    REPO="rovars/vars"
+    REPO="rovars/release"
     RELEASE_TAG="ExthmUI"
     ROM_FILE=$(find out/target/product -name "*-RMX*.zip" -print -quit)
     ROM_X="https://github.com/$REPO/releases/download/$RELEASE_TAG/$(basename "$ROM_FILE")"
