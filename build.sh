@@ -24,15 +24,13 @@ build_src() {
     export BOARD_USES_MTK_HARDWARE=true
     export MTK_HARDWARE=true
     export USE_OPENGL_RENDERER=true
-    export USE_MINIKIN=true
-    export EXTENDED_FONT_FOOTPRINT=true
 
     export KBUILD_BUILD_USER=nobody
     export KBUILD_BUILD_HOST=android-build
     export BUILD_USERNAME=nobody
     export BUILD_HOSTNAME=android-build
 
-    export OWN_KEYS_DIR=$rom_dir/romx/keys
+    export OWN_KEYS_DIR=$rom_dir/x/keys
     export EXTHM_EXTRAVERSION=signed
 
     sudo ln -s $OWN_KEYS_DIR/releasekey.pk8 $OWN_KEYS_DIR/testkey.pk8
