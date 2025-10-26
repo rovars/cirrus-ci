@@ -9,13 +9,11 @@ setup_src() {
 
     retry_rc repo sync -j8 -c --no-clone-bundle --no-tags
 
-    # rm -rf external/chromium-webview
-    # git clone -q --depth=1 https://github.com/LineageOS/android_external_chromium-webview -b master external/chromium-webview
+    rm -rf external/chromium-webview
+    git clone -q --depth=1 https://github.com/LineageOS/android_external_chromium-webview -b master external/chromium-webview
 
     xpatch=$rom_src/x/11
     patch -p1 < $xpatch/*build.patch
-    chmod +x x/sync.sh
-    source x/sync.sh
 }
 
 build_src() {
