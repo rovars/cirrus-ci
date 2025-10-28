@@ -12,9 +12,6 @@ setup_src() {
     rm -rf external/chromium-webview
     git clone -q --depth=1 https://github.com/LineageOS/android_external_chromium-webview -b master external/chromium-webview
 
-    rm -rf packages/apps/exTHmSettings
-    git clone -q --depth=1 https://github.com/rovars/android_packages_apps_exTHmSettings -b exthm-11 packages/apps/exTHmSettings
-
     xpatch=$rom_src/x/11
     patch -p1 < $xpatch/*build.patch
 }
