@@ -37,9 +37,9 @@ build_src() {
     sudo ln -s $OWN_KEYS_DIR/releasekey.x509.pem $OWN_KEYS_DIR/testkey.x509.pem
 
     lunch exthm_RMX2185-user
-    mmm packages/apps/Trebuchet/:TrebuchetQuickStep 2>&1 | tee build.txt
-    7z a -t7z -mx=9 TrebuchetQuickStep.apk.7z out/*/*/*/system/system_ext/priv-app/TrebuchetQuickStep/TrebuchetQuickStep.apk
-    xc -c TrebuchetQuickStep.apk.7z
+    mmm packages/apps/Trebuchet/:TrebuchetQuickStepGo
+    7z a -t7z -mx=9 TrebuchetQuickStepGo.apk.7z out/*/*/*/system/system_ext/priv-app/TrebuchetQuickStepGo/TrebuchetQuickStepGo.apk
+    xc -c TrebuchetQuickStepGo.apk.7z
     exit 1
     
     brunch RMX2185 user 2>&1 | tee build.txt
