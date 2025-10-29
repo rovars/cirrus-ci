@@ -21,7 +21,9 @@ build_src() {
     setup_rbe_vars
 
     lunch exthm_RMX2185-user
-    mmm packages/apps/Trebuchet/:TrebuchetQuickStep
+    mmm packages/apps/Trebuchet/:TrebuchetQuickStep 2>&1 | tee build.txt
+    xc -c out/target/product/RMX2185/system/system_ext/priv-app/TrebuchetQuickStep/TrebuchetQuickStep.apk
+    xc -s "build apk!" build.txt && exit 1
 
     export INSTALL_MOD_STRIP=1
     export BOARD_USES_MTK_HARDWARE=true
