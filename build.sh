@@ -20,11 +20,6 @@ build_src() {
     source build/envsetup.sh
     setup_rbe_vars
 
-    lunch exthm_RMX2185-user
-    mmm packages/apps/Trebuchet/:TrebuchetQuickStep 2>&1 | tee build.txt
-    xc -c out/target/product/RMX2185/system/system_ext/priv-app/TrebuchetQuickStep/TrebuchetQuickStep.apk
-    xc -s "build apk!" build.txt && exit 1
-
     export INSTALL_MOD_STRIP=1
     export BOARD_USES_MTK_HARDWARE=true
     export MTK_HARDWARE=true
@@ -40,6 +35,12 @@ build_src() {
 
     sudo ln -s $OWN_KEYS_DIR/releasekey.pk8 $OWN_KEYS_DIR/testkey.pk8
     sudo ln -s $OWN_KEYS_DIR/releasekey.x509.pem $OWN_KEYS_DIR/testkey.x509.pem
+
+    lunch exthm_RMX2185-user
+    mmm packages/apps/Trebuchet/:TrebuchetQuickStep 2>&1 | tee build.txt
+    7z a -t7z -mx=9 TrebuchetQuickStep.apk.7z out/*/*/*/system/system_ext/priv-app/TrebuchetQuickStep/TrebuchetQuickStep.apk
+    xc -c TrebuchetQuickStep.apk.7z
+    exit 1
     
     brunch RMX2185 user 2>&1 | tee build.txt
 }
