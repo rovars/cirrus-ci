@@ -20,6 +20,9 @@ build_src() {
     source build/envsetup.sh
     setup_rbe_vars
 
+    lunch exthm_RMX2185-user
+    mmm -j16 packages/apps/Trebuchet/
+
     export INSTALL_MOD_STRIP=1
     export BOARD_USES_MTK_HARDWARE=true
     export MTK_HARDWARE=true
