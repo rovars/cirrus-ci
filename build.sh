@@ -21,7 +21,7 @@ build_src() {
     setup_rbe_vars
 
     lunch exthm_RMX2185-user
-    mmm -j16 packages/apps/Trebuchet/
+    mmm packages/apps/Trebuchet/:TrebuchetQuickStep
 
     export INSTALL_MOD_STRIP=1
     export BOARD_USES_MTK_HARDWARE=true
