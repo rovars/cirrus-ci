@@ -5,7 +5,7 @@ setup_src() {
 
     git clone -q https://github.com/rovars/rom x
     mkdir -p  .repo/local_manifests
-    mv x/11/*.xml .repo/local_manifests/
+    mv x/11/ext.xml .repo/local_manifests/
 
     retry_rc repo sync -j8 -c --no-clone-bundle --no-tags
 
