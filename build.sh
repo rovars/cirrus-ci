@@ -50,6 +50,7 @@ build_src() {
     export BUILD_HOSTNAME=android-build
 
     export OWN_KEYS_DIR=$rom_src/x/keys
+    export TARGET_EXTHM_DICTIONARIES=false
     # export EXTHM_EXTRAVERSION=signed
 
     sudo ln -s $OWN_KEYS_DIR/releasekey.pk8 $OWN_KEYS_DIR/testkey.pk8
