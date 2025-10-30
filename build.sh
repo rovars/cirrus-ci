@@ -37,7 +37,7 @@ build_module_src() {
 build_src() {
     source build/envsetup.sh
     setup_rbe_vars
-    build_module_src
+    # build_module_src
 
     export INSTALL_MOD_STRIP=1
     export BOARD_USES_MTK_HARDWARE=true
@@ -50,7 +50,7 @@ build_src() {
     export BUILD_HOSTNAME=android-build
 
     export OWN_KEYS_DIR=$rom_src/x/keys
-    export EXTHM_EXTRAVERSION=signed
+    # export EXTHM_EXTRAVERSION=signed
 
     sudo ln -s $OWN_KEYS_DIR/releasekey.pk8 $OWN_KEYS_DIR/testkey.pk8
     sudo ln -s $OWN_KEYS_DIR/releasekey.x509.pem $OWN_KEYS_DIR/testkey.x509.pem
