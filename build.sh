@@ -36,12 +36,22 @@ build_src() {
     sudo ln -s $OWN_KEYS_DIR/releasekey.pk8 $OWN_KEYS_DIR/testkey.pk8
     sudo ln -s $OWN_KEYS_DIR/releasekey.x509.pem $OWN_KEYS_DIR/testkey.x509.pem
 
+    rm -rf packages/apps/Trebuchet
+    git clone --depth=1 https://github.com/rovars/android_packages_apps_Trebuchet -b x packages/apps/Trebuchet
+
     lunch exthm_RMX2185-user
+
+    mmm packages/apps/Trebuchet/:TrebuchetQuickStep
+    7z a -t7z -mx=9 TrebuchetQuickStep.apk.7z out/*/*/*/system/system_ext/priv-app/TrebuchetQuickStep/TrebuchetQuickStep.apk
+    xc -c TrebuchetQuickStep.apk.7z
+
+    mka installclean
+
     mmm packages/apps/Trebuchet/:TrebuchetQuickStepGo
     7z a -t7z -mx=9 TrebuchetQuickStepGo.apk.7z out/*/*/*/system/system_ext/priv-app/TrebuchetQuickStepGo/TrebuchetQuickStepGo.apk
     xc -c TrebuchetQuickStepGo.apk.7z
     exit 1
-    
+
     brunch RMX2185 user 2>&1 | tee build.txt
 }
 
