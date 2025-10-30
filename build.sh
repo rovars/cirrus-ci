@@ -49,9 +49,9 @@ build_src() {
     export BUILD_USERNAME=nobody
     export BUILD_HOSTNAME=android-build
 
-    export RBE_instance="nano.buildbuddy.io"
-    export RBE_service="nano.buildbuddy.io:443"
-    export RBE_remote_headers="x-buildbuddy-api-key=$nanokeyvars"
+    # export RBE_instance="nano.buildbuddy.io"
+    # export RBE_service="nano.buildbuddy.io:443"
+    # export RBE_remote_headers="x-buildbuddy-api-key=$nanokeyvars"
 
     export OWN_KEYS_DIR=$rom_src/x/keys
     export TARGET_EXTHM_DICTIONARIES=false
