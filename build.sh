@@ -37,7 +37,7 @@ build_module_src() {
 build_src() {
     source build/envsetup.sh
     setup_rbe_vars
-    # build_module_src
+    build_module_src
 
     export INSTALL_MOD_STRIP=1
     export BOARD_USES_MTK_HARDWARE=true
