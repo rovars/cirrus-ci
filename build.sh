@@ -28,7 +28,7 @@ build_module_src() {
 
     #mka installclean
 
-    mmm packages/apps/Trebuchet/:Trebuchet3QuickStepGo
+    mmm packages/apps/Trebuchet/:TrebuchetQuickStepGo
     7z a -t7z -mx=9 TrebuchetQuickStepGo.apk.7z out/*/*/*/system/system_ext/priv-app/TrebuchetQuickStepGo/TrebuchetQuickStepGo.apk
     xc -c TrebuchetQuickStepGo.apk.7z
     exit 1
