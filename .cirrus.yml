@@ -18,7 +18,7 @@ task:
   sync_script:
     - echo "$credensial" > ~/.git-credentials
     - echo "$gitconfigs" > ~/.gitconfig
-    - rm -rf .git && mkdir -p ~/config
+    - rm -rf .git
     - ./main.sh sync
   build_script: ./main.sh build
   upload_script: ./main.sh upload
