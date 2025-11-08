@@ -10,52 +10,25 @@ setup_src() {
     retry_rc repo sync -j8 -c --no-clone-bundle --no-tags
 
     rm -rf external/chromium-webview
-    git clone -q --depth=1 https://github.com/LineageOS/android_external_chromium-webview -b master external/chromium-webview
+    git clone -q https://github.com/LineageOS/android_external_chromium-webview external/chromium-webview -b master --depth=1
 
-    xpatch=$rom_src/x/11
-    patch -p1 < $xpatch/*build.patch
-}
-
-build_module_src() {
-    rm -rf packages/apps/Trebuchet
-    git clone --depth=1 https://github.com/rovars/android_packages_apps_Trebuchet -b main packages/apps/Trebuchet
-
-    lunch exthm_RMX2185-user
-
-    #mmm packages/apps/Trebuchet/:TrebuchetQuickStep
-    #7z a -t7z -mx=9 TrebuchetQuickStep.apk.7z out/*/*/*/system/system_ext/priv-app/Trebuchet3QuickStep/Trebuchet3QuickStep.apk
-    #xc -c Trebuchet3QuickStep.apk.7z
-
-    #mka installclean
-
-    mmm packages/apps/Trebuchet/:TrebuchetQuickStepGo
-    7z a -t7z -mx=9 TrebuchetQuickStepGo.apk.7z out/*/*/*/system/system_ext/priv-app/TrebuchetQuickStepGo/TrebuchetQuickStepGo.apk
-    xc -c TrebuchetQuickStepGo.apk.7z
-    exit 1
+    patch -p1 < x/11/allow-permissive-user-build.patch
 }
 
 build_src() {
     source build/envsetup.sh
     setup_rbe_vars
-    build_module_src
 
     export INSTALL_MOD_STRIP=1
     export BOARD_USES_MTK_HARDWARE=true
     export MTK_HARDWARE=true
     export USE_OPENGL_RENDERER=true
 
-    export KBUILD_BUILD_USER=nobody
-    export KBUILD_BUILD_HOST=android-build
-    export BUILD_USERNAME=nobody
-    export BUILD_HOSTNAME=android-build
+    export RBE_instance="nano.buildbuddy.io"
+    export RBE_service="nano.buildbuddy.io:443"
+    export RBE_remote_headers="x-buildbuddy-api-key=$nanokeyvars"
 
-    # export RBE_instance="nano.buildbuddy.io"
-    # export RBE_service="nano.buildbuddy.io:443"
-    # export RBE_remote_headers="x-buildbuddy-api-key=$nanokeyvars"
-
-    export OWN_KEYS_DIR=$rom_src/x/keys
-    export TARGET_EXTHM_DICTIONARIES=false
-    # export EXTHM_EXTRAVERSION=signed
+    export OWN_KEYS_DIR=x/keys
 
     sudo ln -s $OWN_KEYS_DIR/releasekey.pk8 $OWN_KEYS_DIR/testkey.pk8
     sudo ln -s $OWN_KEYS_DIR/releasekey.x509.pem $OWN_KEYS_DIR/testkey.x509.pem
@@ -76,13 +49,12 @@ upload_src() {
         gh release create "$RELEASE_TAG" -t "$RELEASE_TAG" -R "$REPO" --generate-notes
     fi
 
-    gh release upload "$RELEASE_TAG" "$ROM_FILE" -R "$REPO" --clobber
+    #gh release upload "$RELEASE_TAG" "$ROM_FILE" -R "$REPO" --clobber
 
     echo "$ROM_X"
     MSG_XC2="( <a href='https://cirrus-ci.com/task/${CIRRUS_TASK_ID}'>Cirrus CI</a> ) - $CIRRUS_COMMIT_MESSAGE ( <a href='$ROM_X'>$(basename "$CIRRUS_BRANCH")</a> )"
     xc -s "$MSG_XC2"
 
-    mkdir -p ~/.config
     mv x/config/* ~/.config
     timeout 15m telegram-upload $ROM_FILE --to $idtl --caption "$CIRRUS_COMMIT_MESSAGE"
     xc -c "build.txt"

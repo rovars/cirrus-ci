@@ -35,7 +35,7 @@ setup_ccache_vars() {
         echo "===== no ccache? ah skip ====="
         xc -s2 "( no ccache? ah skip )"
     fi
-    cd "$rom_src"
+    cd $PWD
 }
 
 save_cache() {
@@ -56,7 +56,7 @@ save_cache() {
         xc -s2 "( ccache save failure )"
         return 1
     fi
-    cd "$rom_src"
+    cd $PWD
 }
 
 setup_rbe_vars() {
@@ -84,9 +84,6 @@ setup_rbe_vars() {
 }
 
 main() {
-    export rom_src="$PWD/src"
-    mkdir -p "$rom_src" && cd "$rom_src"
-
     case "${1:-}" in
         sync)
             xc -s "( <a href='https://cirrus-ci.com/task/${CIRRUS_TASK_ID}'>Cirrus CI</a> ) - $CIRRUS_COMMIT_MESSAGE ( $CIRRUS_BRANCH )"
