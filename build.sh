@@ -9,14 +9,15 @@ setup_src() {
 
     rm -rf external/chromium-webview
     git clone -q https://github.com/LineageOS/android_external_chromium-webview external/chromium-webview -b master --depth=1
-
-    source xxx/sync.sh    
+   
 }
 
 build_src() {
     source build/envsetup.sh
+    source xxx/sync.sh
     setup_rbe_vars
-    brunch RMX2185 user
+    lunch lineage_RMX2185-user
+    mka bacon
 }
 
 upload_src() {
