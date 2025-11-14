@@ -24,7 +24,7 @@ task:
         git clone --depth=1 -b lineage-17.1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9 /tmp/gcc64
         git clone --depth=1 -b lineage-17.1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9 /tmp/gcc32
         mkdir -p /tmp/clang
-        wget -qO- https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/tags/android-10.0.0_r41/clang-r353983c1.tar.gz | tar -xz -C /tmp/clang
+        wget -qO- https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/tags/android-10.0.0_r41/clang-r353983c.tar.gz | tar -xz -C /tmp/clang
       else
         git clone --depth=1 https://github.com/techyminati/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-gnu-7.5 /tmp/gcc64
         git clone --depth=1 https://github.com/techyminati/android_prebuilts_gcc_linux-x86_arm_arm-linux-gnueabihf-7.5 /tmp/gcc32
