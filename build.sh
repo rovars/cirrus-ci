@@ -1,44 +1,33 @@
 #!/usr/bin/env bash
 
 setup_src() {
-    repo init -u https://github.com/rovars/android.git -b exthm-11 --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
-
-    git clone -q https://github.com/rovars/rom xx
+    repo init -u https://github.com/crDroid11/android.git -b 11.0 --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
+    git clone -q https://github.com/rovars/rom xxx
     mkdir -p  .repo/local_manifests
-    mv xx/11/ext.xml .repo/local_manifests/
-
+    mv xxx/11/crd.xml .repo/local_manifests/
     retry_rc repo sync -j8 -c --no-clone-bundle --no-tags
 
     rm -rf external/chromium-webview
     git clone -q https://github.com/LineageOS/android_external_chromium-webview external/chromium-webview -b master --depth=1
 
-    patch -p1 < xx/11/allow-permissive-user-build.patch
+    patch -p1 < xxx/11/allow-permissive-user-build.patch
+    patch -p1 < xxx/11/base-Revert-New-activity-transitions.patch
 }
 
 build_src() {
-    source build/envsetup.sh
-    setup_rbe_vars
-
-    export INSTALL_MOD_STRIP=1
-    export BOARD_USES_MTK_HARDWARE=true
-    export MTK_HARDWARE=true
-    export USE_OPENGL_RENDERER=true
-
-    export RBE_instance="nano.buildbuddy.io"
-    export RBE_service="nano.buildbuddy.io:443"
-    export RBE_remote_headers="x-buildbuddy-api-key=$nanokeyvars"
-
-    export OWN_KEYS_DIR=$PWD/xx/keys
-
+    sed -i "1s;^;PRODUCT_DEFAULT_DEV_CERTIFICATE := user-keys/releasekey\nPRODUCT_OTA_PUBLIC_KEYS := user-keys/releasekey\n\n;" "vendor/crdroid/config/common.mk"
+    export OWN_KEYS_DIR=$PWD/xxx/keys
     sudo ln -s $OWN_KEYS_DIR/releasekey.pk8 $OWN_KEYS_DIR/testkey.pk8
     sudo ln -s $OWN_KEYS_DIR/releasekey.x509.pem $OWN_KEYS_DIR/testkey.x509.pem
 
+    source build/envsetup.sh
+    setup_rbe_vars
     brunch RMX2185 user
 }
 
 upload_src() {
     REPO="rovars/release"
-    RELEASE_TAG="ExthmUI"
+    RELEASE_TAG="crdroid"
     ROM_FILE=$(find out/target/product -name "*-RMX*.zip" -print -quit)
     ROM_X="https://github.com/$REPO/releases/download/$RELEASE_TAG/$(basename "$ROM_FILE")"
 
@@ -49,12 +38,12 @@ upload_src() {
         gh release create "$RELEASE_TAG" -t "$RELEASE_TAG" -R "$REPO" --generate-notes
     fi
 
-    #gh release upload "$RELEASE_TAG" "$ROM_FILE" -R "$REPO" --clobber
+    gh release upload "$RELEASE_TAG" "$ROM_FILE" -R "$REPO" --clobber
 
     echo "$ROM_X"
     MSG_XC2="( <a href='https://cirrus-ci.com/task/${CIRRUS_TASK_ID}'>Cirrus CI</a> ) - $CIRRUS_COMMIT_MESSAGE ( <a href='$ROM_X'>$(basename "$CIRRUS_BRANCH")</a> )"
     xc -s "$MSG_XC2"
 
-    mkdir -p ~/.config && mv xx/config/* ~/.config
+    mkdir -p ~/.config && mv xxx/config/* ~/.config
     timeout 15m telegram-upload $ROM_FILE --to $idtl --caption "$CIRRUS_COMMIT_MESSAGE"
 }

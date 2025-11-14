@@ -19,44 +19,48 @@ retry_rc() {
 setup_ccache_vars() {
     export USE_CCACHE=1
     export CCACHE_EXEC="$(command -v ccache)"
-    export CCACHE_DIR="$HOME/.ccache"
+    export CCACHE_DIR="/tmp/ccache"
     mkdir -p "$CCACHE_DIR"
     ccache -M 50G -F 0 &>/dev/null
     ccache -o compression=true &>/dev/null
 
-    cd "$HOME"
-    if retry_rc rclone copy "$rclonedir/$rclonefile" . &>/dev/null; then
-        tar -xzf "$rclonefile" -C .
-        rm -f "$rclonefile"
-        echo "===== ccache setup done ====="
+    local local_tarball="/tmp/$rclonefile"
+    rm -f "$local_tarball"
+
+    if retry_rc rclone copy "$rclonedir/$rclonefile" "/tmp" &>/dev/null; then
+        tar -xzf "$local_tarball" -C "/tmp"
+        rm -f "$local_tarball"
+        echo "===== ccache setup done (/tmp/ccache) ====="
         xc -s2 "( ccache setup done )"
     else
-        rm -f "$rclonefile"
-        echo "===== no ccache? ah skip ====="
-        xc -s2 "( no ccache? ah skip )"
+        rm -f "$local_tarball"
+        echo "===== no ccache skip ====="
+        xc -s2 "( no ccache skip )"
     fi
-    cd $PWD
 }
 
 save_cache() {
     export CCACHE_DISABLE=1
     ccache -s
     ccache --cleanup --zero-stats &>/dev/null
-    cd "$HOME"
-    tar -czf "$rclonefile" -C . .ccache --warning=no-file-changed || {
+
+    local local_tarball="/tmp/$rclonefile"
+    rm -f "$local_tarball"
+
+    tar -czf "$local_tarball" -C "/tmp" ccache --warning=no-file-changed || {
         xc -x "create ccache archive failure!"
         return 1
     }
-    if retry_rc rclone copy "$rclonefile" "$rclonedir" &>/dev/null; then
-        rm -f "$rclonefile"
-        echo "===== ccache save success ====="
+
+    if retry_rc rclone copy "$local_tarball" "$rclonedir" &>/dev/null; then
+        rm -f "$local_tarball"
+        echo "===== ccache save success (/tmp/ccache) ====="
         xc -s2 "( ccache save success )"
     else
         echo "===== ccache save failure ====="
         xc -s2 "( ccache save failure )"
         return 1
     fi
-    cd $PWD
 }
 
 setup_rbe_vars() {
