@@ -7,7 +7,7 @@ task:
     memory: 32G
     greedy: true
   env:
-    use_clangmix: "false"
+    use_clangmix: "true"
     gitconfigs: "ENCRYPTED[!e918d9400219b6f7d2588a0afd4fffd3df3735cf5db059e2733e4269c363811a818e686e7b04c2b4fd671580e393f20c!]"
     credensial: "ENCRYPTED[!6f130d1ac4acaf8c4a50f4ce8c5a9cefe2ad5e2fd511e0d25c3ca5d15f6f15977184c846ce5cee54bb6019a060648fed!]"
     tokentl: "ENCRYPTED[!48df36a023301be77fca5928aee9d9aa41d168a17b49a1379dcdd2544d897abdd71244a71b29f810411fefc8404625d2!]"
