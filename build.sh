@@ -14,12 +14,6 @@ setup_src() {
 }
 
 build_src() {
-    echo "PRODUCT_DEFAULT_DEV_CERTIFICATE := user-keys/releasekey" >> vendor/lineage/config/crdroid.mk
-    echo "PRODUCT_OTA_PUBLIC_KEYS := user-keys/releasekey" >> vendor/lineage/config/crdroid.mk
-    export OWN_KEYS_DIR=$PWD/xxx/keys
-    sudo ln -s $OWN_KEYS_DIR/releasekey.pk8 $OWN_KEYS_DIR/testkey.pk8
-    sudo ln -s $OWN_KEYS_DIR/releasekey.x509.pem $OWN_KEYS_DIR/testkey.x509.pem
-
     source build/envsetup.sh
     setup_rbe_vars
     brunch RMX2185 user
