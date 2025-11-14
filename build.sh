@@ -10,7 +10,7 @@ setup_src() {
     rm -rf external/chromium-webview
     git clone -q https://github.com/LineageOS/android_external_chromium-webview external/chromium-webview -b master --depth=1
 
-    patch -p1 < xxx/11/allow-permissive-user-build.patch
+    source xxx/sync.sh
     patch -p1 < xxx/11/base-Revert-New-activity-transitions.patch
 }
 
