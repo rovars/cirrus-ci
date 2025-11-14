@@ -14,7 +14,10 @@ setup_src() {
 }
 
 build_src() {
-    sed -i "1s;^;PRODUCT_DEFAULT_DEV_CERTIFICATE := user-keys/releasekey\nPRODUCT_OTA_PUBLIC_KEYS := user-keys/releasekey\n\n;" "vendor/crdroid/config/common.mk"
+    cd vendor/crdroid
+    echo "PRODUCT_DEFAULT_DEV_CERTIFICATE := user-keys/releasekey" >> config/crdroid.mk
+    echo "PRODUCT_OTA_PUBLIC_KEYS := user-keys/releasekey" >> config/crdroid.mk
+    cd -
     export OWN_KEYS_DIR=$PWD/xxx/keys
     sudo ln -s $OWN_KEYS_DIR/releasekey.pk8 $OWN_KEYS_DIR/testkey.pk8
     sudo ln -s $OWN_KEYS_DIR/releasekey.x509.pem $OWN_KEYS_DIR/testkey.x509.pem
