@@ -4,14 +4,18 @@ setup_src() {
     repo init -u https://github.com/LineageOS/android.git -b lineage-18.1 --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
 
     git clone -q https://github.com/rovars/rom xx
-    git clone -q https://codeberg.org/lin18-microG/local_manifests .repo/local_manifests
+    git clone -q https://codeberg.org/lin18-microG/local_manifests -b lineage-18.1 .repo/local_manifests
     
     rm -rf .repo/local_manifests/setup*
     mv xx/11/device.xml .repo/local_manifests/
 
     retry_rc repo sync -j8 -c --no-clone-bundle --no-tags
 
-    rm -rf external/AOSmium-prebuilt
+    rm -rf external/AOSmium-prebuilt 
+    rm -rf external/hardened_malloc
+    rm -rf prebuilts/AuroraStore
+    rm -rf prebuilts/prebuiltapks
+
     rm -rf external/chromium-webview
     git clone -q https://github.com/LineageOS/android_external_chromium-webview external/chromium-webview -b master --depth=1
 
@@ -42,29 +46,32 @@ setup_src() {
     rm -rf packages/apps/LineageParts
     git clone https://github.com/bimuafaq/android_packages_apps_LineageParts packages/apps/LineageParts -b lineage-18.1 --depth=1
 
+    git clone https://github.com/MrSluffy/vendor_OnePlusLauncher vendor/oplauncher --depth=1
+
     patch -p1 < $PWD/xx/11/allow-permissive-user-build.patch
 }
 
 build_src() {
     source build/envsetup.sh
     setup_rbe
-    lunch lineage_RMX2185-user
 
     export OWN_KEYS_DIR=$PWD/xx/keys
     sudo ln -s $OWN_KEYS_DIR/releasekey.pk8 $OWN_KEYS_DIR/testkey.pk8
     sudo ln -s $OWN_KEYS_DIR/releasekey.x509.pem $OWN_KEYS_DIR/testkey.x509.pem
+
+    lunch lineage_RMX2185-user
     
-    mmma packages/apps/Trebuchet:TrebuchetQuickStep
-    cd out/target/product/RMX2185
-    7z a -r launcher3.7z system/system_ext/priv-app/TrebuchetQuickStep/TrebuchetQuickStep.apk
-    xc -c launcher3.7z
+    # mmma packages/apps/Trebuchet:TrebuchetQuickStep
+    # cd out/target/product/RMX2185
+    # 7z a -r launcher3.7z system/system_ext/priv-app/TrebuchetQuickStep/TrebuchetQuickStep.apk
+    # xc -c launcher3.7z
 
     # mmma frameworks/base/packages/SystemUI:SystemUI
     # cd out/target/product/RMX2185
     # 7z a -r SystemUI.7z system/system_ext/priv-app/SystemUI/SystemUI.apk
     # xc -c SystemUI.7z
 
-    # mka bacon
+    mka bacon
 }
 
 upload_src() {
