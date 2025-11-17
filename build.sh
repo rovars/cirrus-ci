@@ -1,28 +1,70 @@
 #!/usr/bin/env bash
 
 setup_src() {
-    repo init -u https://github.com/crDroid11/android.git -b 11.0 --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
-    git clone -q https://github.com/rovars/rom xxx
-    mkdir -p  .repo/local_manifests
-    mv xxx/11/crd.xml .repo/local_manifests/
+    repo init -u https://github.com/LineageOS/android.git -b lineage-18.1 --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
+
+    git clone -q https://github.com/rovars/rom xx
+    git clone -q https://codeberg.org/lin18-microG/local_manifests .repo/local_manifests
+    
+    rm -rf .repo/local_manifests/setup*
+    mv xx/11/device.xml .repo/local_manifests/
+
     retry_rc repo sync -j8 -c --no-clone-bundle --no-tags
 
+    rm -rf external/AOSmium-prebuilt
     rm -rf external/chromium-webview
     git clone -q https://github.com/LineageOS/android_external_chromium-webview external/chromium-webview -b master --depth=1
-   
+
+    rm -rf lineage-sdk
+    git clone https://github.com/bimuafaq/android_lineage-sdk lineage-sdk -b lineage-18.1 --depth=1
+
+    rm -rf build/make
+    git clone https://github.com/bimuafaq/android_build_make build/make -b lineage-18.1 --depth=1
+
+    rm -rf system/core
+    git clone https://github.com/bimuafaq/android_system_core system/core -b lineage-18.1 --depth=1
+
+    rm -rf vendor/lineage
+    git clone https://github.com/bimuafaq/android_vendor_lineage vendor/lineage -b lineage-18.1 --depth=1
+
+    rm -rf frameworks/base
+    git clone https://github.com/bimuafaq/android_frameworks_base frameworks/base -b xx --depth=1
+
+    rm -rf packages/apps/Settings
+    git clone https://github.com/bimuafaq/android_packages_apps_Settings packages/apps/Settings -b lineage-18.1 --depth=1
+
+    rm -rf packages/apps/Trebuchet
+    git clone https://github.com/rovars/android_packages_apps_Trebuchet packages/apps/Trebuchet -b exthm-11 --depth=1
+
+    rm -rf packages/apps/DeskClock
+    git clone https://github.com/rovars/android_packages_apps_DeskClock packages/apps/DeskClock -b exthm-11 --depth=1
+
+    rm -rf packages/apps/LineageParts
+    git clone https://github.com/bimuafaq/android_packages_apps_LineageParts packages/apps/LineageParts -b lineage-18.1 --depth=1
+
+    patch -p1 < $PWD/xx/11/allow-permissive-user-build.patch
 }
 
 build_src() {
     source build/envsetup.sh
-    source xxx/sync.sh
-    setup_rbe_vars
+    setup_rbe
     lunch lineage_RMX2185-user
+
+    export OWN_KEYS_DIR=$PWD/xx/keys
+    sudo ln -s $OWN_KEYS_DIR/releasekey.pk8 $OWN_KEYS_DIR/testkey.pk8
+    sudo ln -s $OWN_KEYS_DIR/releasekey.x509.pem $OWN_KEYS_DIR/testkey.x509.pem
+
+    mmma frameworks/base/packages/SystemUI:SystemUI
+    cd out/target/product/RMX2185
+    7z a -r SystemUI.7z system/system_ext/priv-app/SystemUI/SystemUI.apk
+    xc -c SystemUI.7z
+
     mka bacon
 }
 
 upload_src() {
     REPO="rovars/release"
-    RELEASE_TAG="crdroid"
+    RELEASE_TAG="lineage-18.1"
     ROM_FILE=$(find out/target/product -name "*-RMX*.zip" -print -quit)
     ROM_X="https://github.com/$REPO/releases/download/$RELEASE_TAG/$(basename "$ROM_FILE")"
 
@@ -33,12 +75,12 @@ upload_src() {
         gh release create "$RELEASE_TAG" -t "$RELEASE_TAG" -R "$REPO" --generate-notes
     fi
 
-    gh release upload "$RELEASE_TAG" "$ROM_FILE" -R "$REPO" --clobber
+    gh release upload "$RELEASE_TAG" "$ROM_FILE" -R "$REPO" --clobber || true
 
     echo "$ROM_X"
     MSG_XC2="( <a href='https://cirrus-ci.com/task/${CIRRUS_TASK_ID}'>Cirrus CI</a> ) - $CIRRUS_COMMIT_MESSAGE ( <a href='$ROM_X'>$(basename "$CIRRUS_BRANCH")</a> )"
     xc -s "$MSG_XC2"
 
-    mkdir -p ~/.config && mv xxx/config/* ~/.config
-    timeout 15m telegram-upload $ROM_FILE --to $idtl --caption "$CIRRUS_COMMIT_MESSAGE"
+    mkdir -p ~/.config && mv xx/config/* ~/.config
+    timeout 15m telegram-upload $ROM_FILE --to $idtl --caption "$CIRRUS_COMMIT_MESSAGE" || true
 }

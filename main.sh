@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
 set -e
-source "$PWD/build.sh"
+
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+source "$SCRIPT_DIR/build.sh"
 
 export NINJA_HIGHMEM_NUM_JOBS=1
 export SKIP_ABI_CHECKS=true
@@ -16,7 +18,7 @@ retry_rc() {
     return 1
 }
 
-setup_ccache_vars() {
+setup_cache() {
     export USE_CCACHE=1
     export CCACHE_EXEC="$(command -v ccache)"
     export CCACHE_DIR="/tmp/ccache"
@@ -27,43 +29,48 @@ setup_ccache_vars() {
     local local_tarball="/tmp/$rclonefile"
     rm -f "$local_tarball"
 
+    echo "Attempting to restore ccache from rclone..."
     if retry_rc rclone copy "$rclonedir/$rclonefile" "/tmp" &>/dev/null; then
         tar -xzf "$local_tarball" -C "/tmp"
         rm -f "$local_tarball"
-        echo "===== ccache setup done (/tmp/ccache) ====="
-        xc -s2 "( ccache setup done )"
+        echo "ccache restored successfully to $CCACHE_DIR"
+        xc -s2 "(CI: ccache restored)"
     else
         rm -f "$local_tarball"
-        echo "===== no ccache skip ====="
-        xc -s2 "( no ccache skip )"
+        echo "No ccache archive found. Skipping restore."
+        xc -s2 "(CI: No ccache found)"
     fi
 }
 
 save_cache() {
     export CCACHE_DISABLE=1
+    echo "Saving ccache..."
     ccache -s
     ccache --cleanup --zero-stats &>/dev/null
 
     local local_tarball="/tmp/$rclonefile"
     rm -f "$local_tarball"
 
+    echo "Creating ccache archive..."
     tar -czf "$local_tarball" -C "/tmp" ccache --warning=no-file-changed || {
-        xc -x "create ccache archive failure!"
+        echo "Failed to create ccache archive!"
+        xc -x "(CI: ccache archive creation failed)"
         return 1
     }
 
+    echo "Uploading ccache archive to rclone..."
     if retry_rc rclone copy "$local_tarball" "$rclonedir" &>/dev/null; then
         rm -f "$local_tarball"
-        echo "===== ccache save success (/tmp/ccache) ====="
-        xc -s2 "( ccache save success )"
+        echo "ccache saved successfully to $rclonedir"
+        xc -s2 "(CI: ccache saved)"
     else
-        echo "===== ccache save failure ====="
-        xc -s2 "( ccache save failure )"
+        echo "Failed to upload ccache archive!"
+        xc -s2 "(CI: ccache save failed)"
         return 1
     fi
 }
 
-setup_rbe_vars() {
+setup_rbe() {
     git clone -q https://github.com/rovars/reclient
     unset USE_CCACHE CCACHE_EXEC CCACHE_DIR USE_GOMA
 
