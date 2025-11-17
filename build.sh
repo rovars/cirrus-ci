@@ -53,13 +53,18 @@ build_src() {
     export OWN_KEYS_DIR=$PWD/xx/keys
     sudo ln -s $OWN_KEYS_DIR/releasekey.pk8 $OWN_KEYS_DIR/testkey.pk8
     sudo ln -s $OWN_KEYS_DIR/releasekey.x509.pem $OWN_KEYS_DIR/testkey.x509.pem
-
-    mmma frameworks/base/packages/SystemUI:SystemUI
+    
+    mmma packages/apps/Trebuchet:TrebuchetQuickStep
     cd out/target/product/RMX2185
-    7z a -r SystemUI.7z system/system_ext/priv-app/SystemUI/SystemUI.apk
-    xc -c SystemUI.7z
+    7z a -r launcher3.7z system/system_ext/priv-app/TrebuchetQuickStep/TrebuchetQuickStep.apk
+    xc -c launcher3.7z
 
-    mka bacon
+    # mmma frameworks/base/packages/SystemUI:SystemUI
+    # cd out/target/product/RMX2185
+    # 7z a -r SystemUI.7z system/system_ext/priv-app/SystemUI/SystemUI.apk
+    # xc -c SystemUI.7z
+
+    # mka bacon
 }
 
 upload_src() {
