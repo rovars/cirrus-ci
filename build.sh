@@ -12,7 +12,7 @@ setup_src() {
     retry_rc repo sync -j8 -c --no-clone-bundle --no-tags
 
     rm -rf external/AOSmium-prebuilt 
-    #rm -rf external/hardened_malloc
+    rm -rf external/hardened_malloc
     rm -rf prebuilts/AuroraStore
     rm -rf prebuilts/prebuiltapks
 
