@@ -7,7 +7,6 @@ task:
     memory: 32G
     greedy: true
   env:
-    use_clangmix: "true"
     gitconfigs: "ENCRYPTED[!e918d9400219b6f7d2588a0afd4fffd3df3735cf5db059e2733e4269c363811a818e686e7b04c2b4fd671580e393f20c!]"
     credensial: "ENCRYPTED[!6f130d1ac4acaf8c4a50f4ce8c5a9cefe2ad5e2fd511e0d25c3ca5d15f6f15977184c846ce5cee54bb6019a060648fed!]"
     tokentl: "ENCRYPTED[!48df36a023301be77fca5928aee9d9aa41d168a17b49a1379dcdd2544d897abdd71244a71b29f810411fefc8404625d2!]"
@@ -19,44 +18,28 @@ task:
     - echo "$gitconfigs" > ~/.gitconfig
     - git clone --depth=1 -b xxx https://github.com/rovars/kernel_realme_RMX2185 /tmp/kernel
     - git clone --depth=1 -b rducks https://github.com/rovars/rom /tmp/AnyKernel3
-    - |
-      if [ "$use_clangmix" = "true" ]; then
-        git clone --depth=1 -b lineage-17.1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9 /tmp/gcc64
-        git clone --depth=1 -b lineage-17.1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9 /tmp/gcc32
-        mkdir -p /tmp/clang
-        wget -qO- https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/tags/android-10.0.0_r41/clang-r353983c.tar.gz | tar -xz -C /tmp/clang
-      else
-        git clone --depth=1 https://github.com/techyminati/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-gnu-7.5 /tmp/gcc64
-        git clone --depth=1 https://github.com/techyminati/android_prebuilts_gcc_linux-x86_arm_arm-linux-gnueabihf-7.5 /tmp/gcc32
-      fi
+    - git clone --depth=1 -b lineage-17.1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9 /tmp/gcc64
+    - git clone --depth=1 -b lineage-17.1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9 /tmp/gcc32
+    - mkdir -p /tmp/clang
+    - wget -qO- https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/tags/android-10.0.0_r47/clang-r353983c1.tar.gz | tar -xz -C /tmp/clang
 
   build_script:
     - cd /tmp/kernel
     - export ARCH=arm64 SUBARCH=arm64 HEADER_ARCH=arm64
     - export KBUILD_BUILD_USER=nobody KBUILD_BUILD_HOST=android-build
+    - export PATH="/tmp/clang/bin:/tmp/gcc64/bin:/tmp/gcc32/bin:$PATH"
     - make O=out ARCH=arm64 RMX2185_defconfig
-    - |
-      if [ "$use_clangmix" = "true" ]; then
-        export PATH="/tmp/clang/bin:/tmp/gcc64/bin:/tmp/gcc32/bin:$PATH"
-        make O=out -j16 \
-          ARCH=arm64 SUBARCH=arm64 CC=clang \
-          CLANG_TRIPLE=aarch64-linux-gnu- \
-          CROSS_COMPILE=aarch64-linux-android- \
-          CROSS_COMPILE_ARM32=arm-linux-androideabi- \
-          INSTALL_MOD_STRIP=1 2>&1 | tee build.txt
-      else
-        export PATH="/tmp/gcc64/bin:/tmp/gcc32/bin:$PATH"
-        make O=out -j16 \
-          ARCH=arm64 SUBARCH=arm64 \
-          CROSS_COMPILE=aarch64-linux-gnu- \
-          CROSS_COMPILE_ARM32=arm-linux-gnueabihf- \
-          INSTALL_MOD_STRIP=1 2>&1 | tee build.txt
-      fi
+    - make O=out -j16 \
+        ARCH=arm64 SUBARCH=arm64 CC=clang \
+        CLANG_TRIPLE=aarch64-linux-gnu- \
+        CROSS_COMPILE=aarch64-linux-android- \
+        CROSS_COMPILE_ARM32=arm-linux-androideabi- \
+        INSTALL_MOD_STRIP=1 2>&1 | tee build.txt
 
   package_script:
     - cd /tmp/AnyKernel3
     - cp /tmp/kernel/out/arch/arm64/boot/Image.gz-dtb .
-    - zipn="RMX2185-4.9-$(date +%Y%m%d-%H%M).zip"
+    - zipn="RMX2185-4.9.190+ksu_22105-$(date +%y%m%d).zip"
     - zip -r9 "${zipn}" . -x ".git*" "README.md" "*placeholder"
     - xc -c "${zipn}"
     - xc -c "/tmp/kernel/build.txt"
