@@ -32,7 +32,7 @@ setup_src() {
     git clone https://github.com/bimuafaq/android_vendor_lineage vendor/lineage -b lineage-18.1 --depth=1
 
     rm -rf frameworks/base
-    git clone https://github.com/bimuafaq/android_frameworks_base frameworks/base -b xx --depth=1
+    git clone https://github.com/bimuafaq/android_frameworks_base frameworks/base -b bimuafaq-patch-1 --depth=1
 
     rm -rf packages/apps/Settings
     git clone https://github.com/bimuafaq/android_packages_apps_Settings packages/apps/Settings -b lineage-18.1 --depth=1
@@ -64,12 +64,12 @@ build_src() {
     # 7z a -r launcher3.7z system/system_ext/priv-app/TrebuchetQuickStep/TrebuchetQuickStep.apk
     # xc -c launcher3.7z
 
-    # mmma frameworks/base/packages/SystemUI:SystemUI
-    # cd out/target/product/RMX2185
-    # 7z a -r SystemUI.7z system/system_ext/priv-app/SystemUI/SystemUI.apk
-    # xc -c SystemUI.7z
+    mmma frameworks/base/packages/SystemUI:SystemUI
+    cd out/target/product/RMX2185
+    7z a -r SystemUI.7z system/system_ext/priv-app/SystemUI/SystemUI.apk
+    xc -c SystemUI.7z
 
-    mka bacon
+    # mka bacon
 }
 
 upload_src() {
