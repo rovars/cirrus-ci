@@ -32,7 +32,7 @@ setup_src() {
     git clone https://github.com/bimuafaq/android_vendor_lineage vendor/lineage -b lineage-18.1 --depth=1
 
     rm -rf frameworks/base
-    git clone https://github.com/bimuafaq/android_frameworks_base frameworks/base -b lineage-18.1 --depth=1
+    git clone https://github.com/bimuafaq/android_frameworks_base frameworks/base -b bimuafaq-patch-2 --depth=1
 
     rm -rf packages/apps/Settings
     git clone https://github.com/bimuafaq/android_packages_apps_Settings packages/apps/Settings -b lineage-18.1 --depth=1
