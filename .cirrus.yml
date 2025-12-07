@@ -3,9 +3,9 @@ env:
   credensial: "ENCRYPTED[!6f130d1ac4acaf8c4a50f4ce8c5a9cefe2ad5e2fd511e0d25c3ca5d15f6f15977184c846ce5cee54bb6019a060648fed!]"
   tokentl: "ENCRYPTED[!48df36a023301be77fca5928aee9d9aa41d168a17b49a1379dcdd2544d897abdd71244a71b29f810411fefc8404625d2!]"
   idtl: "ENCRYPTED[!a12665bdcb530d0f6222ec4f353356c9819303c6a85209c78bd9c1f2d57b16912c9b96d60e567367846f2438f9f75967!]"
-  rcloneconfig: "ENCRYPTED[!6cd17859df5b240b807fab881bdae9e268476b6c78f625fd52499ddb949a949affc30b88bdfbe29c1866e3812c9998a2!]"
+  rcloneconfig: "ENCRYPTED[!0f1e0f5829795533e75b98015a4647570df2d56d57903d08d7efb1782449648aaa506a63e0b3388fa70dc29d507c84ae!]"
   rclonedir: "me:rom"
-  rclonefile: "ccache_lineage_18.1.tar.gz"
+  rclonefile: "lin_18_test.tar.gz"
 
 task:
   name: "just for fun"
