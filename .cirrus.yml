@@ -8,7 +8,7 @@ env:
   rclonefile: "ccache_lineage_18.1.tar.gz"
 
 task:
-  name: "my confusion"
+  name: "just for fun"
   timeout_in: 120m
   container:
     image: ghcr.io/rovars/docker:ubuntu

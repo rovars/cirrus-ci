@@ -136,7 +136,8 @@ author=system
 description=system test" > module.prop
     # zip -r system-test-$VERSION.zip system/framework/org.lineageos.platform.jar system/system_ext/priv-app/SystemUI/SystemUI.apk system/priv-app/LineageParts/LineageParts.apk module.prop
     zip -r system-test-$VERSION.zip system/system_ext/priv-app/SystemUI/SystemUI.apk module.prop
-    xc -c system-test-$VERSION.zip    
+    xc -c system-test-$VERSION.zip
+    save_cache
 }
 
 build_src() {
@@ -150,13 +151,13 @@ build_src() {
     lunch lineage_RMX2185-user
 
     setup_cache
-    # system_push_test
-    save_cache
+    # system_push_test   
 
     mka bacon
+    save_cache
 }
 
-upload_src() {
+upload_src() {  
     REPO="rovars/release"
     RELEASE_TAG="lineage-18.1"
     ROM_FILE=$(find out/target/product -name "*-RMX*.zip" -print -quit)
