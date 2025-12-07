@@ -19,6 +19,7 @@ retry_rc() {
 }
 
 setup_cache() {
+    cd /tmp
     export USE_CCACHE=1
     export CCACHE_EXEC="$(command -v ccache)"
     export CCACHE_DIR="/tmp/ccache"
@@ -26,48 +27,46 @@ setup_cache() {
     ccache -M 50G -F 0 &>/dev/null
     ccache -o compression=true &>/dev/null
 
-    local local_tarball="/tmp/$rclonefile"
-    rm -f "$local_tarball"
-
     echo "Attempting to restore ccache from rclone..."
-    if retry_rc rclone copy "$rclonedir/$rclonefile" "/tmp" &>/dev/null; then
-        tar -xzf "$local_tarball" -C "/tmp"
-        rm -f "$local_tarball"
+    if retry_rc rclone copy "$rclonedir/$rclonefile" "." &>/dev/null; then
+        tar -xzf "$rclonefile"
+        rm -rf "$rclonefile"
         echo "ccache restored successfully to $CCACHE_DIR"
         xc -s2 "(CI: ccache restored)"
     else
-        rm -f "$local_tarball"
+        rm -rf "$rclonefile"
         echo "No ccache archive found. Skipping restore."
         xc -s2 "(CI: No ccache found)"
     fi
+    cd -
 }
 
 save_cache() {
+    cd /tmp
     export CCACHE_DISABLE=1
     echo "Saving ccache..."
     ccache -s
-    ccache --cleanup --zero-stats &>/dev/null
+    ccache --cleanup --zero-stats
 
-    local local_tarball="/tmp/$rclonefile"
-    rm -f "$local_tarball"
-
-    echo "Creating ccache archive..."
-    tar -czf "$local_tarball" -C "/tmp" ccache --warning=no-file-changed || {
+    echo "Creating ccache archive..."    
+    tar -czf "$rclonefile" ccache --warning=no-file-changed || {
         echo "Failed to create ccache archive!"
         xc -x "(CI: ccache archive creation failed)"
+        cd -
         return 1
     }
 
     echo "Uploading ccache archive to rclone..."
-    if retry_rc rclone copy "$local_tarball" "$rclonedir" &>/dev/null; then
-        rm -f "$local_tarball"
+    if retry_rc rclone copy "$rclonefile" "$rclonedir" &>/dev/null; then
         echo "ccache saved successfully to $rclonedir"
         xc -s2 "(CI: ccache saved)"
     else
         echo "Failed to upload ccache archive!"
         xc -s2 "(CI: ccache save failed)"
+        cd -
         return 1
     fi
+    cd -
 }
 
 setup_rbe() {

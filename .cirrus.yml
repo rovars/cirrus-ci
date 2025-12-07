@@ -3,11 +3,12 @@ env:
   credensial: "ENCRYPTED[!6f130d1ac4acaf8c4a50f4ce8c5a9cefe2ad5e2fd511e0d25c3ca5d15f6f15977184c846ce5cee54bb6019a060648fed!]"
   tokentl: "ENCRYPTED[!48df36a023301be77fca5928aee9d9aa41d168a17b49a1379dcdd2544d897abdd71244a71b29f810411fefc8404625d2!]"
   idtl: "ENCRYPTED[!a12665bdcb530d0f6222ec4f353356c9819303c6a85209c78bd9c1f2d57b16912c9b96d60e567367846f2438f9f75967!]"
-  tokenpat: "ENCRYPTED[!55a825eae5c6b48595000403feb93a1e434b2f6de64ff689cfc8df0079370cfd777f7a3f304e78ec524fd06e2d3e3ac5!]"
-  nanokeyvars: "ENCRYPTED[!ca80700c0523da990eb691b1baacfdc8ca6f8161e784c595bfb715801ba5ad4a512a2ff1e27403f1c094fc920ec53c39!]"
+  rcloneconfig: "ENCRYPTED[!6cd17859df5b240b807fab881bdae9e268476b6c78f625fd52499ddb949a949affc30b88bdfbe29c1866e3812c9998a2!]"
+  rclonedir: "me:rom"
+  rclonefile: "ccache_lineage_18.1.tar.gz"
 
 task:
-  name: "RBE ROM"
+  name: "my confusion"
   timeout_in: 120m
   container:
     image: ghcr.io/rovars/docker:ubuntu
