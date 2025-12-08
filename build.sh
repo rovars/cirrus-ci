@@ -52,95 +52,49 @@ setup_src() {
     git clone https://github.com/bimuafaq/android_packages_apps_LineageParts packages/apps/LineageParts -b lineage-18.1 --depth=1
 
     patch -p1 < $PWD/xx/11/allow-permissive-user-build.patch
-
-    git clone -q https://github.com/rovars/build xxx
-    git clone -q https://codeberg.org/lin18-microG/z_patches -b lin-18.1-microG zzz
-
-    z_patch="$PWD/zzz"
-    x_patch="$PWD/xxx/Patches/LineageOS-18.1"
-
-list_merged_repos() {
-cat <<EOF
-Z:external/conscrypt:patch_703_conscrypt.patch
-Z:external/icu:patch_704_icu.patch
-Z:external/neven:patch_705_neven.patch
-Z:frameworks/rs:patch_706_rs.patch
-Z:frameworks/ex:patch_707_ex.patch
-Z:frameworks/opt/net/voip:patch_708_voip.patch
-Z:hardware/qcom-caf/common:patch_709_qc-common.patch
-Z:lineage-sdk:patch_710_lineage-sdk.patch
-Z:packages/apps/FMRadio:patch_711_FMRadio.patch
-Z:packages/apps/Gallery2:patch_712_Gallery2.patch
-Z:vendor/qcom/opensource/fm-commonsys:patch_716_fm-commonsys.patch
-Z:vendor/nxp/opensource/commonsys/packages/apps/Nfc:patch_717_nxp-Nfc.patch
-Z:vendor/qcom/opensource/libfmjni:patch_718_libfmjni.patch
-X:art:android_art/0001-constify_JNINativeMethod.patch
-X:frameworks/base:android_frameworks_base/0017-constify_JNINativeMethod.patch
-X:libcore:android_libcore/0002-constify_JNINativeMethod.patch
-X:packages/apps/Bluetooth:android_packages_apps_Bluetooth/0001-constify_JNINativeMethod.patch
-X:packages/apps/Nfc:android_packages_apps_Nfc/0001-constify_JNINativeMethod.patch
-EOF
 }
 
-list_merged_repos | while read STR; do
-    [ -z "$STR" ] && continue
-    
-    TYPE="${STR%%:*}"
-    REMAINDER="${STR#*:}"
-    
-    DIR="${REMAINDER%%:*}"
-    PTC="${REMAINDER#*:}"
-
-    if [ "$TYPE" == "Z" ]; then
-        SOURCE_PATH="$z_patch"
-    elif [ "$TYPE" == "X" ]; then
-        SOURCE_PATH="$x_patch"
-    else
-        continue
-    fi
-
-    echo "Applying $PTC to $DIR"
-    
-    if [ -d "$DIR" ]; then
-        cd "$DIR"
-        if [ -f "$SOURCE_PATH/$PTC" ]; then
-            git am < "$SOURCE_PATH/$PTC"
-        else
-            echo "Error: Patch file not found: $SOURCE_PATH/$PTC"
-        fi
-        cd - > /dev/null
-    else
-        echo "Warning: Directory not found: $DIR"
-    fi
-done
-
-    rm -rf xxx zzz
-}
-
-system_push_test() {   
-    m TrebuchetQuickStep
-    cd out/target/product/RMX2185
-    zip launcher3.zip system/system_ext/priv-app/TrebuchetQuickStep/TrebuchetQuickStep.apk
-    xc -c launcher3.zip
+system_push_test() {
+    VERSION=$(date +%y%m%d-%H%M)
+    ZIPNAME="system-test-$VERSION.zip"
+    OUT="out/target/product/RMX2185"
 
     # m org.lineageos.platform
-    # m SystemUI
+    m framework
+    m SystemUI
+    m Settings
     # m LineageParts
-    # cd out/target/product/RMX2185
-    VERSION=$(date +%y%m%d-%H%M)
-    echo "id=system_push_test
-name=system test
-version=$VERSION
-versionCode=$VERSION
-author=system
-description=system test" > module.prop
-    # zip -r system-test-$VERSION.zip system/framework/org.lineageos.platform.jar system/system_ext/priv-app/SystemUI/SystemUI.apk system/priv-app/LineageParts/LineageParts.apk module.prop
-    # zip -r system-test-$VERSION.zip system/system_ext/priv-app/SystemUI/SystemUI.apk module.prop
-    # xc -c system-test-$VERSION.zip
+
+    echo -e "id=system_push_test\n\
+name=system test\n\
+version=$VERSION\n\
+versionCode=$VERSION\n\
+author=system\n\
+description=system test" > $OUT/module.prop
+
+    # m TrebuchetQuickStep && \
+      cd $OUT/system/system_ext/priv-app/TrebuchetQuickStep && \
+      zip -r launcher3.zip TrebuchetQuickStep.apk && \
+      xc -c launcher3.zip
+
+    # cd $OUT && zip -r "$ZIPNAME" "module.prop" \
+        "system/framework/org.lineageos.platform.jar" \
+        "system/system_ext/priv-app/SystemUI/SystemUI.apk" \
+        "system/priv-app/LineageParts/LineageParts.apk"
+
+    cd $OUT && zip -r "$ZIPNAME" "module.prop" \
+        "system/system_ext/priv-app/SystemUI/SystemUI.apk"
+
+    xc -c "$ZIPNAME"
+
+    cd system/system_ext/priv-app/Settings && \
+       zip -r Settings.zip Settings.apk && \
+       xc -c Settings.zip
 }
 
 build_src() {
     source build/envsetup.sh
+    [ "$use_ccache" = "true" ] && _ccache_env
     # setup_rbe
 
     export OWN_KEYS_DIR=$PWD/xx/keys

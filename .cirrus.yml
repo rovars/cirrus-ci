@@ -6,7 +6,7 @@ env:
   tokenpat: "ENCRYPTED[!55a825eae5c6b48595000403feb93a1e434b2f6de64ff689cfc8df0079370cfd777f7a3f304e78ec524fd06e2d3e3ac5!]"
   rcloneconfig: "ENCRYPTED[!0f1e0f5829795533e75b98015a4647570df2d56d57903d08d7efb1782449648aaa506a63e0b3388fa70dc29d507c84ae!]"
   rclonedir: "me:rom"
-  rclonefile: "lin_18_test.tar.gz"
+  rclonefile: "lin_18.tar.gz"
   use_ccache: "true"
 
 task:
@@ -25,9 +25,9 @@ task:
     - rm -rf .git
     - ./main.sh sync
   setup_ccache_script: ./main.sh setup_cache
-  build_script: ./main.sh build
-  upload_script: ./main.sh upload
+  build_script: ./main.sh build  
   save_ccache_script: ./main.sh save_cache
+  upload_script: ./main.sh upload
 
   on_failure:
     notiferror_script:

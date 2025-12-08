@@ -18,15 +18,19 @@ retry_rc() {
     return 1
 }
 
+_ccache_env() {
+    export USE_CCACHE=1
+    export CCACHE_EXEC="$(command -v ccache)"
+    export CCACHE_DIR="/tmp/ccache"
+}
+
 setup_cache() {
     if [ "$use_ccache" != "true" ]; then
         echo "Skipping setup_cache (use_ccache is not true)"
         return 0
     fi
     cd /tmp
-    export USE_CCACHE=1
-    export CCACHE_EXEC="$(command -v ccache)"
-    export CCACHE_DIR="/tmp/ccache"
+    _ccache_env
     mkdir -p "$CCACHE_DIR"
     ccache -M 50G -F 0 &>/dev/null
     ccache -o compression=true &>/dev/null
