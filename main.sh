@@ -19,6 +19,10 @@ retry_rc() {
 }
 
 setup_cache() {
+    if [ "$use_ccache" != "true" ]; then
+        echo "Skipping setup_cache (use_ccache is not true)"
+        return 0
+    fi
     cd /tmp
     export USE_CCACHE=1
     export CCACHE_EXEC="$(command -v ccache)"
@@ -42,6 +46,10 @@ setup_cache() {
 }
 
 save_cache() {
+    if [ "$use_ccache" != "true" ]; then
+        echo "Skipping save_cache (use_ccache is not true)"
+        return 0
+    fi
     cd /tmp
     export CCACHE_DISABLE=1
     echo "Saving ccache..."
