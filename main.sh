@@ -38,7 +38,7 @@ setup_cache() {
         echo "No ccache archive found. Skipping restore."
         xc -s2 "(CI: No ccache found)"
     fi
-    cd -
+    cd /tmp/cirrus-ci-build
 }
 
 save_cache() {
@@ -52,7 +52,6 @@ save_cache() {
     tar -czf "$rclonefile" ccache --warning=no-file-changed || {
         echo "Failed to create ccache archive!"
         xc -x "(CI: ccache archive creation failed)"
-        cd -
         return 1
     }
 
@@ -62,11 +61,10 @@ save_cache() {
         xc -s2 "(CI: ccache saved)"
     else
         echo "Failed to upload ccache archive!"
-        xc -s2 "(CI: ccache save failed)"
-        cd -
+        xc -s2 "(CI: ccache save failed)"        
         return 1
     fi
-    cd -
+    cd /tmp/cirrus-ci-build
 }
 
 setup_rbe() {
