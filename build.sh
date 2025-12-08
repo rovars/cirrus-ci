@@ -54,15 +54,14 @@ setup_src() {
     patch -p1 < $PWD/xx/11/allow-permissive-user-build.patch
 }
 
-_vars() {
+_m_rovv() {
     VERSION=$(date +%y%m%d-%H%M)
     OUT="out/target/product/RMX2185"
-    ZIP="system-test-$VERSION.zip"
-    echo -e "id=system_push_test\nname=System Test\nversion=$VERSION\nversionCode=${VERSION//-/}\nauthor=system\ndescription=System Test" > "$OUT/module.prop"
+    ZIPNAME="system-test-$VERSION.zip"
 }
 
 _m_trebuchet() {
-    _vars
+    _m_rovv
     m TrebuchetQuickStep
     cd "$OUT/system/system_ext/priv-app/TrebuchetQuickStep"
     zip -r launcher3.zip TrebuchetQuickStep.apk
@@ -71,25 +70,27 @@ _m_trebuchet() {
 }
 
 _m_system() {
-    _vars
+    _m_rovv
     m org.lineageos.platform SystemUI LineageParts
     cd "$OUT"
-    zip -r "$ZIP" module.prop system/framework/org.lineageos.platform.jar system/system_ext/priv-app/SystemUI/SystemUI.apk system/priv-app/LineageParts/LineageParts.apk
-    xc -c "$ZIP"
+    echo -e "id=system_push_test\nname=System Test\nversion=$VERSION\nversionCode=${VERSION//-/}\nauthor=system\ndescription=System Test" > module.prop
+    zip -r "$ZIPNAME" module.prop system/framework/org.lineageos.platform.jar system/system_ext/priv-app/SystemUI/SystemUI.apk system/priv-app/LineageParts/LineageParts.apk
+    xc -c "$ZIPNAME"
     croot
 }
 
 _m_systemui() {
-    _vars
+    _m_rovv
     m SystemUI
     cd "$OUT"
-    zip -r "$ZIP" module.prop system/system_ext/priv-app/SystemUI/SystemUI.apk
-    xc -c "$ZIP"
+    echo -e "id=system_push_test\nname=System Test\nversion=$VERSION\nversionCode=${VERSION//-/}\nauthor=system\ndescription=System Test" > module.prop
+    zip -r "$ZIPNAME" module.prop system/system_ext/priv-app/SystemUI/SystemUI.apk
+    xc -c "$ZIPNAME"
     croot
 }
 
 _m_settings() {
-    _vars
+    _m_rovv
     m Settings
     cd "$OUT/system/system_ext/priv-app/Settings"
     zip -r Settings.zip Settings.apk
