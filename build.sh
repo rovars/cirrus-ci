@@ -137,13 +137,11 @@ description=system test" > module.prop
     # zip -r system-test-$VERSION.zip system/framework/org.lineageos.platform.jar system/system_ext/priv-app/SystemUI/SystemUI.apk system/priv-app/LineageParts/LineageParts.apk module.prop
     # zip -r system-test-$VERSION.zip system/system_ext/priv-app/SystemUI/SystemUI.apk module.prop
     # xc -c system-test-$VERSION.zip
-    # save_cache
 }
 
 build_src() {
     source build/envsetup.sh
     # setup_rbe
-    setup_cache
 
     export OWN_KEYS_DIR=$PWD/xx/keys
     sudo ln -s $OWN_KEYS_DIR/releasekey.pk8 $OWN_KEYS_DIR/testkey.pk8
@@ -152,7 +150,7 @@ build_src() {
     lunch lineage_RMX2185-user
     system_push_test
 
-    # mka bacon && save_cache
+    # mka bacon
 }
 
 upload_src() {  
@@ -168,7 +166,7 @@ upload_src() {
         gh release create "$RELEASE_TAG" -t "$RELEASE_TAG" -R "$REPO" --generate-notes
     fi
 
-    #gh release upload "$RELEASE_TAG" "$ROM_FILE" -R "$REPO" --clobber || true
+    # gh release upload "$RELEASE_TAG" "$ROM_FILE" -R "$REPO" --clobber || true
 
     echo "$ROM_X"
     MSG_XC2="( <a href='https://cirrus-ci.com/task/${CIRRUS_TASK_ID}'>Cirrus CI</a> ) - $CIRRUS_COMMIT_MESSAGE ( <a href='$ROM_X'>$(basename "$CIRRUS_BRANCH")</a> )"
