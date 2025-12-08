@@ -54,42 +54,47 @@ setup_src() {
     patch -p1 < $PWD/xx/11/allow-permissive-user-build.patch
 }
 
-system_push_test() {
+_vars() {
     VERSION=$(date +%y%m%d-%H%M)
-    ZIPNAME="system-test-$VERSION.zip"
     OUT="out/target/product/RMX2185"
+    ZIP="system-test-$VERSION.zip"
+    echo -e "id=system_push_test\nname=System Test\nversion=$VERSION\nversionCode=${VERSION//-/}\nauthor=system\ndescription=System Test" > "$OUT/module.prop"
+}
 
-    # m org.lineageos.platform
-    m framework
+_m_trebuchet() {
+    _vars
+    m TrebuchetQuickStep
+    cd "$OUT/system/system_ext/priv-app/TrebuchetQuickStep"
+    zip -r launcher3.zip TrebuchetQuickStep.apk
+    xc -c launcher3.zip
+    croot
+}
+
+_m_system() {
+    _vars
+    m org.lineageos.platform SystemUI LineageParts
+    cd "$OUT"
+    zip -r "$ZIP" module.prop system/framework/org.lineageos.platform.jar system/system_ext/priv-app/SystemUI/SystemUI.apk system/priv-app/LineageParts/LineageParts.apk
+    xc -c "$ZIP"
+    croot
+}
+
+_m_systemui() {
+    _vars
     m SystemUI
+    cd "$OUT"
+    zip -r "$ZIP" module.prop system/system_ext/priv-app/SystemUI/SystemUI.apk
+    xc -c "$ZIP"
+    croot
+}
+
+_m_settings() {
+    _vars
     m Settings
-    # m LineageParts
-
-    echo -e "id=system_push_test\n\
-name=system test\n\
-version=$VERSION\n\
-versionCode=$VERSION\n\
-author=system\n\
-description=system test" > $OUT/module.prop
-
-    # m TrebuchetQuickStep && \
-      cd $OUT/system/system_ext/priv-app/TrebuchetQuickStep && \
-      zip -r launcher3.zip TrebuchetQuickStep.apk && \
-      xc -c launcher3.zip
-
-    # cd $OUT && zip -r "$ZIPNAME" "module.prop" \
-        "system/framework/org.lineageos.platform.jar" \
-        "system/system_ext/priv-app/SystemUI/SystemUI.apk" \
-        "system/priv-app/LineageParts/LineageParts.apk"
-
-    cd $OUT && zip -r "$ZIPNAME" "module.prop" \
-        "system/system_ext/priv-app/SystemUI/SystemUI.apk"
-
-    xc -c "$ZIPNAME"
-
-    cd system/system_ext/priv-app/Settings && \
-       zip -r Settings.zip Settings.apk && \
-       xc -c Settings.zip
+    cd "$OUT/system/system_ext/priv-app/Settings"
+    zip -r Settings.zip Settings.apk
+    xc -c Settings.zip
+    croot
 }
 
 build_src() {
@@ -102,7 +107,11 @@ build_src() {
     sudo ln -s $OWN_KEYS_DIR/releasekey.x509.pem $OWN_KEYS_DIR/testkey.x509.pem
 
     lunch lineage_RMX2185-user
-    system_push_test
+
+    # _m_trebuchet
+    # _m_system
+    _m_systemui
+    _m_settings
 
     # mka bacon
 }
