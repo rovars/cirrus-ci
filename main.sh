@@ -36,7 +36,7 @@ setup_cache() {
     ccache -o compression=true &>/dev/null
 
     echo "Attempting to restore ccache from rclone..."
-    if retry_rc rclone copy "$rclonedir/$rclonefile" "." &>/dev/null; then
+    if retry_rc rclone copy "$rclonedir/$rclonefile" "." ; then
         tar -xzf "$rclonefile"
         rm -rf "$rclonefile"
         echo "ccache restored successfully to $CCACHE_DIR"
@@ -46,7 +46,7 @@ setup_cache() {
         echo "No ccache archive found. Skipping restore."
         xc -s2 "(CI: No ccache found)"
     fi
-    cd /tmp/cirrus-ci-build
+    cd -
 }
 
 save_cache() {
@@ -68,7 +68,7 @@ save_cache() {
     }
 
     echo "Uploading ccache archive to rclone..."
-    if retry_rc rclone copy "$rclonefile" "$rclonedir" &>/dev/null; then
+    if retry_rc rclone copy "$rclonefile" "$rclonedir" ; then
         echo "ccache saved successfully to $rclonedir"
         xc -s2 "(CI: ccache saved)"
     else
@@ -76,10 +76,10 @@ save_cache() {
         xc -s2 "(CI: ccache save failed)"        
         return 1
     fi
-    cd /tmp/cirrus-ci-build
+    cd -
 }
 
-setup_rbe() {
+_use_rbe() {
     git clone -q https://github.com/rovars/reclient
     unset USE_CCACHE CCACHE_EXEC CCACHE_DIR USE_GOMA
 
