@@ -94,8 +94,8 @@ _m_systemui() {
 
 _m_system_fw() {
     _m_rovv
-    m frameworks
-    m frameworks-res
+    m framework
+    m framework-res
     cd "$OUT"
     echo -e "id=system_push_test\nname=System Test\nversion=$VERSION\nversionCode=${VERSION//-/}\nauthor=system\ndescription=System Test" > module.prop
     zip -r "$ZIPNAME" module.prop system/framework/framework-res.apk system/framework/framework.jar
