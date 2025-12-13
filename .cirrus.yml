@@ -25,9 +25,9 @@ task:
     - rm -rf .git
     - ./main.sh sync
   setup_ccache_script: ./main.sh setup_cache
-  build_script: ./main.sh build  
-  save_ccache_script: ./main.sh save_cache
+  build_script: ./main.sh build
   upload_script: ./main.sh upload
+  save_ccache_script: ./main.sh save_cache
 
   on_failure:
     notiferror_script:
