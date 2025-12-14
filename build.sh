@@ -94,7 +94,7 @@ _m_systemui() {
 
 _m_system_fw() {
     _m_rovv
-    m framework
+    m framework-minus-apex
     m framework-res
     cd "$OUT"
     echo -e "id=system_push_test\nname=System Test\nversion=$VERSION\nversionCode=${VERSION//-/}\nauthor=system\ndescription=System Test" > module.prop
