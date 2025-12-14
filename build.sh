@@ -55,6 +55,9 @@ setup_src() {
     git clone https://github.com/bimuafaq/android_frameworks_opt_telephony frameworks/opt/telephony -b lineage-18.1 --depth=1
 
     patch -p1 < $PWD/xx/11/allow-permissive-user-build.patch
+
+    chmod +x $PWD/xx/11/constify.sh
+    source $PWD/xx/11/constify.sh
 }
 
 _m_rovv() {
@@ -92,17 +95,6 @@ _m_systemui() {
     croot
 }
 
-_m_system_fw() {
-    _m_rovv
-    m framework-minus-apex
-    m framework-res
-    cd "$OUT"
-    echo -e "id=system_push_test\nname=System Test\nversion=$VERSION\nversionCode=${VERSION//-/}\nauthor=system\ndescription=System Test" > module.prop
-    zip -r "$ZIPNAME" module.prop system/framework/framework-res.apk system/framework/framework.jar
-    xc -c "$ZIPNAME"
-    croot
-}
-
 _m_settings() {
     _m_rovv
     m Settings
@@ -126,10 +118,9 @@ build_src() {
     # _m_trebuchet
     # _m_system
     # _m_systemui
-    _m_system_fw
-    _m_settings
+    # _m_settings
 
-    # mka bacon
+    mka bacon
 }
 
 upload_src() {  
