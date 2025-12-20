@@ -18,59 +18,68 @@ retry_rc() {
     return 1
 }
 
-setup_cache() {
+_ccache_env() {
     export USE_CCACHE=1
     export CCACHE_EXEC="$(command -v ccache)"
     export CCACHE_DIR="/tmp/ccache"
+}
+
+setup_cache() {
+    if [ "$use_ccache" != "true" ]; then
+        echo "Skipping setup_cache (use_ccache is not true)"
+        return 0
+    fi
+    cd /tmp
+    _ccache_env
     mkdir -p "$CCACHE_DIR"
     ccache -M 50G -F 0 &>/dev/null
     ccache -o compression=true &>/dev/null
 
-    local local_tarball="/tmp/$rclonefile"
-    rm -f "$local_tarball"
-
     echo "Attempting to restore ccache from rclone..."
-    if retry_rc rclone copy "$rclonedir/$rclonefile" "/tmp" &>/dev/null; then
-        tar -xzf "$local_tarball" -C "/tmp"
-        rm -f "$local_tarball"
+    if retry_rc rclone copy "$rclonedir/$rclonefile" "." ; then
+        tar -xzf "$rclonefile"
+        rm -rf "$rclonefile"
         echo "ccache restored successfully to $CCACHE_DIR"
         xc -s2 "(CI: ccache restored)"
     else
-        rm -f "$local_tarball"
+        rm -rf "$rclonefile"
         echo "No ccache archive found. Skipping restore."
         xc -s2 "(CI: No ccache found)"
     fi
+    cd -
 }
 
 save_cache() {
+    if [ "$use_ccache" != "true" ]; then
+        echo "Skipping save_cache (use_ccache is not true)"
+        return 0
+    fi
+    cd /tmp
     export CCACHE_DISABLE=1
     echo "Saving ccache..."
     ccache -s
-    ccache --cleanup --zero-stats &>/dev/null
+    ccache --cleanup --zero-stats
 
-    local local_tarball="/tmp/$rclonefile"
-    rm -f "$local_tarball"
-
-    echo "Creating ccache archive..."
-    tar -czf "$local_tarball" -C "/tmp" ccache --warning=no-file-changed || {
+    echo "Creating ccache archive..."    
+    tar -czf "$rclonefile" ccache --warning=no-file-changed || {
         echo "Failed to create ccache archive!"
         xc -x "(CI: ccache archive creation failed)"
         return 1
     }
 
     echo "Uploading ccache archive to rclone..."
-    if retry_rc rclone copy "$local_tarball" "$rclonedir" &>/dev/null; then
-        rm -f "$local_tarball"
+    if retry_rc rclone copy "$rclonefile" "$rclonedir" ; then
         echo "ccache saved successfully to $rclonedir"
         xc -s2 "(CI: ccache saved)"
     else
         echo "Failed to upload ccache archive!"
-        xc -s2 "(CI: ccache save failed)"
+        xc -s2 "(CI: ccache save failed)"        
         return 1
     fi
+    cd -
 }
 
-setup_rbe() {
+_use_rbe() {
     git clone -q https://github.com/rovars/reclient
     unset USE_CCACHE CCACHE_EXEC CCACHE_DIR USE_GOMA
 
