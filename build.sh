@@ -8,15 +8,13 @@ setup_src() {
     mv xx/10/rev.xml .repo/local_manifests
     repo sync -j8 -c --no-clone-bundle --no-tags
 
-    sed -i 's/^NEVERALLOW_ARG :=/SELINUX_IGNORE_NEVERALLOWS := true/g' system/sepolicy/Android.mk
-    sed -i 's/$(error SELINUX_IGNORE_NEVERALLOWS/$(warning SELINUX_IGNORE_NEVERALLOWS/g' system/sepolicy/Android.mk
+    awk -i inplace '!/true cannot be used in user builds/' system/sepolicy/Android.mk;
     sed -i '/permissivedomains 1>&2; \\/{n;d;}' system/sepolicy/Android.mk
     sed -i 's/-DALLOW_PERMISSIVE_SELINUX=0/-DALLOW_PERMISSIVE_SELINUX=1/g' system/core/init/Android.bp
     sed -i 's/-DALLOW_PERMISSIVE_SELINUX=0/-DALLOW_PERMISSIVE_SELINUX=1/g' system/core/init/Android.mk
 
-    xc -c system/core/init/Android.bp
-    xc -c system/core/init/Android.mk
-    xc -c system/sepolicy/Android.mk
+    rm -rf vendor/lineage
+    git clone https://github.com/LineageOS/android_vendor_lineage vendor/lineage -b lineage-17.1 --depth=1
 }
 
 build_src() {    
@@ -27,7 +25,7 @@ build_src() {
     sudo ln -s $OWN_KEYS_DIR/releasekey.pk8 $OWN_KEYS_DIR/testkey.pk8
     sudo ln -s $OWN_KEYS_DIR/releasekey.x509.pem $OWN_KEYS_DIR/testkey.x509.pem
 
-    brunch RMX2185
+    brunch RMX2185 user
 }
 
 upload_src() {
