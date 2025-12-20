@@ -13,8 +13,11 @@ setup_src() {
 build_src() {    
     source build/envsetup.sh
 
+    git config --global user.email "bimuafaq@duck.com"
+    git config --global user.name "bimuafaq"
+
     chmod +x xx/10/*.sh
-    source xx/10/repopick.sh
+    # source xx/10/repopick.sh
     source xx/10/cb.sh
  
     export OWN_KEYS_DIR=$PWD/xx/keys
