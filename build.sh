@@ -26,10 +26,7 @@ setup_src() {
     git clone https://github.com/bimuafaq/android_build_make build/make -b lineage-18.1 --depth=1
 
     rm -rf system/core
-    git clone https://github.com/bimuafaq/android_system_core system/core -b lineage-18.1
-    cd system/core
-    git revert --no-edit 4c5d682b0134310ece17eba2fa21854d2c57397c
-    cd -
+    git clone https://github.com/bimuafaq/android_system_core system/core -b lineage-18.1 --depth=1
 
     rm -rf vendor/lineage
     git clone https://github.com/bimuafaq/android_vendor_lineage vendor/lineage -b lineage-18.1 --depth=1
@@ -54,7 +51,7 @@ setup_src() {
     rm -rf frameworks/opt/telephony
     git clone https://github.com/bimuafaq/android_frameworks_opt_telephony frameworks/opt/telephony -b lineage-18.1 --depth=1
 
-    patch -p1 < $PWD/xx/11/allow-permissive-user-build.patch
+    patch -p1 < $PWD/xx/11/permissive.patch
 
     chmod +x $PWD/xx/11/constify.sh
     source $PWD/xx/11/constify.sh
@@ -116,11 +113,11 @@ build_src() {
     lunch lineage_RMX2185-user
 
     # _m_trebuchet
-    # _m_system
+    _m_system
     # _m_systemui
     # _m_settings
 
-    mka bacon
+    # mka bacon
 }
 
 upload_src() {  
@@ -136,7 +133,7 @@ upload_src() {
         gh release create "$RELEASE_TAG" -t "$RELEASE_TAG" -R "$REPO" --generate-notes
     fi
 
-    gh release upload "$RELEASE_TAG" "$ROM_FILE" -R "$REPO" --clobber || true
+    #gh release upload "$RELEASE_TAG" "$ROM_FILE" -R "$REPO" --clobber || true
 
     echo "$ROM_X"
     MSG_XC2="( <a href='https://cirrus-ci.com/task/${CIRRUS_TASK_ID}'>Cirrus CI</a> ) - $CIRRUS_COMMIT_MESSAGE ( <a href='$ROM_X'>$(basename "$CIRRUS_BRANCH")</a> )"
