@@ -7,7 +7,7 @@ setup_src() {
     mv xx/10/device.xml .repo/local_manifests
     # mv xx/10/rev.xml .repo/local_manifests
     repo sync -j8 -c --no-clone-bundle --no-tags
-    patch -p1 < permissive.patch
+    # patch -p1 < permissive.patch
 }
 
 build_src() {    
