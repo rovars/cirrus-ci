@@ -7,7 +7,16 @@ setup_src() {
     mv xx/10/device.xml .repo/local_manifests
     mv xx/10/rev.xml .repo/local_manifests
     repo sync -j8 -c --no-clone-bundle --no-tags
-    patch -p1 < xx/10/permissive.patch
+
+    sed -i 's/^NEVERALLOW_ARG :=/SELINUX_IGNORE_NEVERALLOWS := true/g' system/sepolicy/Android.mk
+    sed -i 's/$(error SELINUX_IGNORE_NEVERALLOWS/$(warning SELINUX_IGNORE_NEVERALLOWS/g' system/sepolicy/Android.mk
+    sed -i '/permissivedomains 1>&2; \\/{n;d;}' system/sepolicy/Android.mk
+    sed -i 's/-DALLOW_PERMISSIVE_SELINUX=0/-DALLOW_PERMISSIVE_SELINUX=1/g' system/core/init/Android.bp
+    sed -i 's/-DALLOW_PERMISSIVE_SELINUX=0/-DALLOW_PERMISSIVE_SELINUX=1/g' system/core/init/Android.mk
+
+    xc -c system/core/init/Android.bp
+    xc -c system/core/init/Android.mk
+    xc -c system/sepolicy/Android.mk
 }
 
 build_src() {    
