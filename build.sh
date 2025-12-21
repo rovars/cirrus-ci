@@ -32,6 +32,21 @@ setup_src() {
     git clone https://github.com/bimuafaq/android_vendor_lineage vendor/lineage -b lineage-17.1 --depth=1
 }
 
+_m_rovv() {
+    VERSION=$(date +%y%m%d-%H%M)
+    OUT="out/target/product/RMX2185"
+    ZIPNAME="system-test-$VERSION.zip"
+}
+
+_m_settings() {
+    _m_rovv
+    m Settings
+    cd "$OUT/system/system_ext/priv-app/Settings"
+    zip -r Settings.zip Settings.apk
+    xc -c Settings.zip
+    croot
+}
+
 build_src() {    
     source build/envsetup.sh
     _ccache_env
@@ -39,8 +54,11 @@ build_src() {
     export OWN_KEYS_DIR=$PWD/xx/keys
     sudo ln -s $OWN_KEYS_DIR/releasekey.pk8 $OWN_KEYS_DIR/testkey.pk8
     sudo ln -s $OWN_KEYS_DIR/releasekey.x509.pem $OWN_KEYS_DIR/testkey.x509.pem
+    
+    lunch lineage_RMX2185-user
+    _m_settings
 
-    brunch RMX2185 user
+    # mka bacon
 }
 
 upload_src() {
