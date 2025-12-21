@@ -13,17 +13,25 @@ setup_src() {
     sed -i 's/-DALLOW_PERMISSIVE_SELINUX=0/-DALLOW_PERMISSIVE_SELINUX=1/g' system/core/init/Android.bp
     sed -i 's/-DALLOW_PERMISSIVE_SELINUX=0/-DALLOW_PERMISSIVE_SELINUX=1/g' system/core/init/Android.mk
 
-    rm -rf vendor/lineage
-    git clone https://github.com/LineageOS/android_vendor_lineage vendor/lineage -b lineage-17.1 --depth=1
-
+    git clone https://github.com/LineageOS/android_vendor_apn vendor/apn --depth=1
+    
     rm -rf packages/apps/Settings
     git clone https://github.com/bimuafaq/android_packages_apps_Settings packages/apps/Settings -b lineage-17.1 --depth=1
 
-    rm -rf frameworks/opt/telephony
-    git clone https://github.com/bimuafaq/android_frameworks_opt_telephony frameworks/opt/telephony -b lineage-17.1 --depth=1
-
     rm -rf frameworks/base
     git clone https://github.com/bimuafaq/android_frameworks_base frameworks/base -b lineage-17.1 --depth=1
+
+    rm -rf frameworks/opt/telephony
+    git clone https://github.com/bimuafaq/android_frameworks_opt_telephony frameworks/opt/telephony -b lineage-17.1 --depth=1
+    
+    rm -rf lineage-sdk
+    git clone https://github.com/bimuafaq/android_lineage-sdk lineage-sdk -b lineage-17.1 --depth=1
+
+    rm -rf packages/apps/LineageParts
+    git clone https://github.com/bimuafaq/android_packages_apps_LineageParts packages/apps/LineageParts -b lineage-17.1 --depth=1
+
+    rm -rf vendor/lineage
+    git clone https://github.com/bimuafaq/android_vendor_lineage vendor/lineage -b lineage-17.1 --depth=1
 }
 
 build_src() {    
