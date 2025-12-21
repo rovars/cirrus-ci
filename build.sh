@@ -41,7 +41,7 @@ _m_rovv() {
 _m_settings() {
     _m_rovv
     m Settings
-    cd "$OUT/system/product/priv-app/Settings/"
+    cd "$OUT/system/product/priv-app/Settings"
     zip -r Settings.zip Settings.apk
     xc -c Settings.zip
     croot
