@@ -124,24 +124,15 @@ build_src() {
 }
 
 upload_src() {  
-    REPO="rovars/release"
+    REPO="bimuafaq/release"
     RELEASE_TAG="lineage-18.1"
-    ROM_FILE=$(find out/target/product -name "*-RMX*.zip" -print -quit)
-    ROM_X="https://github.com/$REPO/releases/download/$RELEASE_TAG/$(basename "$ROM_FILE")"
+    RELEASE_FILE=$(find out/target/product -name "*-RMX*.zip" -print -quit)
 
     echo "$tokenpat" > tokenpat.txt
-    gh auth login --with-token < tokenpat.txt
-
-    if ! gh release view "$RELEASE_TAG" -R "$REPO" > /dev/null 2>&1; then
-        gh release create "$RELEASE_TAG" -t "$RELEASE_TAG" -R "$REPO" --generate-notes
-    fi
-
-    #gh release upload "$RELEASE_TAG" "$ROM_FILE" -R "$REPO" --clobber || true
-
-    echo "$ROM_X"
-    MSG_XC2="( <a href='https://cirrus-ci.com/task/${CIRRUS_TASK_ID}'>Cirrus CI</a> ) - $CIRRUS_COMMIT_MESSAGE ( <a href='$ROM_X'>$(basename "$CIRRUS_BRANCH")</a> )"
-    xc -s "$MSG_XC2"
+    gh auth login --with-token < tokenpat.txt    
+    # gh release create "$RELEASE_TAG" -t "$RELEASE_TAG" -R "$REPO" --generate-notes
+    # gh release upload "$RELEASE_TAG" "$RELEASE_FILE" -R "$REPO" --clobber || true
 
     mkdir -p ~/.config && mv xx/config/* ~/.config
-    timeout 15m telegram-upload $ROM_FILE --to $idtl --caption "$CIRRUS_COMMIT_MESSAGE" || true
+    timeout 15m telegram-upload $RELEASE_FILE --to $idtl --caption "$CIRRUS_COMMIT_MESSAGE" || true
 }
