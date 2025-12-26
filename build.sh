@@ -51,8 +51,8 @@ setup_src() {
     rm -rf frameworks/opt/telephony
     git clone https://github.com/bimuafaq/android_frameworks_opt_telephony frameworks/opt/telephony -b lineage-18.1 --depth=1
 
-    rm -rf art
-    git clone https://github.com/bimuafaq/android_art art -b lineage-18.1 --depth=1
+    # rm -rf art
+    # git clone https://github.com/bimuafaq/android_art art -b lineage-18.1 --depth=1
 
     patch -p1 < $PWD/xx/11/permissive.patch
 
@@ -115,12 +115,12 @@ build_src() {
 
     lunch lineage_RMX2185-user
 
-    _m_trebuchet
+    # _m_trebuchet
     # _m_system
     # _m_systemui
     # _m_settings
 
-    # mka bacon
+    mka bacon
 }
 
 upload_src() {  
