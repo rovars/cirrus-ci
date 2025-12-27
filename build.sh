@@ -69,6 +69,9 @@ _m_rovv() {
 _m_trebuchet() {
     _m_rovv
     m TrebuchetQuickStep
+    cd "$OUT"
+    zip -r TrebuchetQuickStep-A11.zip "system/system_ext/priv-app/TrebuchetQuickStep/TrebuchetQuickStep.apk" "system/system_ext/etc/permissions/com.android.launcher3.xml"
+    xc -c TrebuchetQuickStep-A11.zip && exit 0
     cd "$OUT/system/system_ext/priv-app/TrebuchetQuickStep"
     zip -r launcher3.zip TrebuchetQuickStep.apk
     xc -c launcher3.zip
@@ -115,12 +118,12 @@ build_src() {
 
     lunch lineage_RMX2185-user
 
-    # _m_trebuchet
+    _m_trebuchet
     # _m_system
     # _m_systemui
     # _m_settings
 
-    mka bacon
+    # mka bacon
 }
 
 upload_src() {  
