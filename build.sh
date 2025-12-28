@@ -118,9 +118,9 @@ build_src() {
 
     lunch lineage_RMX2185-user
 
-    _m_trebuchet
+    # _m_trebuchet
     # _m_system
-    # _m_systemui
+    _m_systemui
     # _m_settings
 
     # mka bacon
