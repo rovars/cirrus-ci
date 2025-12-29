@@ -7,7 +7,7 @@ env:
   rcloneconfig: "ENCRYPTED[!0f1e0f5829795533e75b98015a4647570df2d56d57903d08d7efb1782449648aaa506a63e0b3388fa70dc29d507c84ae!]"
   rclonedir: "me:rom"
   rclonefile: "lin_18.tar.gz"
-  use_ccache: "true"
+  use_ccache: "false"
 
 task:
   name: "just for fun"

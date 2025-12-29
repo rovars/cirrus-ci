@@ -51,8 +51,8 @@ setup_src() {
     rm -rf frameworks/opt/telephony
     git clone https://github.com/bimuafaq/android_frameworks_opt_telephony frameworks/opt/telephony -b lineage-18.1 --depth=1
 
-    rm -rf art
-    git clone https://github.com/bimuafaq/android_art art -b lineage-18.1 --depth=1
+    # rm -rf art
+    # git clone https://github.com/bimuafaq/android_art art -b lineage-18.1 --depth=1
 
     patch -p1 < $PWD/xx/11/permissive.patch
 
@@ -109,14 +109,15 @@ _m_settings() {
 
 build_src() {
     source build/envsetup.sh
-    _ccache_env
-    # _use_rbe
+    # _ccache_env
+    _use_rbe
 
     export OWN_KEYS_DIR=$PWD/xx/keys
     sudo ln -s $OWN_KEYS_DIR/releasekey.pk8 $OWN_KEYS_DIR/testkey.pk8
     sudo ln -s $OWN_KEYS_DIR/releasekey.x509.pem $OWN_KEYS_DIR/testkey.x509.pem
 
     lunch lineage_RMX2185-user
+    make clean
 
     # _m_trebuchet
     # _m_system
