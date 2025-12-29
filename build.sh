@@ -117,14 +117,14 @@ build_src() {
     sudo ln -s $OWN_KEYS_DIR/releasekey.x509.pem $OWN_KEYS_DIR/testkey.x509.pem
 
     lunch lineage_RMX2185-user
-    make clean
+    # make clean
 
     # _m_trebuchet
     # _m_system
-    _m_systemui
+    # _m_systemui
     # _m_settings
 
-    # mka bacon
+    mka bacon
 }
 
 upload_src() {  
