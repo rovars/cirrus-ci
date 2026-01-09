@@ -92,11 +92,15 @@ _use_rbe() {
     export RBE_use_unified_cas_ops="true"
     export RBE_use_unified_downloads="true"
     export RBE_use_unified_uploads="true"
-    export RBE_instance="rovars.buildbuddy.io"
-    export RBE_service="rovars.buildbuddy.io:443"
-    export RBE_remote_headers="x-buildbuddy-api-key=yaDX7CznLv0XcEqk0wee"
+    # export RBE_instance="rovars.buildbuddy.io"
+    # export RBE_service="rovars.buildbuddy.io:443"
+    # export RBE_remote_headers="x-buildbuddy-api-key=yaDX7CznLv0XcEqk0wee"
     export RBE_use_rpc_credentials="false"
     export RBE_service_no_auth="true"
+
+    export RBE_instance="nano.buildbuddy.io"
+    export RBE_service="nano.buildbuddy.io:443"
+    export RBE_remote_headers="x-buildbuddy-api-key=fLtDdNWsr0itMxV4X4wN"
 
     local rbex_logs="/tmp/rbelogs"
     mkdir -p "$rbex_logs"
