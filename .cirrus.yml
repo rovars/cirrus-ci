@@ -3,11 +3,8 @@ env:
   credensial: "ENCRYPTED[!6f130d1ac4acaf8c4a50f4ce8c5a9cefe2ad5e2fd511e0d25c3ca5d15f6f15977184c846ce5cee54bb6019a060648fed!]"
   tokentl: "ENCRYPTED[!48df36a023301be77fca5928aee9d9aa41d168a17b49a1379dcdd2544d897abdd71244a71b29f810411fefc8404625d2!]"
   idtl: "ENCRYPTED[!a12665bdcb530d0f6222ec4f353356c9819303c6a85209c78bd9c1f2d57b16912c9b96d60e567367846f2438f9f75967!]"
-  tokenpat: "ENCRYPTED[!55a825eae5c6b48595000403feb93a1e434b2f6de64ff689cfc8df0079370cfd777f7a3f304e78ec524fd06e2d3e3ac5!]"
+  tokenpat: "ENCRYPTED[!b0f01121b81d5dfd094e994b9cb6266579f851809cbb3db38f906e561e7bf2824501e2176e76ed23e53312da3aef78f6!]"
   rcloneconfig: "ENCRYPTED[!0f1e0f5829795533e75b98015a4647570df2d56d57903d08d7efb1782449648aaa506a63e0b3388fa70dc29d507c84ae!]"
-  rclonedir: "me:rom"
-  rclonefile: "lin_18.tar.gz"
-  use_ccache: "false"
 
 task:
   name: "just for fun"

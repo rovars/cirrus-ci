@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+export rclonedir="me:rom"
+export rclonefile="lin_18.tar.gz"
+export use_ccache="false"
+
 setup_src() {
     repo init -u https://github.com/LineageOS/android.git -b lineage-18.1 --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
 
