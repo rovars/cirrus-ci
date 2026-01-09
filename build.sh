@@ -7,6 +7,7 @@ export use_ccache="false"
 setup_src() {
     repo init -u https://github.com/rovars/android.git -b exthm-11 --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
     git clone -q https://github.com/rovars/rom xx
+    mkdir -p .repo/local_manifests
     mv xx/11/exthm.xml .repo/local_manifests/device.xml
 
     retry_rc repo sync -j8 -c --no-clone-bundle --no-tags
