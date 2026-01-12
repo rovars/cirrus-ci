@@ -123,9 +123,9 @@ build_src() {
     # _m_trebuchet
     # _m_system
     # _m_systemui
-    _m_settings
+    # _m_settings
 
-    # mka bacon
+    mka bacon
 }
 
 upload_src() {
