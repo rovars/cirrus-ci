@@ -73,7 +73,7 @@ _m_trebuchet() {
     cd "$OUT"
     # zip -r TrebuchetQuickStep-A11.zip "system/system_ext/priv-app/TrebuchetQuickStep/TrebuchetQuickStep.apk" "system/system_ext/etc/permissions/com.android.launcher3.xml"
     # xc -c TrebuchetQuickStep-A11.zip && exit 0
-    cd "$OUT/system/system_ext/priv-app/TrebuchetQuickStep"
+    cd "system/system_ext/priv-app/TrebuchetQuickStep"
     zip -r launcher3.zip TrebuchetQuickStep.apk
     xc -c launcher3.zip
     croot
