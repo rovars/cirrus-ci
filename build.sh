@@ -71,8 +71,8 @@ _m_trebuchet() {
     _m_rovv
     m TrebuchetQuickStep
     cd "$OUT"
-    zip -r TrebuchetQuickStep-A11.zip "system/system_ext/priv-app/TrebuchetQuickStep/TrebuchetQuickStep.apk" "system/system_ext/etc/permissions/com.android.launcher3.xml"
-    xc -c TrebuchetQuickStep-A11.zip && exit 0
+    # zip -r TrebuchetQuickStep-A11.zip "system/system_ext/priv-app/TrebuchetQuickStep/TrebuchetQuickStep.apk" "system/system_ext/etc/permissions/com.android.launcher3.xml"
+    # xc -c TrebuchetQuickStep-A11.zip && exit 0
     cd "$OUT/system/system_ext/priv-app/TrebuchetQuickStep"
     zip -r launcher3.zip TrebuchetQuickStep.apk
     xc -c launcher3.zip
@@ -122,10 +122,10 @@ build_src() {
 
     # _m_trebuchet
     # _m_system
-    # _m_systemui
+    _m_systemui
     # _m_settings
 
-    mka bacon
+    # mka bacon
 }
 
 upload_src() {
@@ -137,8 +137,8 @@ upload_src() {
     echo "$tokenpat" > tokenpat.txt
     gh auth login --with-token < tokenpat.txt    
 
-    gh release create "$RELEASE_TAG" -t "$RELEASE_NAME" -R "$REPO" --generate-notes
-    gh release upload "$RELEASE_TAG" "$RELEASE_FILE" -R "$REPO" --clobber || true
+    #gh release create "$RELEASE_TAG" -t "$RELEASE_NAME" -R "$REPO" --generate-notes
+    #gh release upload "$RELEASE_TAG" "$RELEASE_FILE" -R "$REPO" --clobber || true
 
     mkdir -p ~/.config && mv xx/config/* ~/.config
     timeout 15m telegram-upload $RELEASE_FILE --to $idtl --caption "$CIRRUS_COMMIT_MESSAGE" || true
