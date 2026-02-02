@@ -26,6 +26,7 @@ task:
 
   build_script:
     - cd /tmp/kernel
+    - git revert --no-edit 6d8518279ff9834a0ed9363d01cc910621a30ab0
     - export ARCH=arm64 SUBARCH=arm64 HEADER_ARCH=arm64
     - export KBUILD_BUILD_USER=nobody KBUILD_BUILD_HOST=android-build
     - export PATH="/tmp/clang/bin:/tmp/gcc64/bin:/tmp/gcc32/bin:$PATH"
