@@ -43,18 +43,16 @@ task:
 
   package_script:
     - echo "--- Packaging Result ---"
-    - source /opt/cirrus_env
     - cd /tmp/rom/AnyKernel3
     - cp /tmp/kernel/out/arch/arm64/boot/Image.gz-dtb .
     - ksu_ver=$(sed -n 's/.*DKSU_VERSION=\([0-9]*\).*/\1/p' /tmp/kernel/drivers/kernelsu/Makefile | head -n 1)
     - zipn="RMX2185-4.9.190+ksu_${ksu_ver}-$(date +%y%m%d).zip"
     - zip -r9 "${zipn}" . -x ".git*" "README.md" "*placeholder"
     - echo "--- Uploading to Telegram ---"
-    - tg_post "${zipn}"
-    - tg_post "/tmp/kernel/build.txt" "Build successfull"
+    - /opt/cirrus_env tg_post "${zipn}"
+    - /opt/cirrus_env tg_post "/tmp/kernel/build.txt" "Build successfull"
 
   on_failure:
     sendtl_script:
-      - source /opt/cirrus_env
       - echo "--- Handling Failure ---"
-      - if [ -f /tmp/kernel/build.txt ]; then tg_post "/tmp/kernel/build.txt" "Build Failed! Log attached."; else tg_post "Build Failed! No log found."; fi
+      - if [ -f /tmp/kernel/build.txt ]; then /opt/cirrus_env tg_post "/tmp/kernel/build.txt" "Build Failed! Log attached."; else /opt/cirrus_env tg_post "Build Failed! No log found."; fi
