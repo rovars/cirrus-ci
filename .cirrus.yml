@@ -14,7 +14,7 @@ task:
 
   setup_script:
     - source /opt/cirrus_env
-    - 'tg_post "Build Started: ${CIRRUS_COMMIT_MESSAGE} (${CIRRUS_BRANCH}) [Cirrus CI](https://cirrus-ci.com/task/${CIRRUS_TASK_ID})"'
+    - /opt/cirrus_env --started
     - echo "--- Configuring Git ---"
     - echo "$credensial" > ~/.git-credentials
     - echo "$gitconfigs" > ~/.gitconfig
