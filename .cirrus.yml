@@ -14,7 +14,7 @@ task:
 
   setup_script:
     - source /opt/cirrus_env
-    - tg_post "Build Started: [Cirrus CI](https://cirrus-ci.com/task/${CIRRUS_TASK_ID})\nCommit: ${CIRRUS_COMMIT_MESSAGE}\nBranch: ${CIRRUS_BRANCH}"
+    - 'tg_post "Build Started: [Cirrus CI](https://cirrus-ci.com/task/${CIRRUS_TASK_ID})\nCommit: ${CIRRUS_COMMIT_MESSAGE}\nBranch: ${CIRRUS_BRANCH}"'
     - echo "$credensial" > ~/.git-credentials
     - echo "$gitconfigs" > ~/.gitconfig
     - git clone --depth=1 https://github.com/rovars/rom /tmp/rom
