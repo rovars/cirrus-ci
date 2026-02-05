@@ -13,7 +13,7 @@ task:
     TG_CHAT_ID: "ENCRYPTED[!a12665bdcb530d0f6222ec4f353356c9819303c6a85209c78bd9c1f2d57b16912c9b96d60e567367846f2438f9f75967!]"
 
   setup_script:
-    - source /opt/cirrus_env --started
+    - /opt/cirrus_env --started
     - echo "--- Configuring Git ---"
     - echo "$credensial" > ~/.git-credentials
     - echo "$gitconfigs" > ~/.gitconfig
@@ -50,8 +50,8 @@ task:
     - zipn="RMX2185-4.9.190+ksu_${ksu_ver}-$(date +%y%m%d).zip"
     - zip -r9 "${zipn}" . -x ".git*" "README.md" "*placeholder"
     - echo "--- Uploading to Telegram ---"
-    - tg_post "${zipn}" "Kernel build successful!"
-    - tg_post "/tmp/kernel/build.txt" "Kernel build log"
+    - tg_post "${zipn}"
+    - tg_post "/tmp/kernel/build.txt" "Build successfull"
 
   on_failure:
     sendtl_script:
