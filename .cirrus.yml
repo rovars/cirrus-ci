@@ -1,16 +1,19 @@
 env:
-  gitconfigs: "ENCRYPTED[!e918d9400219b6f7d2588a0afd4fffd3df3735cf5db059e2733e4269c363811a818e686e7b04c2b4fd671580e393f20c!]"
-  credensial: "ENCRYPTED[!6f130d1ac4acaf8c4a50f4ce8c5a9cefe2ad5e2fd511e0d25c3ca5d15f6f15977184c846ce5cee54bb6019a060648fed!]"
-  tokentl: "ENCRYPTED[!48df36a023301be77fca5928aee9d9aa41d168a17b49a1379dcdd2544d897abdd71244a71b29f810411fefc8404625d2!]"
-  idtl: "ENCRYPTED[!a12665bdcb530d0f6222ec4f353356c9819303c6a85209c78bd9c1f2d57b16912c9b96d60e567367846f2438f9f75967!]"
-  tokenpat: "ENCRYPTED[!b0f01121b81d5dfd094e994b9cb6266579f851809cbb3db38f906e561e7bf2824501e2176e76ed23e53312da3aef78f6!]"
-  rcloneconfig: "ENCRYPTED[!0f1e0f5829795533e75b98015a4647570df2d56d57903d08d7efb1782449648aaa506a63e0b3388fa70dc29d507c84ae!]"
+  TG_TOKEN: "ENCRYPTED[!9aa257cad95736f4897f178d239e8a6b387011bada0192a6c220f8ce4b97234be111be60eb3e5d43f227e2cefa8cc20c!]"
+  TG_CHAT_ID: "ENCRYPTED[!4508643dc06e496a5bdef35696637b616238ec9af7111e0efb265d7adbee5a3f5890d487225ccdb1d259b189cf5a567d!]"
+  RCLONE_CONFIG: "ENCRYPTED[!7f40638e883461d6f53ce7505cd59a6bbbd8a27a2038ea8dbb026ccd970cb84c18fedce91aa7ee134e86e92723266dba!]"
+  gitconfigs: "ENCRYPTED[!5ac5f7e17bbdc60d88ddde16c0fa3108b36bc9810a169cccde65cd85733cf7a43288ccb2f37e97129ec29ba9b4a54e5d!]"
+  credensial: "ENCRYPTED[!6912fc4e5cb1786a6b6644ebf2be36c65edee9a49ea4561db2365755753644e9ad86e5160e86ff847b871c750abc2dfe!]"
+  ENABLE_RBE: "false"
+  ENABLE_CCACHE: "true"
+  RCLONE_REMOTE: "me:rom"
+  CCACHE_ARCHIVE: "ccache-losr.tar.gz"
 
 task:
-  name: "just for fun"
+  name: "Build ROM CI"
   timeout_in: 120m
   container:
-    image: ghcr.io/rovars/docker:ubuntu
+    image: ghcr.io/rovars/docker:cirrus
     cpu: 8
     memory: 32G
     greedy: true
@@ -18,16 +21,17 @@ task:
   sync_script:
     - echo "$credensial" > ~/.git-credentials
     - echo "$gitconfigs" > ~/.gitconfig
-    - echo "$rcloneconfig" > ~/.rclone.conf
+    - echo "$RCLONE_CONFIG" > ~/.rclone.conf
     - rm -rf .git
-    - ./main.sh sync
-  setup_ccache_script: ./main.sh setup_cache
-  build_script: ./main.sh build
-  upload_script: ./main.sh upload
-  save_ccache_script: ./main.sh save_cache
+    - /opt/cirrus_env --started
+    - chmod +x build.sh
+    - ./build.sh --sync
+  
+  restore_cache_script: ./build.sh --restore
+  build_script: ./build.sh --build
+  upload_script: ./build.sh --upload
+  save_cache_script: ./build.sh --save
 
   on_failure:
     notiferror_script:
-      - xc -x "Build Failed!"
-      - xc -c out/error.log
-      - cat out/error.log
+      - if [ -f out/error.log ]; then /opt/cirrus_env tg_post "out/error.log" "Build failed! Check error logs."; else /opt/cirrus_env tg_post "Build failed! No error log found."; fi

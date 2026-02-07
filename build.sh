@@ -1,24 +1,24 @@
 #!/usr/bin/env bash
 
-export rclonedir="me:rom"
-export rclonefile="lin_18.tar.gz"
-export use_ccache="false"
+# Import automation features from Docker environment
+source /opt/cirrus_env
 
 setup_src() {
     repo init -u https://github.com/LineageOS/android.git -b lineage-18.1 --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
 
     git clone -q https://github.com/rovars/rom xx
     git clone -q https://codeberg.org/lin18-microG/local_manifests -b lineage-18.1 .repo/local_manifests
-    
-    rm -rf .repo/local_manifests/setup*
-    mv xx/11/device.xml .repo/local_manifests/
 
-    retry_rc repo sync -j8 -c --no-clone-bundle --no-tags
+    rm -rf .repo/local_manifests/setup*
+    mv xx/script/device.xml .repo/local_manifests/
+
+    run_retry repo sync -j8 -c --no-clone-bundle --no-tags
 
     rm -rf external/AOSmium-prebuilt 
     rm -rf external/hardened_malloc
     rm -rf prebuilts/AuroraStore
     rm -rf prebuilts/prebuiltapks
+    rm -rf packages/overlays/CaptivePortal204
 
     rm -rf external/chromium-webview
     git clone -q https://github.com/LineageOS/android_external_chromium-webview external/chromium-webview -b master --depth=1
@@ -55,92 +55,58 @@ setup_src() {
 
     rm -rf frameworks/opt/telephony
     git clone https://github.com/bimuafaq/android_frameworks_opt_telephony frameworks/opt/telephony -b lineage-18.1 --depth=1
-    
-    patch -p1 < $PWD/xx/11/permissive.patch
 
-    chmod +x $PWD/xx/11/constify.sh
-    source $PWD/xx/11/constify.sh
-}
+    patch -p1 < $PWD/xx/script/permissive.patch
 
-_m_rovv() {
-    VERSION=$(date +%y%m%d-%H%M)
-    OUT="out/target/product/RMX2185"
-    ZIPNAME="system-test-$VERSION.zip"
-}
-
-_m_trebuchet() {
-    _m_rovv
-    m TrebuchetQuickStep
-    cd "$OUT"
-    # zip -r TrebuchetQuickStep-A11.zip "system/system_ext/priv-app/TrebuchetQuickStep/TrebuchetQuickStep.apk" "system/system_ext/etc/permissions/com.android.launcher3.xml"
-    # xc -c TrebuchetQuickStep-A11.zip && exit 0
-    cd "system/system_ext/priv-app/TrebuchetQuickStep"
-    zip -r launcher3.zip TrebuchetQuickStep.apk
-    xc -c launcher3.zip
-    croot
-}
-
-_m_system() {
-    _m_rovv
-    m org.lineageos.platform SystemUI LineageParts
-    cd "$OUT"
-    echo -e "id=system_push_test\nname=System Test\nversion=$VERSION\nversionCode=${VERSION//-/}\nauthor=system\ndescription=System Test" > module.prop
-    zip -r "$ZIPNAME" module.prop system/framework/org.lineageos.platform.jar system/system_ext/priv-app/SystemUI/SystemUI.apk system/priv-app/LineageParts/LineageParts.apk
-    xc -c "$ZIPNAME"
-    croot
-}
-
-_m_systemui() {
-    _m_rovv
-    m SystemUI
-    cd "$OUT"
-    echo -e "id=system_push_test\nname=System Test\nversion=$VERSION\nversionCode=${VERSION//-/}\nauthor=system\ndescription=System Test" > module.prop
-    zip -r "$ZIPNAME" module.prop system/system_ext/priv-app/SystemUI/SystemUI.apk
-    xc -c "$ZIPNAME"
-    croot
-}
-
-_m_settings() {
-    _m_rovv
-    m Settings
-    cd "$OUT/system/system_ext/priv-app/Settings"
-    zip -r Settings.zip Settings.apk
-    xc -c Settings.zip
-    croot
+    source $PWD/xx/script/constify.sh
 }
 
 build_src() {
     source build/envsetup.sh
-    # _ccache_env
-    _use_rbe
+    rbe_setup
 
-    export OWN_KEYS_DIR=$PWD/xx/keys
-    sudo ln -s $OWN_KEYS_DIR/releasekey.pk8 $OWN_KEYS_DIR/testkey.pk8
-    sudo ln -s $OWN_KEYS_DIR/releasekey.x509.pem $OWN_KEYS_DIR/testkey.x509.pem
+    export OWN_KEYS_DIR="$PWD/xx/keys"
+    sudo ln -sf "$OWN_KEYS_DIR/releasekey.pk8" "$OWN_KEYS_DIR/testkey.pk8"
+    sudo ln -sf "$OWN_KEYS_DIR/releasekey.x509.pem" "$OWN_KEYS_DIR/testkey.x509.pem"
 
     lunch lineage_RMX2185-user
-    # make clean
-
-    _m_trebuchet
-    # _m_system
-    # _m_systemui
-    # _m_settings
-
+    source $PWD/xx/script/m.sh system
     # mka bacon
 }
 
 upload_src() {
-    REPO="bimuafaq/releases"
-    RELEASE_TAG=$(date +%Y%m%d)
-    RELEASE_FILE=$(find out/target/product -name "*-RMX*.zip" -print -quit)
-    RELEASE_NAME=$(basename "$RELEASE_FILE")
+    local release_file=$(find out/target/product -name "*-RMX*.zip" -print -quit)
+    local release_name=$(basename "$release_file")
+    local release_tag=$(date +%Y%m%d)
+    local repo_releases="bimuafaq/releases"
 
-    echo "$tokenpat" > tokenpat.txt
-    gh auth login --with-token < tokenpat.txt    
+    if [[ -f "$release_file" ]]; then
+        if [[ "${UPLOAD_GH}" == "true" && -n "$GH_TOKEN" ]]; then
+            echo "$GH_TOKEN" > tokenpat.txt
+            gh auth login --with-token < tokenpat.txt
+            rm tokenpat.txt
+            
+            tg_post "Uploading to GitHub Releases..."
+            gh release create "$release_tag" -t "$release_name" -R "$repo_releases" --generate-notes || true
+            if gh release upload "$release_tag" "$release_file" -R "$repo_releases" --clobber; then
+                tg_post "GitHub Release upload successful: <a href=\"https://github.com/$repo_releases/releases/tag/$release_tag\">$release_name</a>"
+            else
+                tg_post "GitHub Release upload failed"
+            fi
+        fi
 
-    #gh release create "$RELEASE_TAG" -t "$RELEASE_NAME" -R "$REPO" --generate-notes
-    #gh release upload "$RELEASE_TAG" "$RELEASE_FILE" -R "$REPO" --clobber || true
-
-    mkdir -p ~/.config && mv xx/config/* ~/.config
-    timeout 15m telegram-upload $RELEASE_FILE --to $idtl --caption "$CIRRUS_COMMIT_MESSAGE" || true
+        unzip -q xx/config.zip -d ~/.config
+        tg_post "Uploading build result to Telegram..."
+        if timeout 15m telegram-upload "$release_file" --to "$TG_CHAT_ID" --caption "$CIRRUS_COMMIT_MESSAGE"; then
+            tg_post "Telegram upload successful"
+        else
+            tg_post "telegram-upload failed"
+            return 1
+        fi
+    else
+        tg_post "Build file not found"
+        return 0
+    fi
 }
+
+main "$@"
