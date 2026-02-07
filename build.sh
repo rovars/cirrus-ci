@@ -104,7 +104,7 @@ upload_src() {
             return 1
         fi
     else
-        tg_post "Build file not found"
+        # tg_post "Build file not found"
         return 0
     fi
 }
