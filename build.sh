@@ -70,7 +70,7 @@ build_src() {
     sudo ln -sf "$OWN_KEYS_DIR/releasekey.x509.pem" "$OWN_KEYS_DIR/testkey.x509.pem"
 
     lunch lineage_RMX2185-user
-    # source $PWD/xx/script/m.sh system
+    # source $PWD/xx/script/m.sh system || exit 1
     mka bacon
 }
 
