@@ -65,13 +65,19 @@ build_src() {
     source build/envsetup.sh
     rbe_setup
 
+    export KBUILD_BUILD_USER=nobody
+    export KBUILD_BUILD_HOST=android-build
+    export BUILD_USERNAME=nobody
+    export BUILD_HOSTNAME=android-build
+
     export OWN_KEYS_DIR="$PWD/xx/keys"
     sudo ln -sf "$OWN_KEYS_DIR/releasekey.pk8" "$OWN_KEYS_DIR/testkey.pk8"
     sudo ln -sf "$OWN_KEYS_DIR/releasekey.x509.pem" "$OWN_KEYS_DIR/testkey.x509.pem"
 
     lunch lineage_RMX2185-user
+    make LineageOneUiSansFont
     # source $PWD/xx/script/m.sh system || exit 1
-    mka bacon
+    # mka bacon
 }
 
 upload_src() {
