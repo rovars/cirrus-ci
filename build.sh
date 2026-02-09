@@ -46,7 +46,6 @@ setup_src() {
     rm -rf packages/apps/Trebuchet
     git clone https://github.com/rovars/android_packages_apps_Trebuchet packages/apps/Trebuchet -b wip --depth=1
 
-
     rm -rf packages/apps/DeskClock
     git clone https://github.com/rovars/android_packages_apps_DeskClock packages/apps/DeskClock -b exthm-11 --depth=1
 
@@ -59,6 +58,11 @@ setup_src() {
     patch -p1 < $PWD/xx/script/permissive.patch
 
     source $PWD/xx/script/constify.sh
+
+    rm -rf kernel/realme/RMX2185
+    git clone https://github.com/rovars/kernel_realme_RMX2185 kernel/realme/RMX2185 --depth=5
+    git revert --no-edit a435473e6a45d3b319e793f40fb4cf9c1c269568
+    cd kernel/realme/RMX2185
 }
 
 build_src() {
@@ -75,9 +79,8 @@ build_src() {
     sudo ln -sf "$OWN_KEYS_DIR/releasekey.x509.pem" "$OWN_KEYS_DIR/testkey.x509.pem"
 
     lunch lineage_RMX2185-user
-    make LineageOneUiSansFont
     # source $PWD/xx/script/m.sh system || exit 1
-    # mka bacon
+    mka bacon
 }
 
 upload_src() {
@@ -86,12 +89,10 @@ upload_src() {
     local release_tag=$(date +%Y%m%d)
     local repo_releases="bimuafaq/releases"
 
+    UPLOAD_GH=true
+
     if [[ -f "$release_file" ]]; then
         if [[ "${UPLOAD_GH}" == "true" && -n "$GH_TOKEN" ]]; then
-            echo "$GH_TOKEN" > tokenpat.txt
-            gh auth login --with-token < tokenpat.txt
-            rm tokenpat.txt
-            
             tg_post "Uploading to GitHub Releases..."
             gh release create "$release_tag" -t "$release_name" -R "$repo_releases" --generate-notes || true
             if gh release upload "$release_tag" "$release_file" -R "$repo_releases" --clobber; then
