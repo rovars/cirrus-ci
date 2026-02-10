@@ -86,16 +86,19 @@ build_src() {
 
 upload_src() {
     local release_file=$(find out/target/product -name "*-RMX*.zip" -print -quit)
-    local release_name=$(basename "$release_file")
+    local release_name=$(basename "$release_file" .zip)
     local release_tag=$(date +%Y%m%d)
     local repo_releases="bimuafaq/releases"
 
-    UPLOAD_GH=true
+    UPLOAD_GH=${UPLOAD_GH:-true}
 
     if [[ -f "$release_file" ]]; then
-        if [[ "${UPLOAD_GH}" == "true" && -n "$GH_TOKEN" ]]; then
+        if [[ "${UPLOAD_GH}" == "true" && -n "$GITHUB_TOKEN" ]]; then
+            echo "$GITHUB_TOKEN" > tokenpat.txt
+            gh auth login --with-token < tokenpat.txt
+            rm tokenpat.txt
             tg_post "Uploading to GitHub Releases..."
-            gh release create "$release_tag" -t "$release_name" -R "$repo_releases" --generate-notes || true
+            gh release create "$release_tag" -t "$release_name" -R "$repo_releases" -F "xx/script/notes.txt" || true
             if gh release upload "$release_tag" "$release_file" -R "$repo_releases" --clobber; then
                 tg_post "GitHub Release upload successful: <a href=\"https://github.com/$repo_releases/releases/tag/$release_tag\">$release_name</a>"
             else
@@ -112,7 +115,7 @@ upload_src() {
             return 1
         fi
     else
-        # tg_post "Build file not found"
+        tg_post "Build file not found"
         return 0
     fi
 }
