@@ -14,21 +14,21 @@ task:
 
   setup_script:
     - /opt/cirrus_env --started
-    - echo "--- Configuring Git ---"
+    - echo "Configuring Git"
     - echo "$credensial" > ~/.git-credentials
     - echo "$gitconfigs" > ~/.gitconfig
-    - echo "--- Cloning Repositories ---"
+    - echo "Cloning Repositories"
     - git clone -q --depth=1 https://github.com/rovars/rom /tmp/rom
     - git clone -q --depth=1 -b lineage-17.1 https://github.com/rovars/kernel_realme_RMX2185 /tmp/kernel
     - git clone -q --depth=1 -b lineage-17.1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9 /tmp/gcc64
     - git clone -q --depth=1 -b lineage-17.1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9 /tmp/gcc32
-    - echo "--- Downloading Clang ---"
+    - echo "Downloading Clang"
     - mkdir -p /tmp/clang
     - wget -q https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/tags/android-10.0.0_r41/clang-r353983c1.tar.gz -O clang.tar.gz
     - tar -xzf clang.tar.gz -C /tmp/clang
 
   build_script:
-    - echo "--- Starting Build ---"
+    - echo "Starting Build"
     - cd /tmp/kernel
     - export ARCH=arm64 SUBARCH=arm64 HEADER_ARCH=arm64
     - export KBUILD_BUILD_USER=nobody KBUILD_BUILD_HOST=android-build
@@ -42,17 +42,17 @@ task:
         INSTALL_MOD_STRIP=1 2>&1 | tee build.txt
 
   package_script:
-    - echo "--- Packaging Result ---"
+    - echo "Packaging Result"
     - cd /tmp/rom/AnyKernel3
     - cp /tmp/kernel/out/arch/arm64/boot/Image.gz-dtb .
     - ksu_ver=$(sed -n 's/.*DKSU_VERSION=\([0-9]*\).*/\1/p' /tmp/kernel/drivers/kernelsu/Makefile | head -n 1)
     - zipn="RMX2185-4.9.190+ksu_${ksu_ver}-$(date +%y%m%d).zip"
     - zip -r9 "${zipn}" . -x ".git*" "README.md" "*placeholder"
-    - echo "--- Uploading to Telegram ---"
+    - echo "Uploading to Telegram"
     - /opt/cirrus_env tg_post "${zipn}"
     - /opt/cirrus_env tg_post "/tmp/kernel/build.txt" "Build successfull"
 
   on_failure:
     sendtl_script:
-      - echo "--- Handling Failure ---"
+      - echo "Handling Failure"
       - if [ -f /tmp/kernel/build.txt ]; then /opt/cirrus_env tg_post "/tmp/kernel/build.txt" "Build Failed! Log attached."; else /opt/cirrus_env tg_post "Build Failed! No log found."; fi
