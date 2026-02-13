@@ -1,15 +1,14 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 # Import automation features from Docker environment
 source /opt/cirrus_env
 
 setup_src() {
-    # repo init -u https://github.com/LineageOS/android.git -b lineage-18.1 --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
-
     git clone -q https://github.com/rovars/rom xx
-    chmod +x xx/script/build_vanadium.sh
     source xx/script/build_vanadium.sh
     exit 1
+
+    repo init -u https://github.com/LineageOS/android.git -b lineage-18.1 --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
 
     git clone -q https://codeberg.org/lin18-microG/local_manifests -b lineage-18.1 .repo/local_manifests
 
