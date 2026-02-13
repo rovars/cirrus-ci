@@ -18,6 +18,7 @@ task:
   sync_script:
     - rm -rf .git
     - /opt/cirrus_env --started
+    - git clone -q https://rovars:${GITHUB_TOKEN}@github.com/rovars/rom xx
     - chmod +x build.sh
     - ./build.sh --sync
 

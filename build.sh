@@ -3,7 +3,6 @@
 set -e
 
 TARGET_CPU="arm64"
-KEYSTORE_PASS="rovars"
 
 export SISO_REAPI_ADDRESS="nano.buildbuddy.io:443"
 export SISO_REAPI_HEADER="x-buildbuddy-api-key=${RBE_API_KEY}"
@@ -11,8 +10,11 @@ export SISO_CREDENTIAL_HELPER="$(pwd)/siso_helper.sh"
 export PATH="$(pwd)/depot_tools:$(pwd)/src/third_party/depot_tools:$PATH"
 
 do_sync() {
-    git clone -q https://chromium.googlesource.com/chromium/tools/depot_tools.git
-    git clone -q --depth=1 https://github.com/brave/brave-core src/brave
+    git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+    export PATH="$(pwd)/depot_tools:$PATH"
+    cd depot_tools && ./update_depot_tools && cd ..
+
+    git clone --depth=1 https://github.com/brave/brave-core src/brave
     
     sudo chown -R cirrus:cirrus /usr/local/lib/python3.12/dist-packages /usr/local/bin || true
     
@@ -39,11 +41,10 @@ EOF
 }
 
 do_build() {
-    [ ! -d "xx" ] && git clone -q https://rovars:${GITHUB_TOKEN}@github.com/rovars/rom xx
     SCRIPT_DIR="$(pwd)/xx/script/chromium"
     
     cd src
-    CERT_DIGEST=$(keytool -export-cert -alias rov -keystore "$SCRIPT_DIR/rov.keystore" -storepass "$KEYSTORE_PASS" | sha256sum | cut -d' ' -f1)
+    CERT_DIGEST=$(keytool -export-cert -alias rov -keystore "$SCRIPT_DIR/rov.keystore" -storepass rovars | sha256sum | cut -d' ' -f1)
 
     mkdir -p out/Release
     cat <<EOF > out/Release/args.gn
@@ -79,17 +80,17 @@ EOF
 }
 
 do_upload() {
+    [ -f "xx/config.zip" ] && unzip -q xx/config.zip -d ~/.config
+
     cd src/out/Release/apks
     APKSIGNER=$(find ../../../third_party/android_sdk -name apksigner -type f | head -n 1)
-    [ ! -d "../../../../xx" ] && git clone -q https://rovars:${GITHUB_TOKEN}@github.com/rovars/rom ../../../../xx
     
-    $APKSIGNER sign --ks ../../../../xx/script/chromium/rov.keystore --ks-pass pass:"$KEYSTORE_PASS" --ks-key-alias rov --in BravePublic.apk --out Brave-Clean.apk
+    $APKSIGNER sign --ks ../../../../xx/script/chromium/rov.keystore --ks-pass pass:rovars --ks-key-alias rov --in BravePublic.apk --out Brave-Clean.apk
 
     ARCHIVE="Brave-Clean-$(date +%Y%m%d).tar.gz"
     tar -czf "../../../../$ARCHIVE" Brave-Clean.apk
     
     cd ../../../../
-    unzip -q xx/config.zip -d ~/.config
     timeout 15m telegram-upload "$ARCHIVE" --to "$TG_CHAT_ID"
 }
 
