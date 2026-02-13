@@ -7,20 +7,19 @@ TARGET_CPU="arm64"
 export SISO_REAPI_ADDRESS="nano.buildbuddy.io:443"
 export SISO_REAPI_HEADER="x-buildbuddy-api-key=${RBE_API_KEY}"
 export SISO_CREDENTIAL_HELPER="$(pwd)/siso_helper.sh"
-export PATH="$(pwd)/depot_tools:$(pwd)/src/third_party/depot_tools:$PATH"
+# Put Brave's internal depot_tools in PATH
+export PATH="$(pwd)/src/brave/vendor/depot_tools:$PATH"
 
 do_sync() {
-    git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
-    export PATH="$(pwd)/depot_tools:$PATH"
-    cd depot_tools && ./update_depot_tools && cd ..
-
-    git clone --depth=1 https://github.com/brave/brave-core src/brave
+    git clone -q --depth=1 https://github.com/brave/brave-core src/brave
     
     sudo chown -R cirrus:cirrus /usr/local/lib/python3.12/dist-packages /usr/local/bin || true
     
     cd src/brave
     npm install
     
+    # Brave Core will clone depot_tools into vendor/ during sync
+    # We must ensure .gclient is present one level above 'src'
     cat <<EOF > ../../.gclient
 solutions = [
   {
