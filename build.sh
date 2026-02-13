@@ -2,7 +2,6 @@
 
 set -e
 
-BRAVE_TAG="v1.87.186"
 TARGET_CPU="arm64"
 KEYSTORE_PASS="rovars"
 
@@ -13,7 +12,7 @@ export PATH="$(pwd)/depot_tools:$(pwd)/src/third_party/depot_tools:$PATH"
 
 do_sync() {
     git clone -q https://chromium.googlesource.com/chromium/tools/depot_tools.git
-    git clone -q --depth=1 --branch "$BRAVE_TAG" https://github.com/brave/brave-core src/brave
+    git clone -q --depth=1 https://github.com/brave/brave-core src/brave
     
     sudo chown -R cirrus:cirrus /usr/local/lib/python3.12/dist-packages /usr/local/bin || true
     
