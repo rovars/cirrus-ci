@@ -16,5 +16,7 @@ task:
     greedy: true
 
   build_script:
+    - rm -rf .git
+    - /opt/cirrus_env --started
     - chmod +x build.sh
     - ./build.sh
