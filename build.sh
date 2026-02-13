@@ -9,6 +9,9 @@ export SISO_REAPI_HEADER="x-buildbuddy-api-key=${RBE_API_KEY}"
 export SISO_CREDENTIAL_HELPER="$(pwd)/siso_helper.sh"
 
 do_sync() {
+    git clone -q --depth=1 https://github.com/brave/brave-browser.git
+    cd brave-browser
+
     cat <<EOF > .gclient
 solutions = [
   {
@@ -18,27 +21,24 @@ solutions = [
     "custom_vars": {
       "rbe_instance": "default_instance",
       "reapi_address": "nano.buildbuddy.io:443",
-      "reapi_backend_config_path": "$(pwd)/../../buildbuddy_backend.star",
+      "reapi_backend_config_path": "$(pwd)/buildbuddy_backend.star",
     },
   },
 ]
 target_os = ["android"]
 EOF
 
-    git clone -q --depth=1 https://github.com/brave/brave-core src/brave
-    
     sudo chown -R cirrus:cirrus /usr/local/lib/python3.12/dist-packages /usr/local/bin || true
     
-    cd src/brave
     npm install
-    export PATH="$(pwd)/vendor/depot_tools:$PATH"
+    npm run init -- --target_os=android --target_arch=$TARGET_CPU
     npm run sync -- --target_os=android --target_arch=$TARGET_CPU
 }
 
 do_build() {
     SCRIPT_DIR="$(pwd)/xx/script/chromium"
-    cd src
-    CERT_DIGEST=$(keytool -export-cert -alias rov -keystore "$SCRIPT_DIR/rov.keystore" -storepass rovars | sha256sum | cut -d' ' -f1)
+    cd brave-browser/src
+    CERT_DIGEST=$(keytool -export-cert -alias rov -keystore "../../$SCRIPT_DIR/rov.keystore" -storepass rovars | sha256sum | cut -d' ' -f1)
 
     mkdir -p out/Release
     cat <<EOF > out/Release/args.gn
@@ -61,12 +61,6 @@ enable_ai_chat = false
 enable_brave_talk = false
 enable_brave_ads = false
 enable_brave_wayback_machine = false
-brave_stats_updater_url = ""
-brave_variations_server_url = ""
-brave_p3a_enabled = false
-enable_ipfs = false
-enable_tor = false
-enable_speedreader = false
 EOF
 
     gn gen out/Release
@@ -75,12 +69,12 @@ EOF
 
 do_upload() {
     [ -f "xx/config.zip" ] && unzip -q xx/config.zip -d ~/.config
-    cd src/out/Release/apks
+    cd brave-browser/src/out/Release/apks
     APKSIGNER=$(find ../../../third_party/android_sdk -name apksigner -type f | head -n 1)
-    $APKSIGNER sign --ks ../../../../xx/script/chromium/rov.keystore --ks-pass pass:rovars --ks-key-alias rov --in BravePublic.apk --out Brave-Clean.apk
+    $APKSIGNER sign --ks ../../../../../xx/script/chromium/rov.keystore --ks-pass pass:rovars --ks-key-alias rov --in BravePublic.apk --out Brave-Clean.apk
     ARCHIVE="Brave-Clean-$(date +%Y%m%d).tar.gz"
-    tar -czf "../../../../$ARCHIVE" Brave-Clean.apk
-    cd ../../../../
+    tar -czf "../../../../../$ARCHIVE" Brave-Clean.apk
+    cd ../../../../../
     timeout 15m telegram-upload "$ARCHIVE" --to "$TG_CHAT_ID"
 }
 
