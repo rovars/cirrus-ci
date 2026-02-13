@@ -16,21 +16,36 @@ export SISO_PROFILER=1
 export SISO_CREDENTIAL_HELPER="$(pwd)/siso_helper.sh"
 export CHROME_HEADLESS=1
 
-if [ ! -d "depot_tools" ]; then
-    git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
-fi
+git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
 export PATH="$(pwd)/depot_tools:$PATH"
 export DEPOT_TOOLS_UPDATE=1
 cd depot_tools && ./update_depot_tools && cd ..
 
-if [ ! -d "brave-browser" ]; then
-    git clone --depth=1 --branch "$BRAVE_TAG" https://github.com/brave/brave-browser.git
-fi
+git clone --depth=1 --branch "$BRAVE_TAG" https://github.com/brave/brave-browser.git
 cd brave-browser
 
 npm cache clean --force > /dev/null 2>&1 || true
 npm install
 npm run init -- --target_os=android --target_arch=$TARGET_CPU
+
+cat <<EOF > .gclient
+solutions = [
+  {
+    "name": "src",
+    "url": "https://chromium.googlesource.com/chromium/src.git",
+    "managed": False,
+    "custom_deps": {},
+    "custom_vars": {
+      "rbe_instance": "default_instance",
+      "reapi_address": "nano.buildbuddy.io:443",
+      "reapi_instance": "default_instance",
+      "reapi_backend_config_path": "$(pwd)/buildbuddy_backend.star",
+    },
+  },
+]
+target_os = ["android"]
+EOF
+
 npm run sync -- --target_os=android
 
 export PATH="$PATH:$(pwd)/src/third_party/depot_tools"
@@ -73,24 +88,6 @@ enable_speedreader = false
 EOF
 
 cd src
-cat <<EOF > ../.gclient
-solutions = [
-  {
-    "name": "src",
-    "url": "https://chromium.googlesource.com/chromium/src.git",
-    "managed": False,
-    "custom_deps": {},
-    "custom_vars": {
-      "rbe_instance": "default_instance",
-      "reapi_address": "nano.buildbuddy.io:443",
-      "reapi_instance": "default_instance",
-      "reapi_backend_config_path": "$(pwd)/../../buildbuddy_backend.star",
-    },
-  },
-]
-target_os = ["android"]
-EOF
-
 gn gen out/Release
 chrt -b 0 autoninja -C out/Release chrome_public_apk
 
