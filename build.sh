@@ -24,6 +24,10 @@ cd depot_tools && ./update_depot_tools && cd ..
 git clone --depth=1 --branch "$BRAVE_TAG" https://github.com/brave/brave-browser.git
 cd brave-browser
 
+# Fix Python permissions for Brave sync
+sudo chown -R cirrus:cirrus /usr/local/lib/python3.10/dist-packages || true
+sudo chown -R cirrus:cirrus /usr/local/bin || true
+
 npm cache clean --force > /dev/null 2>&1 || true
 npm install
 npm run init -- --target_os=android --target_arch=$TARGET_CPU
@@ -106,5 +110,5 @@ tar -czf "$ARCHIVE_FILE" -C brave-browser/src/out/Release/apks/signed .
 
 if [ -f "xx/config.zip" ]; then
     unzip -q xx/config.zip -d ~/.config
-    timeout 15m telegram-upload "$ARCHIVE_FILE" --to "$TG_CHAT_ID" --caption "Brave Clean $BRAVE_TAG ARM64 (RBE)"
+    timeout 15m telegram-upload "$ARCHIVE_FILE" --to "$TG_CHAT_ID"
 fi
