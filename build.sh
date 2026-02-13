@@ -9,10 +9,13 @@ export SISO_REAPI_HEADER="x-buildbuddy-api-key=${RBE_API_KEY}"
 export SISO_CREDENTIAL_HELPER="$(pwd)/siso_helper.sh"
 
 do_sync() {
+    git clone -q https://chromium.googlesource.com/chromium/tools/depot_tools.git
+    export PATH="$(pwd)/depot_tools:$PATH"
+    ./depot_tools/update_depot_tools
+
     git clone -q --depth=1 https://github.com/brave/brave-browser.git
     cd brave-browser
 
-    # .gclient must be here to manage the 'src' folder Brave will create
     cat <<EOF > .gclient
 solutions = [
   {
@@ -22,7 +25,7 @@ solutions = [
     "custom_vars": {
       "rbe_instance": "default_instance",
       "reapi_address": "nano.buildbuddy.io:443",
-      "reapi_backend_config_path": "$(pwd)/buildbuddy_backend.star",
+      "reapi_backend_config_path": "$(pwd)/../buildbuddy_backend.star",
     },
   },
 ]
@@ -32,8 +35,8 @@ EOF
     sudo chown -R cirrus:cirrus /usr/local/lib/python3.12/dist-packages /usr/local/bin || true
     
     npm install
-    # Brave sync will handle fetching brave-core and chromium
-    npm run sync -- --target_os=android --target_arch=$TARGET_CPU
+    gclient sync --nohooks --no-history -j 8
+    gclient runhooks
 }
 
 do_build() {
