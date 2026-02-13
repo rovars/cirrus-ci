@@ -12,6 +12,7 @@ do_sync() {
     git clone -q --depth=1 https://github.com/brave/brave-browser.git
     cd brave-browser
 
+    # .gclient must be here to manage the 'src' folder Brave will create
     cat <<EOF > .gclient
 solutions = [
   {
@@ -31,7 +32,7 @@ EOF
     sudo chown -R cirrus:cirrus /usr/local/lib/python3.12/dist-packages /usr/local/bin || true
     
     npm install
-    npm run init -- --target_os=android --target_arch=$TARGET_CPU
+    # Brave sync will handle fetching brave-core and chromium
     npm run sync -- --target_os=android --target_arch=$TARGET_CPU
 }
 
