@@ -25,11 +25,11 @@ solutions = [
 target_os = ["android"]
 EOF
 
-    git clone -q --depth=1 https://github.com/brave/brave-core src/rov-core
+    git clone -q --depth=1 https://github.com/brave/brave-core src/brave
     
     sudo chown -R cirrus:cirrus /usr/local/lib/python3.12/dist-packages /usr/local/bin || true
     
-    cd src/rov-core
+    cd src/brave
     npm install
     export PATH="$(pwd)/vendor/depot_tools:$PATH"
     npm run sync -- --target_os=android --target_arch=$TARGET_CPU
@@ -42,7 +42,7 @@ do_build() {
 
     mkdir -p out/Release
     cat <<EOF > out/Release/args.gn
-import("//rov-core/build/config/android.gni")
+import("//brave/build/config/android.gni")
 target_os = "android"
 target_cpu = "$TARGET_CPU"
 trichrome_certdigest = "$CERT_DIGEST"
