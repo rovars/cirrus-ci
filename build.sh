@@ -7,20 +7,9 @@ TARGET_CPU="arm64"
 export SISO_REAPI_ADDRESS="nano.buildbuddy.io:443"
 export SISO_REAPI_HEADER="x-buildbuddy-api-key=${RBE_API_KEY}"
 export SISO_CREDENTIAL_HELPER="$(pwd)/siso_helper.sh"
-# Put Brave's internal depot_tools in PATH
-export PATH="$(pwd)/src/brave/vendor/depot_tools:$PATH"
 
 do_sync() {
-    git clone -q --depth=1 https://github.com/brave/brave-core src/brave
-    
-    sudo chown -R cirrus:cirrus /usr/local/lib/python3.12/dist-packages /usr/local/bin || true
-    
-    cd src/brave
-    npm install
-    
-    # Brave Core will clone depot_tools into vendor/ during sync
-    # We must ensure .gclient is present one level above 'src'
-    cat <<EOF > ../../.gclient
+    cat <<EOF > .gclient
 solutions = [
   {
     "name": "src",
@@ -36,18 +25,24 @@ solutions = [
 target_os = ["android"]
 EOF
 
+    git clone -q --depth=1 https://github.com/brave/brave-core src/rov-core
+    
+    sudo chown -R cirrus:cirrus /usr/local/lib/python3.12/dist-packages /usr/local/bin || true
+    
+    cd src/rov-core
+    npm install
+    export PATH="$(pwd)/vendor/depot_tools:$PATH"
     npm run sync -- --target_os=android --target_arch=$TARGET_CPU
 }
 
 do_build() {
     SCRIPT_DIR="$(pwd)/xx/script/chromium"
-    
     cd src
     CERT_DIGEST=$(keytool -export-cert -alias rov -keystore "$SCRIPT_DIR/rov.keystore" -storepass rovars | sha256sum | cut -d' ' -f1)
 
     mkdir -p out/Release
     cat <<EOF > out/Release/args.gn
-import("//brave/build/config/android.gni")
+import("//rov-core/build/config/android.gni")
 target_os = "android"
 target_cpu = "$TARGET_CPU"
 trichrome_certdigest = "$CERT_DIGEST"
@@ -80,15 +75,11 @@ EOF
 
 do_upload() {
     [ -f "xx/config.zip" ] && unzip -q xx/config.zip -d ~/.config
-
     cd src/out/Release/apks
     APKSIGNER=$(find ../../../third_party/android_sdk -name apksigner -type f | head -n 1)
-    
     $APKSIGNER sign --ks ../../../../xx/script/chromium/rov.keystore --ks-pass pass:rovars --ks-key-alias rov --in BravePublic.apk --out Brave-Clean.apk
-
     ARCHIVE="Brave-Clean-$(date +%Y%m%d).tar.gz"
     tar -czf "../../../../$ARCHIVE" Brave-Clean.apk
-    
     cd ../../../../
     timeout 15m telegram-upload "$ARCHIVE" --to "$TG_CHAT_ID"
 }
