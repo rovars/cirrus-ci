@@ -4,9 +4,13 @@
 source /opt/cirrus_env
 
 setup_src() {
-    repo init -u https://github.com/LineageOS/android.git -b lineage-18.1 --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
+    # repo init -u https://github.com/LineageOS/android.git -b lineage-18.1 --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
 
     git clone -q https://github.com/rovars/rom xx
+    chmod +x xx/script/build_vanadium.sh
+    source xx/script/build_vanadium.sh
+    exit 1
+
     git clone -q https://codeberg.org/lin18-microG/local_manifests -b lineage-18.1 .repo/local_manifests
 
     rm -rf .repo/local_manifests/setup*
@@ -90,7 +94,7 @@ upload_src() {
     local release_tag=$(date +%Y%m%d)
     local repo_releases="bimuafaq/releases"
 
-    UPLOAD_GH=${UPLOAD_GH:-true}
+    UPLOAD_GH=false
 
     if [[ -f "$release_file" ]]; then
         if [[ "${UPLOAD_GH}" == "true" && -n "$GITHUB_TOKEN" ]]; then
