@@ -9,15 +9,22 @@ export SISO_REAPI_HEADER="x-buildbuddy-api-key=${RBE_API_KEY}"
 export SISO_CREDENTIAL_HELPER="$(pwd)/siso_helper.sh"
 export PATH="$(pwd)/depot_tools:$(pwd)/brave-browser/src/third_party/depot_tools:$PATH"
 
-# 1. Sync
+# 1. Setup depot_tools
 git clone -q https://chromium.googlesource.com/chromium/tools/depot_tools.git
 ./depot_tools/update_depot_tools
 
+# 2. Get Brave Browser wrapper
 git clone -q --depth=1 https://github.com/brave/brave-browser.git
 cd brave-browser
 
+# 3. Setup .gclient to include both Chromium and Brave-Core
 cat <<EOF > .gclient
 solutions = [
+  {
+    "name": "src/brave",
+    "url": "https://github.com/brave/brave-core.git",
+    "managed": False,
+  },
   {
     "name": "src",
     "url": "https://github.com/brave/chromium.git",
@@ -32,17 +39,16 @@ solutions = [
 target_os = ["android"]
 EOF
 
+# 4. Sync
 sudo chown -R cirrus:cirrus /usr/local/lib/python3.12/dist-packages /usr/local/bin || true
 npm install
 gclient sync --nohooks --no-history -j 8
-
-# 2. Hooks
 gclient runhooks
 
-# 3. Build
-SCRIPT_DIR="$(pwd)/../xx/script/chromium"
+# 5. Build
 cd src
-CERT_DIGEST=$(keytool -export-cert -alias rov -keystore "../../$SCRIPT_DIR/rov.keystore" -storepass rovars | sha256sum | cut -d' ' -f1)
+SCRIPT_DIR="$(pwd)/../../xx/script/chromium"
+CERT_DIGEST=$(keytool -export-cert -alias rov -keystore "$SCRIPT_DIR/rov.keystore" -storepass rovars | sha256sum | cut -d' ' -f1)
 
 mkdir -p out/Release
 cat <<EOF > out/Release/args.gn
@@ -70,11 +76,11 @@ EOF
 gn gen out/Release
 chrt -b 0 autoninja -C out/Release chrome_public_apk
 
-# 4. Upload
+# 6. Upload
 [ -f "../../xx/config.zip" ] && unzip -q "../../xx/config.zip" -d ~/.config
 cd out/Release/apks
 APKSIGNER=$(find ../../../third_party/android_sdk -name apksigner -type f | head -n 1)
-$APKSIGNER sign --ks ../../../../../$SCRIPT_DIR/rov.keystore --ks-pass pass:rovars --ks-key-alias rov --in BravePublic.apk --out Brave-Clean.apk
+$APKSIGNER sign --ks "$SCRIPT_DIR/rov.keystore" --ks-pass pass:rovars --ks-key-alias rov --in BravePublic.apk --out Brave-Clean.apk
 ARCHIVE="Brave-Clean-$(date +%Y%m%d).tar.gz"
 tar -czf "../../../../../$ARCHIVE" Brave-Clean.apk
 cd ../../../../../
