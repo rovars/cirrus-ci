@@ -5,7 +5,7 @@ source /opt/cirrus_env
 
 setup_src() {
     git clone -q https://github.com/rovars/rom xx
-    source xx/script/build_vanadium.sh
+    source xx/script/build_brave.sh
     exit 1
 
     repo init -u https://github.com/LineageOS/android.git -b lineage-18.1 --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
