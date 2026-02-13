@@ -15,10 +15,14 @@ task:
     memory: 32G
     greedy: true
 
-  build_script:
+  sync_script:
     - rm -rf .git
-    - sudo chown -R cirrus:cirrus /usr/local/lib/python3.12/dist-packages || true
-    - sudo chown -R cirrus:cirrus /usr/local/bin || true
     - /opt/cirrus_env --started
     - chmod +x build.sh
-    - ./build.sh
+    - ./build.sh --sync
+
+  build_script:
+    - ./build.sh --build
+
+  upload_script:
+    - ./build.sh --upload
