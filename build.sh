@@ -13,17 +13,23 @@ export SISO_REAPI_ADDRESS="nano.buildbuddy.io:443"
 export SISO_REAPI_HEADER="x-buildbuddy-api-key=${RBE_API_KEY}"
 export SISO_CREDENTIAL_HELPER="$ROOT_DIR/siso_helper.sh"
 
-export PYTHONUNBUFFERED=1
-export GSUTIL_ENABLE_LUCI_AUTH=0
-export DEPOT_TOOLS_UPDATE=1
+export BRAVE_IPFS_ENABLED=false
+export BRAVE_REWARDS_ENABLED=false
+export BRAVE_WALLET_ENABLED=false
+export BRAVE_TOR_ENABLED=false
+export BRAVE_SPEEDREADER_ENABLED=false
+export BRAVE_ADS_ENABLED=false
+export BRAVE_VPN_ENABLED=false
+
+export USE_REMOTEEXEC=true
+export USE_SISO=true
+export SYMBOL_LEVEL=0
 
 mkdir -p src
-
 git clone -q https://github.com/brave/brave-core.git src/brave
 export PATH="$ROOT_DIR/src/brave/vendor/depot_tools:$PATH"
 
 cd src/brave
-sudo chown -R cirrus:cirrus /usr/local/lib/python3.* /usr/local/bin || true
 npm install
 
 cat <<EOF > .env
@@ -35,59 +41,23 @@ projects_chrome_custom_vars='{
 }'
 EOF
 
-echo "Initializing Brave build environment for Android ($TARGET_CPU)..."
-npm run init -- --target_os=android --target_arch=$TARGET_CPU --no-history
+npm run build -- Release --target_os=android --target_arch=$TARGET_CPU --target=chrome_public_apk
 
-cd ..
-echo "Installing Android build dependencies..."
-sudo "$ROOT_DIR/src/build/install-build-deps.sh" --android --no-prompt > /dev/null 2>&1
-
-BUILD_DIR="out/android_release"
-mkdir -p $BUILD_DIR
-
-cat <<EOF > $BUILD_DIR/args.gn
-enable_ipfs = false
-brave_rewards_enabled = false
-brave_wallet_enabled = false
-enable_tor = false
-enable_speedreader = false
-brave_ads_enabled = false
-enable_brave_vpn = false
-use_remoteexec = true
-use_siso = true
-is_official_build = false
-is_component_build = false
-is_debug = false
-target_os = "android"
-target_cpu = "$TARGET_CPU"
-symbol_level = 0
-EOF
-
-echo "Generating build files with 'gn gen'..."
-gn gen "$BUILD_DIR"
-
-echo "Starting Brave compilation for $TARGET_CPU..."
-chrt -b 0 autoninja -C "$BUILD_DIR" chrome_public_apk
-
-[ -f "$ROM_REPO_DIR/config.zip" ] && unzip -q "$ROM_REPO_DIR/config.zip" -d ~/.config
+BUILD_DIR="../out/Release_android"
 
 cd "$BUILD_DIR/apks"
 APKSIGNER=$(find "$ROOT_DIR/src/third_party/android_sdk" -name apksigner -type f | head -n 1)
 
 FINAL_APK="BravePublic.apk"
 SCRIPT_DIR="$ROM_REPO_DIR/script/chromium"
+
 if [ -f "$SCRIPT_DIR/rov.keystore" ]; then
-    echo "Signing BravePublic.apk with rov.keystore..."
     "$APKSIGNER" sign --ks "$SCRIPT_DIR/rov.keystore" --ks-pass pass:rovars --ks-key-alias rov --in BravePublic.apk --out Brave-Clean.apk
     FINAL_APK="Brave-Clean.apk"
-else
-    echo "Keystore not found ($SCRIPT_DIR/rov.keystore). Skipping APK signing."
 fi
 
 ARCHIVE="Brave-Clean-$(date +%Y%m%d).tar.gz"
-echo "Creating archive: $ARCHIVE"
 tar -czf "$ROOT_DIR/$ARCHIVE" "$FINAL_APK"
 
 cd "$ROOT_DIR"
-echo "Uploading $ARCHIVE to Telegram..."
 timeout 15m telegram-upload "$ARCHIVE" --to "$TG_CHAT_ID" || echo "Upload failed"
