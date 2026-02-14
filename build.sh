@@ -5,9 +5,9 @@ set -e
 sudo apt-get -qq update
 sudo apt-get -qq install -y git python-is-python3 curl lsb-release sudo file wget tar unzip
 
-TARGET_CPU="arm64"
+TARGET_CPU="${1:-arm64}"
 ROOT_DIR="$(pwd)"
-ROM_REPO_DIR="$ROOT_DIR/xx"
+ROM_REPO_DIR="$ROOT_DIR/rom"
 
 export SISO_REAPI_ADDRESS="nano.buildbuddy.io:443"
 export SISO_REAPI_HEADER="x-buildbuddy-api-key=${RBE_API_KEY}"
@@ -20,6 +20,8 @@ export DEPOT_TOOLS_UPDATE=1
 mkdir -p src
 if [ ! -d "src/brave" ]; then
     git clone -q --depth=1 https://github.com/brave/brave-core.git src/brave
+else
+    echo "brave-core repository already exists."
 fi
 
 export PATH="$ROOT_DIR/src/brave/vendor/depot_tools:$PATH"
@@ -37,50 +39,17 @@ projects_chrome_custom_vars='{
 }'
 EOF
 
+echo "Initializing Brave build environment for Android ($TARGET_CPU)..."
 npm run init -- --target_os=android --target_arch=$TARGET_CPU --no-history
 
+echo "Installing Android build dependencies..."
 sudo "$ROOT_DIR/src/build/install-build-deps.sh" --android --no-prompt
-
-SCRIPT_DIR="$ROM_REPO_DIR/script/chromium"
-if [ -f "$SCRIPT_DIR/rov.keystore" ]; then
-    CERT_DIGEST=$(keytool -export-cert -alias rov -keystore "$SCRIPT_DIR/rov.keystore" -storepass rovars | sha256sum | cut -d' ' -f1)
-else
-    CERT_DIGEST="000000"
-fi
-
-cd "$ROOT_DIR/src"
-
-if [ ! -d "brave" ]; then
-    git clone -q --depth=1 https://github.com/brave/brave-core.git brave
-fi
-
-export PATH="$ROOT_DIR/src/buildtools/linux64:$ROOT_DIR/src/brave/vendor/depot_tools:$PATH"
 
 BUILD_DIR="out/Release_android_$TARGET_CPU"
 mkdir -p "$BUILD_DIR"
+echo 'is_brave_origin_branded = true' > "$BUILD_DIR/args.gn"
 
-gn gen "$BUILD_DIR" --args="
-  import(\"//brave/build/config/android.gni\")
-  target_os = \"android\"
-  target_cpu = \"$TARGET_CPU\"
-  trichrome_certdigest = \"$CERT_DIGEST\"
-  symbol_level = 0
-  is_debug = false
-  is_official_build = false
-  use_remoteexec = true
-  use_siso = true
-  is_clang = true
-  treat_warnings_as_errors = false
-  enable_brave_rewards = false
-  enable_brave_wallet = false
-  enable_brave_vpn = false
-  enable_brave_news = false
-  enable_ai_chat = false
-  enable_brave_talk = false
-  enable_brave_ads = false
-  enable_brave_wayback_machine = false
-"
-
+echo "Starting Brave compilation for $TARGET_CPU..."
 chrt -b 0 autoninja -C "$BUILD_DIR" chrome_public_apk
 
 [ -f "$ROM_REPO_DIR/config.zip" ] && unzip -q "$ROM_REPO_DIR/config.zip" -d ~/.config
@@ -88,15 +57,20 @@ chrt -b 0 autoninja -C "$BUILD_DIR" chrome_public_apk
 cd "$BUILD_DIR/apks"
 APKSIGNER=$(find "$ROOT_DIR/src/third_party/android_sdk" -name apksigner -type f | head -n 1)
 
+FINAL_APK="BravePublic.apk"
+SCRIPT_DIR="$ROM_REPO_DIR/script/chromium"
 if [ -f "$SCRIPT_DIR/rov.keystore" ]; then
+    echo "Signing BravePublic.apk with rov.keystore..."
     "$APKSIGNER" sign --ks "$SCRIPT_DIR/rov.keystore" --ks-pass pass:rovars --ks-key-alias rov --in BravePublic.apk --out Brave-Clean.apk
     FINAL_APK="Brave-Clean.apk"
 else
-    FINAL_APK="BravePublic.apk"
+    echo "Keystore not found ($SCRIPT_DIR/rov.keystore). Skipping APK signing."
 fi
 
 ARCHIVE="Brave-Clean-$(date +%Y%m%d).tar.gz"
+echo "Creating archive: $ARCHIVE"
 tar -czf "$ROOT_DIR/$ARCHIVE" "$FINAL_APK"
 
 cd "$ROOT_DIR"
+echo "Uploading $ARCHIVE to Telegram..."
 timeout 15m telegram-upload "$ARCHIVE" --to "$TG_CHAT_ID" || echo "Upload failed"
