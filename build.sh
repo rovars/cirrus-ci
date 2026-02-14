@@ -11,13 +11,13 @@ export PATH="$(pwd)/depot_tools:$(pwd)/brave-browser/src/third_party/depot_tools
 
 # 1. Setup depot_tools
 git clone -q https://chromium.googlesource.com/chromium/tools/depot_tools.git
-./depot_tools/update_depot_tools
+source ./depot_tools/update_depot_tools
 
 # 2. Get Brave Browser wrapper
 git clone -q --depth=1 https://github.com/brave/brave-browser.git
 cd brave-browser
 
-# 3. Setup .gclient to include both Chromium and Brave-Core
+# 3. Setup .gclient
 cat <<EOF > .gclient
 solutions = [
   {
@@ -40,7 +40,7 @@ target_os = ["android"]
 EOF
 
 # 4. Sync
-sudo chown -R cirrus:cirrus /usr/local/lib/python3.12/dist-packages /usr/local/bin || true
+sudo chown -R cirrus:cirrus /usr/local/lib/python3.* /usr/local/bin || true
 npm install
 gclient sync --nohooks --no-history -j 8
 gclient runhooks
