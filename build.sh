@@ -12,26 +12,22 @@ export SISO_CREDENTIAL_HELPER="$(pwd)/siso_helper.sh"
 git clone -q --depth=1 https://github.com/brave/brave-browser.git
 cd brave-browser
 
-# 2. Install dependencies and Init
+# 2. Install dependencies and Sync
 sudo chown -R cirrus:cirrus /usr/local/lib/python3.* /usr/local/bin || true
 node -v
 npm -v
 npm install
 
-# npm run init handles .gclient creation, gclient sync, and patching
-npm run init -- --target_os=android --target_arch=$TARGET_CPU
+# 'npm run sync' is the correct command to handle .gclient, gclient sync, and patching
+echo "Running npm run sync..."
+npm run sync -- --target_os=android --target_arch=$TARGET_CPU
 
-# 3. Setup custom GN args and generate Ninja files
-# We use 'npm run build' to prepare the environment and GN args
-# Passing custom GN args via environment or arguments if supported, 
-# or we can modify the generated args.gn afterwards.
-
-# Get the cert digest for the keystore
+# 3. Setup custom GN args
 SCRIPT_DIR="$(pwd)/../../xx/script/chromium"
 CERT_DIGEST=$(keytool -export-cert -alias rov -keystore "$SCRIPT_DIR/rov.keystore" -storepass rovars | sha256sum | cut -d' ' -f1)
 
-# Run build prep
-# Static build for Android with RBE enabled
+# Run build prep to create directory structure
+echo "Preparing build directory..."
 npm run build -- --target_os=android --target_arch=$TARGET_CPU Static
 
 # 4. Inject our custom RBE/Siso args into the generated args.gn
@@ -61,10 +57,10 @@ enable_brave_ads = false
 enable_brave_wayback_machine = false
 EOF
 
-echo "Regenerating GN with custom args..."
+echo "Regenerating GN with custom args for RBE..."
 gn gen "$BUILD_DIR"
 
-echo "Starting Build..."
+echo "Starting Build with Autoninja (RBE)..."
 chrt -b 0 autoninja -C "$BUILD_DIR" chrome_public_apk
 
 # 5. Upload
