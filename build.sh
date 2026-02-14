@@ -40,7 +40,7 @@ cat <<EOF > .env
 projects_chrome_custom_vars='{
   "rbe_instance": "nano.buildbuddy.io",
   "reapi_address": "nano.buildbuddy.io:443",
-  "reapi_backend_config_path": "$ROOT_DIR/src/brave/build/config/siso/brave_siso_config.star",
+  "reapi_backend_config_path": "$ROOT_DIR/src/brave/build/config/siso/brave_siso_config.star"
 }'
 EOF
 
