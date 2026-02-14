@@ -56,7 +56,8 @@ use_remoteexec = true
 use_siso = true
 is_official_build = false
 is_debug = false
-enable_grammatical_gender = false
+target_os = "android"
+target_cpu = "$TARGET_CPU"
 EOF
 
 echo "Generating build files with 'gn gen'..."
