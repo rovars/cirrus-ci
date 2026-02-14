@@ -55,6 +55,7 @@ enable_brave_vpn=false
 brave_services_key=
 brave_variations_server_url=https://variations.brave.com
 updater_dev_endpoint=https://updates.bravesoftware.com
+updater_prod_endpoint=https://updates.bravesoftware.com
 is_official_build=false
 allow_unset_env_config_flags=true
 EOF
