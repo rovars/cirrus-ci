@@ -52,6 +52,9 @@ enable_tor=false
 enable_speedreader=false
 enable_brave_ads=false
 enable_brave_vpn=false
+brave_services_key=
+allow_unset_env_config_flags=true
+is_official_build=false
 EOF
 
 echo "Running npm run init..."
