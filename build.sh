@@ -2,9 +2,8 @@
 
 set -e
 
-echo "Installing system prerequisites..."
 sudo apt-get -qq update
-sudo apt-get -qq install -y git python-is-python3 curl lsb-release sudo file wget tar
+sudo apt-get -qq install -y git python-is-python3 curl lsb-release sudo file wget tar unzip
 
 TARGET_CPU="arm64"
 ROOT_DIR="$(pwd)"
@@ -18,10 +17,12 @@ export PYTHONUNBUFFERED=1
 export GSUTIL_ENABLE_LUCI_AUTH=0
 export DEPOT_TOOLS_UPDATE=1
 
-export PATH="$ROOT_DIR/src/brave/vendor/depot_tools:$PATH"
-
 mkdir -p src
-git clone -q --depth=1 https://github.com/brave/brave-core.git src/brave
+if [ ! -d "src/brave" ]; then
+    git clone -q --depth=1 https://github.com/brave/brave-core.git src/brave
+fi
+
+export PATH="$ROOT_DIR/src/brave/vendor/depot_tools:$PATH"
 
 cd src/brave
 sudo chown -R cirrus:cirrus /usr/local/lib/python3.* /usr/local/bin || true
@@ -36,18 +37,25 @@ projects_chrome_custom_vars='{
 }'
 EOF
 
-npm run init -- --target_os=android --target_arch=$TARGET_CPU --no-history --delete_unused_deps
+npm run init -- --target_os=android --target_arch=$TARGET_CPU --no-history
 
-sudo $ROOT_DIR/src/build/install-build-deps.sh --android --no-prompt
+sudo "$ROOT_DIR/src/build/install-build-deps.sh" --android --no-prompt
 
 SCRIPT_DIR="$ROM_REPO_DIR/script/chromium"
 if [ -f "$SCRIPT_DIR/rov.keystore" ]; then
     CERT_DIGEST=$(keytool -export-cert -alias rov -keystore "$SCRIPT_DIR/rov.keystore" -storepass rovars | sha256sum | cut -d' ' -f1)
 else
-    CERT_DIGEST="000000" 
+    CERT_DIGEST="000000"
 fi
 
 cd "$ROOT_DIR/src"
+
+if [ ! -d "brave" ]; then
+    git clone -q --depth=1 https://github.com/brave/brave-core.git brave
+fi
+
+export PATH="$ROOT_DIR/src/buildtools/linux64:$ROOT_DIR/src/brave/vendor/depot_tools:$PATH"
+
 BUILD_DIR="out/Release_android_$TARGET_CPU"
 mkdir -p "$BUILD_DIR"
 
@@ -78,10 +86,10 @@ chrt -b 0 autoninja -C "$BUILD_DIR" chrome_public_apk
 [ -f "$ROM_REPO_DIR/config.zip" ] && unzip -q "$ROM_REPO_DIR/config.zip" -d ~/.config
 
 cd "$BUILD_DIR/apks"
-APKSIGNER=$(find ../../../third_party/android_sdk -name apksigner -type f | head -n 1)
+APKSIGNER=$(find "$ROOT_DIR/src/third_party/android_sdk" -name apksigner -type f | head -n 1)
 
 if [ -f "$SCRIPT_DIR/rov.keystore" ]; then
-    $APKSIGNER sign --ks "$SCRIPT_DIR/rov.keystore" --ks-pass pass:rovars --ks-key-alias rov --in BravePublic.apk --out Brave-Clean.apk
+    "$APKSIGNER" sign --ks "$SCRIPT_DIR/rov.keystore" --ks-pass pass:rovars --ks-key-alias rov --in BravePublic.apk --out Brave-Clean.apk
     FINAL_APK="Brave-Clean.apk"
 else
     FINAL_APK="BravePublic.apk"
@@ -91,4 +99,4 @@ ARCHIVE="Brave-Clean-$(date +%Y%m%d).tar.gz"
 tar -czf "$ROOT_DIR/$ARCHIVE" "$FINAL_APK"
 
 cd "$ROOT_DIR"
-timeout 15m telegram-upload "$ARCHIVE" --to "$TG_CHAT_ID"
+timeout 15m telegram-upload "$ARCHIVE" --to "$TG_CHAT_ID" || echo "Upload failed"
