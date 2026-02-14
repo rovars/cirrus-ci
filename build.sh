@@ -8,6 +8,9 @@ sudo chown -R $(whoami):$(whoami) /usr/local/lib/python3.* /usr/local/bin || tru
 ROOT_DIR="$(pwd)"
 ROM_REPO_DIR="$ROOT_DIR/rov"
 
+chmod +x $ROM_REPO_DIR/rov.sh
+source $ROM_REPO_DIR/rov.sh
+
 git clone -q https://github.com/brave/brave-core chr/src/brave
 cd chr/src/brave
 
@@ -35,6 +38,8 @@ npm run init -- --target_os=android --target_arch=arm --no-history
 
 echo "Install build deps..."
 sudo "$ROOT_DIR/src/build/install-build-deps.sh" --android --no-prompt > /dev/null 2>&1
+
+sleep 60m
 
 npm run build -- --target_os=android --target_arch=arm
 
