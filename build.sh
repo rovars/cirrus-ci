@@ -18,12 +18,8 @@ export GSUTIL_ENABLE_LUCI_AUTH=0
 export DEPOT_TOOLS_UPDATE=1
 
 mkdir -p src
-if [ ! -d "src/brave" ]; then
-    git clone -q --depth=1 https://github.com/brave/brave-core.git src/brave
-else
-    echo "brave-core repository already exists."
-fi
 
+git clone -q https://github.com/brave/brave-core.git src/brave
 export PATH="$ROOT_DIR/src/brave/vendor/depot_tools:$PATH"
 
 cd src/brave
@@ -42,15 +38,14 @@ EOF
 echo "Initializing Brave build environment for Android ($TARGET_CPU)..."
 npm run init -- --target_os=android --target_arch=$TARGET_CPU --no-history
 
-echo "Moving back to src directory for building..."
 cd ..
-
 echo "Installing Android build dependencies..."
 sudo "$ROOT_DIR/src/build/install-build-deps.sh" --android --no-prompt > /dev/null 2>&1
 
-BUILD_DIR="out/Release_android_$TARGET_CPU"
-mkdir -p "$BUILD_DIR"
-cat <<EOF > "$BUILD_DIR/args.gn"
+BUILD_DIR="out/android_release"
+mkdir -p $BUILD_DIR
+
+cat <<EOF > $BUILD_DIR/args.gn
 enable_ipfs = false
 brave_rewards_enabled = false
 brave_wallet_enabled = false
