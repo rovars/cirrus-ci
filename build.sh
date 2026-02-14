@@ -13,6 +13,10 @@ export SISO_REAPI_ADDRESS="nano.buildbuddy.io:443"
 export SISO_REAPI_HEADER="x-buildbuddy-api-key=${RBE_API_KEY}"
 export SISO_CREDENTIAL_HELPER="$ROOT_DIR/siso_helper.sh"
 
+export PYTHONUNBUFFERED=1
+export GSUTIL_ENABLE_LUCI_AUTH=0
+export DEPOT_TOOLS_UPDATE=1
+
 export BRAVE_IPFS_ENABLED=false
 export BRAVE_REWARDS_ENABLED=false
 export BRAVE_WALLET_ENABLED=false
@@ -20,7 +24,6 @@ export BRAVE_TOR_ENABLED=false
 export BRAVE_SPEEDREADER_ENABLED=false
 export BRAVE_ADS_ENABLED=false
 export BRAVE_VPN_ENABLED=false
-
 export USE_REMOTEEXEC=true
 export USE_SISO=true
 export SYMBOL_LEVEL=0
@@ -30,6 +33,7 @@ git clone -q https://github.com/brave/brave-core.git src/brave
 export PATH="$ROOT_DIR/src/brave/vendor/depot_tools:$PATH"
 
 cd src/brave
+sudo chown -R $(whoami):$(whoami) /usr/local/lib/python3.* /usr/local/bin || true
 npm install
 
 cat <<EOF > .env
@@ -41,7 +45,13 @@ projects_chrome_custom_vars='{
 }'
 EOF
 
-npm run build -- Release --target_os=android --target_arch=$TARGET_CPU --target=chrome_public_apk
+npm run init -- --target_os=android --target_arch=$TARGET_CPU --no-history
+
+cd ..
+sudo "$ROOT_DIR/src/build/install-build-deps.sh" --android --no-prompt > /dev/null 2>&1
+
+cd src/brave
+npm run build -- Release --target_os=android --target_arch=$TARGET_CPU --target=chrome_public_apk --no_init
 
 BUILD_DIR="../out/Release_android"
 
