@@ -8,7 +8,7 @@ sudo chown -R $(whoami):$(whoami) /usr/local/lib/python3.* /usr/local/bin || tru
 ROOT_DIR="$(pwd)"
 ROM_REPO_DIR="$ROOT_DIR/rov"
 
-git clone https://github.com/brave-core chr/src/brave
+git clone -q https://github.com/brave/brave-core chr/src/brave
 cd chr/src/brave
 
 npm install
