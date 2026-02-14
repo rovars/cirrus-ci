@@ -33,9 +33,10 @@ mkdir -p "$SISO_CACHE_DIR"
 
 npm run init -- --target_os=android --target_arch=arm --no-history
 
+echo "Install build deps..."
 sudo "$ROOT_DIR/src/build/install-build-deps.sh" --android --no-prompt > /dev/null 2>&1
 
-npm run build -- --target_os=android --target_arch=arm Release
+npm run build -- --target_os=android --target_arch=arm
 
 BUILD_DIR="../../out/Release_android"
 
