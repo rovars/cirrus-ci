@@ -43,11 +43,20 @@ echo "Initializing Brave build environment for Android ($TARGET_CPU)..."
 npm run init -- --target_os=android --target_arch=$TARGET_CPU --no-history
 
 echo "Installing Android build dependencies..."
-sudo "$ROOT_DIR/src/build/install-build-deps.sh" --android --no-prompt
+sudo "$ROOT_DIR/src/build/install-build-deps.sh" --android --no-prompt > /dev/null 2>&1
 
 BUILD_DIR="out/Release_android_$TARGET_CPU"
 mkdir -p "$BUILD_DIR"
-echo 'is_brave_origin_branded = true' > "$BUILD_DIR/args.gn"
+cat <<EOF > "$BUILD_DIR/args.gn"
+is_brave_origin_branded = true
+use_remoteexec = true
+use_siso = true
+is_official_build = false
+is_debug = false
+EOF
+
+echo "Generating build files with 'gn gen'..."
+gn gen "$BUILD_DIR"
 
 echo "Starting Brave compilation for $TARGET_CPU..."
 chrt -b 0 autoninja -C "$BUILD_DIR" chrome_public_apk
