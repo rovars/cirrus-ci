@@ -56,6 +56,7 @@ use_remoteexec = true
 use_siso = true
 is_official_build = false
 is_debug = false
+enable_grammatical_gender = false
 EOF
 
 echo "Generating build files with 'gn gen'..."
