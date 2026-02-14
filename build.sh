@@ -42,6 +42,9 @@ EOF
 echo "Initializing Brave build environment for Android ($TARGET_CPU)..."
 npm run init -- --target_os=android --target_arch=$TARGET_CPU --no-history
 
+echo "Moving back to src directory for building..."
+cd ..
+
 echo "Installing Android build dependencies..."
 sudo "$ROOT_DIR/src/build/install-build-deps.sh" --android --no-prompt > /dev/null 2>&1
 
