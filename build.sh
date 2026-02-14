@@ -23,7 +23,7 @@ npm install
 
 # 3. Initialize build (This downloads Chromium and applies patches)
 echo "Running npm run init..."
-npm run init -- --target_os=android --target_arch=$TARGET_CPU
+npm run init -- --target_os=android --target_arch=$TARGET_CPU --no-history -j 8
 
 # 4. Setup custom GN args
 SCRIPT_DIR="$ROM_REPO_DIR/script/chromium"

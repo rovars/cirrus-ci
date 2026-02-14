@@ -18,8 +18,6 @@ task:
   build_script:
     - rm -rf .git
     - /opt/cirrus_env --started
-    - git clone -q https://chromium.googlesource.com/chromium/tools/depot_tools.git
-    - export PATH="$(pwd)/depot_tools:$PATH"
     - git clone -q https://rovars:${GITHUB_TOKEN}@github.com/rovars/rom xx
     - chmod +x build.sh
     - ./build.sh
