@@ -23,9 +23,6 @@ mkdir -p "$GIT_CACHE_PATH"
 # Ensure depot_tools is in PATH (Brave init installs it to vendor/depot_tools)
 export PATH="$ROOT_DIR/src/brave/vendor/depot_tools:$PATH"
 
-# Inject RBE and PGO vars into .gclient
-export BRAVE_CHROMIUM_CUSTOM_VARS="rbe_instance='default_instance',reapi_address='nano.buildbuddy.io:443',reapi_backend_config_path='$ROOT_DIR/buildbuddy_backend.star',checkout_pgo_profiles=False"
-
 # 1. Setup Directory Structure and Clone brave-core
 mkdir -p src
 git clone -q --depth=1 --branch master https://github.com/brave/brave-core.git src/brave
@@ -37,8 +34,24 @@ node -v
 npm -v
 npm install
 
+# --- FIX START: Inject .gclient vars via .env ---
+# The log indicates variables must be set in brave/.env using projects_chrome_custom_vars
+# and formatted as a JSON object.
+echo "Creating src/brave/.env to configure .gclient..."
+cat <<EOF > .env
+projects_chrome_custom_vars='{
+  "rbe_instance": "default_instance",
+  "reapi_address": "nano.buildbuddy.io:443",
+  "reapi_backend_config_path": "$ROOT_DIR/buildbuddy_backend.star",
+  "checkout_pgo_profiles": false
+}'
+EOF
+# --- FIX END ---
+
 # 3. Initialize build
 echo "Running npm run init..."
+# verify .env exists
+ls -la .env
 npm run init -- --target_os=android --target_arch=$TARGET_CPU --no-history --gclient_verbose
 
 # 4. Setup Python path for Brave utils
