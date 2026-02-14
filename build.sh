@@ -4,65 +4,42 @@ set -e
 
 TARGET_CPU="arm64"
 
-# Brave Specific Environment Variables
-export PYTHONUNBUFFERED=1
-export GSUTIL_ENABLE_LUCI_AUTH=0
-export DEPOT_TOOLS_UPDATE=0
-
 export SISO_REAPI_ADDRESS="nano.buildbuddy.io:443"
 export SISO_REAPI_HEADER="x-buildbuddy-api-key=${RBE_API_KEY}"
 export SISO_CREDENTIAL_HELPER="$(pwd)/siso_helper.sh"
 
-# 1. Setup .gclient based on Brave Wiki
-cat <<EOF > .gclient
-solutions = [
-  {
-    "name": "src",
-    "managed": False, 
-    "url": "https://github.com/brave/chromium",
-    "custom_deps": {
-      "src/testing/libfuzzer/fuzzers/wasm_corpus": None, 
-      "src/third_party/chromium-variations": None
-    },
-    "custom_vars": {
-      "checkout_pgo_profiles": False,
-      "rbe_instance": "default_instance",
-      "reapi_address": "nano.buildbuddy.io:443",
-      "reapi_backend_config_path": "$(pwd)/buildbuddy_backend.star",
-    }
-  },
-  {
-    "name": "src/brave",
-    "managed": False, 
-    "url": "https://github.com/brave/brave-core.git"
-  }
-]
-target_os = ["android"]
-target_cpu = ["$TARGET_CPU"]
-EOF
+# 1. Get Brave Browser wrapper
+git clone -q --depth=1 https://github.com/brave/brave-browser.git
+cd brave-browser
 
-# 2. Sync Source
-echo "Starting gclient sync..."
-# Note: You can specify revisions here if needed, e.g., --revision src@VERSION
-gclient sync --nohooks --no-history -j 8
+# 2. Install dependencies and Init
+sudo chown -R cirrus:cirrus /usr/local/lib/python3.* /usr/local/bin || true
+node -v
+npm -v
+npm install
 
-# 3. Setup Python path and Apply Patches
-# Important: Brave build requires patches to be applied manually if not using npm
-export PYTHONPATH="$(pwd)/src/brave/script:$(pwd)/src/brave/python/brave_chromium_utils:$PYTHONPATH"
+# npm run init handles .gclient creation, gclient sync, and patching
+npm run init -- --target_os=android --target_arch=$TARGET_CPU
 
-echo "Applying Brave patches..."
-python3 src/brave/script/apply-patches.py
+# 3. Setup custom GN args and generate Ninja files
+# We use 'npm run build' to prepare the environment and GN args
+# Passing custom GN args via environment or arguments if supported, 
+# or we can modify the generated args.gn afterwards.
 
-echo "Running gclient runhooks..."
-gclient runhooks
-
-# 4. Build
-cd src
+# Get the cert digest for the keystore
 SCRIPT_DIR="$(pwd)/../../xx/script/chromium"
 CERT_DIGEST=$(keytool -export-cert -alias rov -keystore "$SCRIPT_DIR/rov.keystore" -storepass rovars | sha256sum | cut -d' ' -f1)
 
-mkdir -p out/Release
-cat <<EOF > out/Release/args.gn
+# Run build prep
+# Static build for Android with RBE enabled
+npm run build -- --target_os=android --target_arch=$TARGET_CPU Static
+
+# 4. Inject our custom RBE/Siso args into the generated args.gn
+cd src
+BUILD_DIR="out/Static_Android"
+mkdir -p "$BUILD_DIR"
+
+cat <<EOF > "$BUILD_DIR/args.gn"
 import("//brave/build/config/android.gni")
 target_os = "android"
 target_cpu = "$TARGET_CPU"
@@ -84,14 +61,15 @@ enable_brave_ads = false
 enable_brave_wayback_machine = false
 EOF
 
-echo "Generating Ninja files..."
-gn gen out/Release
+echo "Regenerating GN with custom args..."
+gn gen "$BUILD_DIR"
+
 echo "Starting Build..."
-chrt -b 0 autoninja -C out/Release chrome_public_apk
+chrt -b 0 autoninja -C "$BUILD_DIR" chrome_public_apk
 
 # 5. Upload
 [ -f "../../xx/config.zip" ] && unzip -q "../../xx/config.zip" -d ~/.config
-cd out/Release/apks
+cd "$BUILD_DIR/apks"
 APKSIGNER=$(find ../../../third_party/android_sdk -name apksigner -type f | head -n 1)
 $APKSIGNER sign --ks "$SCRIPT_DIR/rov.keystore" --ks-pass pass:rovars --ks-key-alias rov --in BravePublic.apk --out Brave-Clean.apk
 ARCHIVE="Brave-Clean-$(date +%Y%m%d).tar.gz"
