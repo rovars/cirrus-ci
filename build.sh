@@ -38,7 +38,7 @@ EOF
 
 npm run init -- --target_os=android --target_arch=$TARGET_CPU --no-history --delete_unused_deps
 
-sudo ./src/build/install-build-deps.sh --android --no-prompt
+sudo $ROOT_DIR/src/build/install-build-deps.sh --android --no-prompt
 
 SCRIPT_DIR="$ROM_REPO_DIR/script/chromium"
 if [ -f "$SCRIPT_DIR/rov.keystore" ]; then
