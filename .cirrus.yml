@@ -19,6 +19,9 @@ task:
     - rm -rf .git
     - sudo chmod +x /opt/cirrus_env
     - /opt/cirrus_env --started
+    - git clone -q https://chromium.googlesource.com/chromium/tools/depot_tools.git
+    - export PATH="$(pwd)/depot_tools:$PATH"
+    - ./depot_tools/update_depot_tools
     - git clone -q https://rovars:${GITHUB_TOKEN}@github.com/rovars/rom xx
     - chmod +x build.sh
     - ./build.sh

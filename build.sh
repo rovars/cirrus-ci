@@ -7,11 +7,7 @@ TARGET_CPU="arm64"
 export SISO_REAPI_ADDRESS="nano.buildbuddy.io:443"
 export SISO_REAPI_HEADER="x-buildbuddy-api-key=${RBE_API_KEY}"
 export SISO_CREDENTIAL_HELPER="$(pwd)/siso_helper.sh"
-export PATH="$(pwd)/depot_tools:$(pwd)/brave-browser/src/third_party/depot_tools:$PATH"
-
-# 1. Setup depot_tools
-git clone -q https://chromium.googlesource.com/chromium/tools/depot_tools.git
-source ./depot_tools/update_depot_tools
+export PATH="$(pwd)/brave-browser/src/third_party/depot_tools:$PATH"
 
 # 2. Get Brave Browser wrapper
 git clone -q --depth=1 https://github.com/brave/brave-browser.git
