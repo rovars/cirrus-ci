@@ -53,8 +53,9 @@ enable_speedreader=false
 enable_brave_ads=false
 enable_brave_vpn=false
 brave_services_key=
-allow_unset_env_config_flags=true
+brave_variations_server_url=https://variations.brave.com
 is_official_build=false
+allow_unset_env_config_flags=true
 EOF
 
 echo "Running npm run init..."
