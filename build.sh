@@ -4,47 +4,57 @@ set -e
 
 TARGET_CPU="arm64"
 
+# Brave Specific Environment Variables
+export PYTHONUNBUFFERED=1
+export GSUTIL_ENABLE_LUCI_AUTH=0
+export DEPOT_TOOLS_UPDATE=0
+
 export SISO_REAPI_ADDRESS="nano.buildbuddy.io:443"
 export SISO_REAPI_HEADER="x-buildbuddy-api-key=${RBE_API_KEY}"
 export SISO_CREDENTIAL_HELPER="$(pwd)/siso_helper.sh"
 
-# 1. Setup .gclient in the root (where brave-browser will be cloned)
+# 1. Setup .gclient based on Brave Wiki
 cat <<EOF > .gclient
 solutions = [
   {
-    "name": "src/brave",
-    "url": "https://github.com/brave/brave-core.git",
-    "managed": False,
-  },
-  {
     "name": "src",
-    "url": "https://github.com/brave/chromium.git",
-    "managed": False,
+    "managed": False, 
+    "url": "https://github.com/brave/chromium",
+    "custom_deps": {
+      "src/testing/libfuzzer/fuzzers/wasm_corpus": None, 
+      "src/third_party/chromium-variations": None
+    },
     "custom_vars": {
+      "checkout_pgo_profiles": False,
       "rbe_instance": "default_instance",
       "reapi_address": "nano.buildbuddy.io:443",
       "reapi_backend_config_path": "$(pwd)/buildbuddy_backend.star",
-    },
+    }
   },
+  {
+    "name": "src/brave",
+    "managed": False, 
+    "url": "https://github.com/brave/brave-core.git"
+  }
 ]
 target_os = ["android"]
+target_cpu = ["$TARGET_CPU"]
 EOF
 
-# 2. Get Brave Browser wrapper
-git clone -q --depth=1 https://github.com/brave/brave-browser.git
-cd brave-browser
-
-# 3. Sync and Init using Brave's recommended way
-sudo chown -R cirrus:cirrus /usr/local/lib/python3.* /usr/local/bin || true
-node -v
-npm -v
-npm install
-
-# Run init to setup the environment properly (this handles hooks and utils)
-npm run init
-
-# Sync dependencies
+# 2. Sync Source
+echo "Starting gclient sync..."
+# Note: You can specify revisions here if needed, e.g., --revision src@VERSION
 gclient sync --nohooks --no-history -j 8
+
+# 3. Setup Python path and Apply Patches
+# Important: Brave build requires patches to be applied manually if not using npm
+export PYTHONPATH="$(pwd)/src/brave/script:$(pwd)/src/brave/python/brave_chromium_utils:$PYTHONPATH"
+
+echo "Applying Brave patches..."
+python3 src/brave/script/apply-patches.py
+
+echo "Running gclient runhooks..."
+gclient runhooks
 
 # 4. Build
 cd src
@@ -74,7 +84,9 @@ enable_brave_ads = false
 enable_brave_wayback_machine = false
 EOF
 
+echo "Generating Ninja files..."
 gn gen out/Release
+echo "Starting Build..."
 chrt -b 0 autoninja -C out/Release chrome_public_apk
 
 # 5. Upload
