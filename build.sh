@@ -36,6 +36,9 @@ EOF
 
 # 4. Sync
 sudo chown -R cirrus:cirrus /usr/local/lib/python3.* /usr/local/bin || true
+sudo npm install -g npm@latest
+node -v
+npm -v
 npm install
 gclient sync --nohooks --no-history -j 8
 gclient runhooks
