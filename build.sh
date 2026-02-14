@@ -2,6 +2,10 @@
 
 set -e
 
+echo "Installing system prerequisites..."
+sudo apt-get -qq update
+sudo apt-get -qq install -y git python-is-python3 curl lsb-release sudo file wget tar
+
 TARGET_CPU="arm64"
 ROOT_DIR="$(pwd)"
 ROM_REPO_DIR="$ROOT_DIR/xx"
@@ -34,7 +38,7 @@ EOF
 
 npm run init -- --target_os=android --target_arch=$TARGET_CPU --no-history --delete_unused_deps
 
-export PYTHONPATH="$ROOT_DIR/src/brave/script:$ROOT_DIR/src/brave/python:$ROOT_DIR/src/brave/python/brave_chromium_utils:$PYTHONPATH"
+sudo ./src/build/install-build-deps.sh --android --no-prompt
 
 SCRIPT_DIR="$ROM_REPO_DIR/script/chromium"
 if [ -f "$SCRIPT_DIR/rov.keystore" ]; then
