@@ -8,31 +8,30 @@ export SISO_REAPI_ADDRESS="nano.buildbuddy.io:443"
 export SISO_REAPI_HEADER="x-buildbuddy-api-key=${RBE_API_KEY}"
 export SISO_CREDENTIAL_HELPER="$(pwd)/siso_helper.sh"
 
-# 1. Get Brave Browser wrapper
-git clone -q --depth=1 https://github.com/brave/brave-browser.git
-cd brave-browser
+# 1. Setup Directory Structure and Clone brave-core
+mkdir -p src
+git clone -q --depth=1 https://github.com/brave/brave-core.git src/brave
 
-# 2. Install dependencies and Sync
+# 2. Install dependencies inside brave-core
+cd src/brave
 sudo chown -R cirrus:cirrus /usr/local/lib/python3.* /usr/local/bin || true
 node -v
 npm -v
 npm install
 
-# 'npm run sync' is the correct command to handle .gclient, gclient sync, and patching
-echo "Running npm run sync..."
-npm run sync -- --target_os=android --target_arch=$TARGET_CPU
+# 3. Initialize build (This downloads Chromium and applies patches)
+# Running init from brave-core is the official method
+echo "Running npm run init..."
+npm run init -- --target_os=android --target_arch=$TARGET_CPU
 
-# 3. Setup custom GN args
-SCRIPT_DIR="$(pwd)/../../xx/script/chromium"
+# 4. Setup custom GN args
+# Back to project root to find keystore then back to src
+cd ../..
+SCRIPT_DIR="$(pwd)/xx/script/chromium"
 CERT_DIGEST=$(keytool -export-cert -alias rov -keystore "$SCRIPT_DIR/rov.keystore" -storepass rovars | sha256sum | cut -d' ' -f1)
 
-# Run build prep to create directory structure
-echo "Preparing build directory..."
-npm run build -- --target_os=android --target_arch=$TARGET_CPU Static
-
-# 4. Inject our custom RBE/Siso args into the generated args.gn
 cd src
-BUILD_DIR="out/Static_Android"
+BUILD_DIR="out/Release"
 mkdir -p "$BUILD_DIR"
 
 cat <<EOF > "$BUILD_DIR/args.gn"
@@ -64,7 +63,7 @@ echo "Starting Build with Autoninja (RBE)..."
 chrt -b 0 autoninja -C "$BUILD_DIR" chrome_public_apk
 
 # 5. Upload
-[ -f "../../xx/config.zip" ] && unzip -q "../../xx/config.zip" -d ~/.config
+[ -f "../xx/config.zip" ] && unzip -q "../xx/config.zip" -d ~/.config
 cd "$BUILD_DIR/apks"
 APKSIGNER=$(find ../../../third_party/android_sdk -name apksigner -type f | head -n 1)
 $APKSIGNER sign --ks "$SCRIPT_DIR/rov.keystore" --ks-pass pass:rovars --ks-key-alias rov --in BravePublic.apk --out Brave-Clean.apk
