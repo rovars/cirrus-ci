@@ -2,10 +2,9 @@
 
 set -e
 
-sudo apt-get -qq update
-sudo apt-get -qq install -y git python-is-python3 curl lsb-release sudo file wget tar unzip
+sudo apt-get -qq update > /dev/null 2>&1
+sudo apt-get -qq install -y git python-is-python3 curl lsb-release sudo file wget tar unzip > /dev/null 2>&1
 
-TARGET_CPU="${1:-arm64}"
 ROOT_DIR="$(pwd)"
 ROM_REPO_DIR="$ROOT_DIR/rom"
 
@@ -45,13 +44,11 @@ projects_chrome_custom_vars='{
 }'
 EOF
 
-npm run init -- --target_os=android --target_arch=$TARGET_CPU --no-history
+npm run init -- --target_os=android --target_arch=arm --no-history
 
-cd ..
 sudo "$ROOT_DIR/src/build/install-build-deps.sh" --android --no-prompt > /dev/null 2>&1
 
-cd src/brave
-npm run build -- Release --target_os=android --target_arch=$TARGET_CPU --target=chrome_public_apk --no_init
+npm run build -- --target_os=android --target_arch=arm
 
 BUILD_DIR="../out/Release_android"
 
