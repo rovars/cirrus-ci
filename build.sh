@@ -8,8 +8,8 @@ sudo chown -R $(whoami):$(whoami) /usr/local/lib/python3.* /usr/local/bin || tru
 ROOT_DIR="$(pwd)"
 ROM_REPO_DIR="$ROOT_DIR/rov"
 
-git clone git@github.com:brave/brave-core.git $ROOT_DIR/src/brave
-cd src/brave
+git clone https://github.com/brave-core chr/src/brave
+cd chr/src/brave
 
 npm install
 
@@ -37,7 +37,7 @@ sudo "$ROOT_DIR/src/build/install-build-deps.sh" --android --no-prompt > /dev/nu
 
 npm run build -- --target_os=android --target_arch=arm Release
 
-BUILD_DIR="../out/Release_android"
+BUILD_DIR="../../out/Release_android"
 
 cd "$BUILD_DIR/apks"
 APKSIGNER=$(find "$ROOT_DIR/src/third_party/android_sdk" -name apksigner -type f | head -n 1)
