@@ -51,13 +51,21 @@ sudo "$ROOT_DIR/src/build/install-build-deps.sh" --android --no-prompt > /dev/nu
 BUILD_DIR="out/Release_android_$TARGET_CPU"
 mkdir -p "$BUILD_DIR"
 cat <<EOF > "$BUILD_DIR/args.gn"
-is_brave_origin_branded = true
+enable_ipfs = false
+brave_rewards_enabled = false
+brave_wallet_enabled = false
+enable_tor = false
+enable_speedreader = false
+brave_ads_enabled = false
+enable_brave_vpn = false
 use_remoteexec = true
 use_siso = true
 is_official_build = false
+is_component_build = false
 is_debug = false
 target_os = "android"
 target_cpu = "$TARGET_CPU"
+symbol_level = 0
 EOF
 
 echo "Generating build files with 'gn gen'..."
