@@ -3,15 +3,14 @@ set -e
 
 sudo apt-get -qq update > /dev/null 2>&1
 sudo apt-get -qq install -y git python-is-python3 curl > /dev/null 2>&1
+sudo chown -R $(whoami):$(whoami) /usr/local/lib/python3.* /usr/local/bin || true
 
 ROOT_DIR="$(pwd)"
-ROM_REPO_DIR="$ROOT_DIR/rom"
+ROM_REPO_DIR="$ROOT_DIR/rov"
 
-mkdir -p src
-git clone -q https://github.com/brave/brave-browser.git .
+git clone git@github.com:brave/brave-core.git $ROOT_DIR/src/brave
 cd src/brave
 
-sudo chown -R $(whoami):$(whoami) /usr/local/lib/python3.* /usr/local/bin || true
 npm install
 
 cat > .env << 'EOF'
