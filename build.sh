@@ -8,12 +8,12 @@ sudo apt-get -qq install -y git python-is-python3 curl lsb-release sudo file wge
 ROOT_DIR="$(pwd)"
 ROM_REPO_DIR="$ROOT_DIR/rom"
 
+envsubst < $ROOT_DIR/siso_helper.sh >> $ROOT_DIR/siso_helper_env.sh
+
 export SISO_REAPI_ADDRESS="nano.buildbuddy.io:443"
 export SISO_REAPI_HEADER="x-buildbuddy-api-key=${RBE_API_KEY}"
-export SISO_CREDENTIAL_HELPER="$ROOT_DIR/siso_helper.sh"
+export SISO_CREDENTIAL_HELPER="$ROOT_DIR/siso_helper_env.sh"
 
-export PYTHONUNBUFFERED=1
-export GSUTIL_ENABLE_LUCI_AUTH=0
 export DEPOT_TOOLS_UPDATE=1
 
 export BRAVE_IPFS_ENABLED=false
@@ -23,6 +23,7 @@ export BRAVE_TOR_ENABLED=false
 export BRAVE_SPEEDREADER_ENABLED=false
 export BRAVE_ADS_ENABLED=false
 export BRAVE_VPN_ENABLED=false
+
 export USE_REMOTEEXEC=true
 export USE_SISO=true
 export SYMBOL_LEVEL=0
@@ -37,10 +38,9 @@ npm install
 
 cat <<EOF > .env
 projects_chrome_custom_vars='{
-  "rbe_instance": "default_instance",
+  "rbe_instance": "nano.buildbuddy.io",
   "reapi_address": "nano.buildbuddy.io:443",
-  "reapi_backend_config_path": "$ROOT_DIR/buildbuddy_backend.star",
-  "checkout_pgo_profiles": false
+  "reapi_backend_config_path": "$ROOT_DIR/src/brave/build/config/siso/brave_siso_config.star",
 }'
 EOF
 
@@ -48,6 +48,7 @@ npm run init -- --target_os=android --target_arch=arm --no-history
 
 sudo "$ROOT_DIR/src/build/install-build-deps.sh" --android --no-prompt > /dev/null 2>&1
 
+export RBE_exec_strategy=remote
 npm run build -- --target_os=android --target_arch=arm
 
 BUILD_DIR="../out/Release_android"
