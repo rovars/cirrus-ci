@@ -1,20 +1,44 @@
 #!/bin/bash
-set -e
+set -ex
 
 sudo apt-get -qq update > /dev/null 2>&1
-sudo apt-get -qq install -y git python-is-python3 curl > /dev/null 2>&1
-sudo chown -R $(whoami):$(whoami) /usr/local/lib/python3.* /usr/local/bin || true
+sudo apt-get -qq install -y git python-is-python3 curl pkg-config > /dev/null 2>&1
 
 ROOT_DIR="$(pwd)"
-ROM_REPO_DIR="$ROOT_DIR/rov"
+ROM_REPO_DIR="$ROOT_DIR/rom"
 
-chmod +x $ROM_REPO_DIR/rov.sh
-source $ROM_REPO_DIR/rov.sh
+mkdir -p src
+git clone -q https://github.com/brave/brave-core.git src/brave
+cd src/brave
 
-git clone -q https://github.com/brave/brave-core chr/src/brave
-cd chr/src/brave
+sudo chown -R $(whoami):$(whoami) /usr/local/lib/python3.* /usr/local/bin || true
 
 npm install
+
+cat > "$ROOT_DIR/siso_helper.sh" << 'EOF'
+#!/bin/bash
+cat << HELPER
+{
+  "headers": {
+    "x-buildbuddy-api-key": ["${RBE_API_KEY}"]
+  },
+  "token": "dummy"
+}
+HELPER
+EOF
+chmod +x "$ROOT_DIR/siso_helper.sh"
+
+if [ -z "$RBE_API_KEY" ]; then
+  echo "ERROR: RBE_API_KEY not set"
+  exit 1
+fi
+
+export SISO_REAPI_ADDRESS="nano.buildbuddy.io:443"
+export SISO_CREDENTIAL_HELPER="$ROOT_DIR/siso_helper.sh"
+export SISO_CACHE_DIR="/tmp/siso-cache"
+export DEPOT_TOOLS_UPDATE=1
+
+mkdir -p "$SISO_CACHE_DIR"
 
 cat > .env << 'EOF'
 rbe_service=nano.buildbuddy.io:443
@@ -30,20 +54,16 @@ enable_brave_ads=false
 enable_brave_vpn=false
 EOF
 
-export REAPI_AUTH_TOKEN="$RBE_API_KEY"
-export SISO_CACHE_DIR="/tmp/siso-cache"
-mkdir -p "$SISO_CACHE_DIR"
-
+echo "Running npm run init..."
 npm run init -- --target_os=android --target_arch=arm --no-history
 
-echo "Install build deps..."
+echo "Installing build deps..."
 sudo "$ROOT_DIR/src/build/install-build-deps.sh" --android --no-prompt > /dev/null 2>&1
 
-sleep 60m
+echo "Starting build..."
+npm run build -- --target_os=android --target_arch=arm Release
 
-npm run build -- --target_os=android --target_arch=arm
-
-BUILD_DIR="../../out/Release_android"
+BUILD_DIR="../out/Release_android"
 
 cd "$BUILD_DIR/apks"
 APKSIGNER=$(find "$ROOT_DIR/src/third_party/android_sdk" -name apksigner -type f | head -n 1)
