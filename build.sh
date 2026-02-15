@@ -37,8 +37,10 @@ if [ -z "$RBE_API_KEY" ]; then
 fi
 
 export SISO_REAPI_ADDRESS="${rbe_service:-nano.buildbuddy.io:443}"
+export SISO_REAPI_INSTANCE="default"
 export SISO_CREDENTIAL_HELPER="$ROOT_DIR/siso_helper.sh"
 export SISO_CACHE_DIR="${siso_cache_dir:-/tmp/siso-cache}"
+export SISO_FALLBACK=true
 export DEPOT_TOOLS_UPDATE=1
 
 mkdir -p "$SISO_CACHE_DIR"
@@ -100,6 +102,10 @@ touch "$ROOT_DIR/src/chrome/android/profiles/afdo.prof"
 
 echo "Running npm run init..."
 npm run init -- --target_os=android --target_arch=arm --no-history
+
+echo "Ensuring scripts are executable..."
+find "$ROOT_DIR/src/brave/script" -name "*.py" -exec chmod +x {} +
+find "$ROOT_DIR/src/buildtools" -type f -not -name "*.gn" -not -name "*.gni" -exec chmod +x {} + || true
 
 echo "Starting build..."
 npm run build -- --target_os=android --target_arch=arm Release --gn="is_official_build:false" --gn="call_afdo:false" --gn="chrome_pgo_phase:0" --gn="clang_use_default_sample_profile:false" --gn="enable_android_afdo:false"
