@@ -23,11 +23,10 @@ if [ -z "$RBE_API_KEY" ]; then
   exit 1
 fi
 
-export SISO_REAPI_ADDRESS="nano.buildbuddy.io:443"
-export SISO_REAPI_INSTANCE="default"
 export SISO_PROFILER=1
 export SISO_CREDENTIAL_HELPER="$ROOT_DIR/siso_helper.sh"
 export SISO_FALLBACK=true
+export SISO_ARGS="-reapi_keep_exec_stream -fs_min_flush_timeout 300s"
 
 export DEPOT_TOOLS_UPDATE=1
 export GCLIENT_SUPPRESS_GIT_VERSION_WARNING=1
@@ -39,7 +38,24 @@ VANADIUM_TAG=$(git ls-remote --tags --sort="v:refname" https://github.com/Graphe
 git clone -q --depth=1 https://github.com/GrapheneOS/Vanadium.git -b "$VANADIUM_TAG" "$ROOT_DIR/Vanadium"
 cd "$ROOT_DIR/Vanadium"
 
-fetch --nohooks --no-history android
+cat > .gclient << EOF
+solutions = [
+  {
+    "name": "src",
+    "url": "https://chromium.googlesource.com/chromium/src.git",
+    "managed": False,
+    "custom_deps": {},
+    "custom_vars": {
+      "reapi_instance": "default",
+      "reapi_address": "nano.buildbuddy.io:443",
+      "reapi_backend_config_path": "google.star"
+    },
+  },
+]
+target_os = ["android"]
+EOF
+
+gclient sync --nohooks --no-history
 
 cd src
 CHROMIUM_VERSION=$(echo "$VANADIUM_TAG" | cut -d'.' -f1-4)
@@ -67,7 +83,8 @@ sed -i "s/v8_enable_drumbrake = .*/v8_enable_drumbrake = false/" "$BUILD_DIR/arg
 sed -i "s/v8_drumbrake_bounds_checks = .*/v8_drumbrake_bounds_checks = false/" "$BUILD_DIR/args.gn"
 
 echo "use_remoteexec=true" >> "$BUILD_DIR/args.gn"
-echo "use_reclient=false" >> "$BUILD_DIR/args.gn
+echo "use_reclient=false" >> "$BUILD_DIR/args.gn"
+echo "use_siso=true" >> "$BUILD_DIR/args.gn"
 
 gn gen "$BUILD_DIR"
 
