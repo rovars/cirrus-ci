@@ -7,8 +7,16 @@ sudo apt-get -qq install -y git python-is-python3 curl pkg-config > /dev/null 2>
 ROOT_DIR="$(pwd)"
 ROM_REPO_DIR="$ROOT_DIR/rom"
 
+# Load custom .env from root if it exists
+if [ -f "$ROOT_DIR/.env" ]; then
+  echo "Loading custom .env from $ROOT_DIR/.env"
+  set -a
+  source "$ROOT_DIR/.env"
+  set +a
+fi
+
 mkdir -p src
-git clone -q https://github.com/brave/brave-core.git src/brave
+git clone -q --depth=1 https://github.com/brave/brave-core.git src/brave
 cd src/brave
 
 sudo chown -R $(whoami):$(whoami) /usr/local/lib/python3.* /usr/local/bin || true
@@ -29,35 +37,61 @@ EOF
 chmod +x "$ROOT_DIR/siso_helper.sh"
 
 if [ -z "$RBE_API_KEY" ]; then
-  echo "ERROR: RBE_API_KEY not set"
+  echo "ERROR: RBE_API_KEY not set. Please add it to your .env file or export it."
   exit 1
 fi
 
-export SISO_REAPI_ADDRESS="nano.buildbuddy.io:443"
+export SISO_REAPI_ADDRESS="${rbe_service:-nano.buildbuddy.io:443}"
 export SISO_CREDENTIAL_HELPER="$ROOT_DIR/siso_helper.sh"
-export SISO_CACHE_DIR="/tmp/siso-cache"
+export SISO_CACHE_DIR="${siso_cache_dir:-/tmp/siso-cache}"
 export DEPOT_TOOLS_UPDATE=1
 
 mkdir -p "$SISO_CACHE_DIR"
 
-cat > .env << 'EOF'
-rbe_service=nano.buildbuddy.io:443
-use_siso=true
-use_remoteexec=true
-siso_cache_dir=/tmp/siso-cache
-enable_ipfs=false
-enable_brave_rewards=false
-enable_brave_wallet=false
-enable_tor=false
-enable_speedreader=false
-enable_brave_ads=false
-enable_brave_vpn=false
-brave_services_key=
-brave_variations_server_url=https://variations.brave.com
-updater_dev_endpoint=https://updates.bravesoftware.com
-updater_prod_endpoint=https://updates.bravesoftware.com
-is_official_build=false
-allow_unset_env_config_flags=true
+# Generate src/brave/.env with defaults, allowing overrides from environment
+# These dummy values are required to pass GN assertions in Release builds
+cat > .env << EOF
+rbe_service=${rbe_service:-nano.buildbuddy.io:443}
+use_siso=${use_siso:-true}
+use_remoteexec=${use_remoteexec:-true}
+siso_cache_dir=${siso_cache_dir:-/tmp/siso-cache}
+enable_ipfs=${enable_ipfs:-false}
+enable_brave_rewards=${enable_brave_rewards:-false}
+enable_brave_wallet=${enable_brave_wallet:-false}
+enable_tor=${enable_tor:-false}
+enable_speedreader=${enable_speedreader:-false}
+enable_brave_ads=${enable_brave_ads:-false}
+enable_brave_vpn=${enable_brave_vpn:-false}
+brave_services_key=${brave_services_key:-dummy_key}
+brave_services_key_id=${brave_services_key_id:-dummy_id}
+brave_stats_updater_url=${brave_stats_updater_url:-https://localhost}
+brave_variations_server_url=${brave_variations_server_url:-https://variations.brave.com}
+updater_dev_endpoint=${updater_dev_endpoint:-https://updates.bravesoftware.com}
+updater_prod_endpoint=${updater_prod_endpoint:-https://updates.bravesoftware.com}
+service_key_aichat=${service_key_aichat:-dummy_aichat_key}
+service_key_stt=${service_key_stt:-dummy_stt_key}
+brave_sync_endpoint=${brave_sync_endpoint:-https://sync-v2.brave.com/v2}
+rewards_grant_dev_endpoint=${rewards_grant_dev_endpoint:-https://localhost}
+rewards_grant_staging_endpoint=${rewards_grant_staging_endpoint:-https://localhost}
+rewards_grant_prod_endpoint=${rewards_grant_prod_endpoint:-https://localhost}
+bitflyer_production_client_id=${bitflyer_production_client_id:-dummy_id}
+bitflyer_production_client_secret=${bitflyer_production_client_secret:-dummy_secret}
+bitflyer_production_fee_address=${bitflyer_production_fee_address:-dummy_address}
+bitflyer_production_url=${bitflyer_production_url:-https://localhost}
+gemini_production_api_url=${gemini_production_api_url:-https://localhost}
+gemini_production_fee_address=${gemini_production_fee_address:-dummy_address}
+gemini_production_oauth_url=${gemini_production_oauth_url:-https://localhost}
+uphold_production_api_url=${uphold_production_api_url:-https://localhost}
+uphold_production_fee_address=${uphold_production_fee_address:-dummy_address}
+uphold_production_oauth_url=${uphold_production_oauth_url:-https://localhost}
+zebpay_production_api_url=${zebpay_production_api_url:-https://localhost}
+zebpay_production_oauth_url=${zebpay_production_oauth_url:-https://localhost}
+brave_google_api_key=${brave_google_api_key:-dummy_google_key}
+brave_google_api_endpoint=${brave_google_api_endpoint:-https://localhost}
+brave_stats_api_key=${brave_stats_api_key:-dummy_stats_key}
+safebrowsing_api_endpoint=${safebrowsing_api_endpoint:-https://localhost}
+is_official_build=${is_official_build:-false}
+allow_unset_env_config_flags=${allow_unset_env_config_flags:-true}
 EOF
 
 echo "Running npm run init..."
