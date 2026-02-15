@@ -1,4 +1,4 @@
-#!/bin/bash
+ok#!/bin/bash
 
 set -ex
 
@@ -46,7 +46,8 @@ CHROMIUM_VERSION=$(echo "$VANADIUM_TAG" | cut -d'.' -f1-4)
 git fetch --depth=1 origin "refs/tags/$CHROMIUM_VERSION:refs/tags/$CHROMIUM_VERSION"
 git checkout "$CHROMIUM_VERSION"
 
-gclient sync -D --no-history --with_branch_heads --with_tags -j 8
+gclient sync --nohooks --reset --upstream --revision src@refs/tags/$CHROMIUM_VERSION --force --no-history
+
 git am --3way --whitespace=nowarn --keep-non-patch ../patches/*.patch
 
 SCRIPT_DIR="$ROM_REPO_DIR/script/chromium"
@@ -61,13 +62,7 @@ mkdir -p "$BUILD_DIR"
 
 cp ../args.gn "$BUILD_DIR/args.gn"
 
-# Remove Trichrome specific packages that break 32-bit arm builds
-sed -i "/trichrome_library_package/d" "$BUILD_DIR/args.gn"
-sed -i "/system_webview_package_name/d" "$BUILD_DIR/args.gn"
-
 sed -i "s/trichrome_certdigest = .*/trichrome_certdigest = \"$CERT_DIGEST\"/" "$BUILD_DIR/args.gn"
-sed -i "s/target_cpu = .*/target_cpu = \"arm\"/" "$BUILD_DIR/args.gn"
-sed -i "s/is_official_build = .*/is_official_build = false/" "$BUILD_DIR/args.gn"
 sed -i "s/v8_enable_drumbrake = .*/v8_enable_drumbrake = false/" "$BUILD_DIR/args.gn"
 sed -i "s/v8_drumbrake_bounds_checks = .*/v8_drumbrake_bounds_checks = false/" "$BUILD_DIR/args.gn"
 
