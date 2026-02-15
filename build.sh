@@ -2,7 +2,6 @@
 
 set -ex
 
-VANADIUM_TAG="145.0.7632.45.1"
 ROOT_DIR="$(pwd)"
 ROM_REPO_DIR="$ROOT_DIR/rom"
 
@@ -36,7 +35,8 @@ export PATH="$ROOT_DIR/depot_tools:$PATH"
 
 git clone -q --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git "$ROOT_DIR/depot_tools"
 
-git clone -q --depth=1 https://github.com/GrapheneOS/Vanadium.git "$ROOT_DIR/Vanadium"
+VANADIUM_TAG=$(git ls-remote --tags --sort="v:refname" https://github.com/GrapheneOS/Vanadium.git | tail -n1 | sed 's/.*\///')
+git clone -q --depth=1 https://github.com/GrapheneOS/Vanadium.git -b "$VANADIUM_TAG" "$ROOT_DIR/Vanadium"
 cd "$ROOT_DIR/Vanadium"
 
 fetch --nohooks --no-history android
@@ -59,14 +59,11 @@ fi
 BUILD_DIR="out/Default"
 mkdir -p "$BUILD_DIR"
 
-# Copy base args from Vanadium
 cp ../args.gn "$BUILD_DIR/args.gn"
 
-# Use sed to update trichrome_certdigest and append use_remoteexec
 sed -i "s/trichrome_certdigest = .*/trichrome_certdigest = \"$CERT_DIGEST\"/" "$BUILD_DIR/args.gn"
 echo "use_remoteexec = true" >> "$BUILD_DIR/args.gn"
 
-# Initialize GN directory
 gn gen "$BUILD_DIR"
 
 chrt -b 0 autoninja -C "$BUILD_DIR" monochrome_public_apk
