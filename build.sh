@@ -16,55 +16,6 @@ mkdir -p src
 git clone -q --depth=1 https://github.com/brave/brave-core.git src/brave
 cd src/brave
 
-# THE TOTAL ISOLATION FIX: 
-# Recursively strip all test and extension dependencies from the entire build tree
-python3 -c '
-import os, re
-
-def clean_content(content):
-    # Skip patterns that we want to get rid of
-    skip_patterns = [
-        r"\"//brave/test[^\"]*\"",
-        r"\"//brave/browser/extensions[^\"]*\"",
-        r"\"//extensions/browser[^\"]*\"",
-        r"\"//extensions/common[^\"]*\"",
-        r"\":brave_browser_tests\"",
-        r"\":brave_unit_tests\""
-    ]
-    
-    # 1. Empty any list named *_tests_deps or *_test_deps
-    pattern_list = re.compile(r"(\w*test\w*_deps\s*[+]*=\s*\[)(.*?)(\])", re.DOTALL | re.IGNORECASE)
-    content = pattern_list.sub(r"\1\3", content)
-    
-    # 2. Use a safer approach to remove specific dependencies inside lists
-    # Instead of deleting lines, we replace the problematic strings with empty comments
-    for p in skip_patterns:
-        content = re.sub(p, "# removed", content)
-    
-    # 3. Clean up empty lines or trailing commas that might have been left behind
-    content = content.replace(",\n    # removed", "")
-    content = content.replace("# removed,", "")
-    
-    return content
-
-for root, dirs, files in os.walk("."):
-    for file in files:
-        if file.endswith((".gn", ".gni")):
-            file_path = os.path.join(root, file)
-            try:
-                with open(file_path, "r") as f:
-                    content = f.read()
-                
-                cleaned = clean_content(content)
-                
-                if cleaned != content:
-                    with open(file_path, "w") as f:
-                        f.write(cleaned)
-                    print(f"Cleaned {file_path}")
-            except Exception as e:
-                print(f"Error processing {file_path}: {e}")
-'
-
 npm install
 
 cat > "$ROOT_DIR/siso_helper.sh" << 'EOF'
@@ -150,10 +101,6 @@ enable_chrome_android_internal_profiles=false
 is_official_build=false
 EOF
 
-# Create a dummy afdo.prof file just in case GN still expects it
-mkdir -p "$ROOT_DIR/src/chrome/android/profiles"
-touch "$ROOT_DIR/src/chrome/android/profiles/afdo.prof"
-
 echo "Running npm run init..."
 npm run init -- --target_os=android --target_arch=arm --no-history
 
@@ -162,25 +109,9 @@ find "$ROOT_DIR/src/brave/script" -name "*.py" -exec chmod +x {} +
 find "$ROOT_DIR/src/buildtools" -type f -not -name "*.gn" -not -name "*.gni" -exec chmod +x {} + || true
 
 echo "Starting build..."
-npm run build -- --target_os=android --target_arch=arm Release \
-  --gn="is_official_build:false" \
-  --gn="chrome_pgo_phase:0" \
-  --gn="clang_use_default_sample_profile:false" \
-  --gn="enable_android_afdo:false" \
-  --gn="enable_ai_chat:false" \
-  --gn="enable_brave_news:false" \
-  --gn="enable_brave_rewards:false" \
-  --gn="enable_brave_wallet:false" \
-  --gn="enable_tor:false" \
-  --gn="enable_speedreader:false" \
-  --gn="enable_brave_ads:false" \
-  --gn="enable_brave_vpn:false" \
-  --gn="enable_brave_sync:false" \
-  --gn="enable_brave_wayback_machine:false" \
-  --gn="enable_sidebar:false" \
-  --gn="enable_sparkle:false"
+npm run build -- --target_os=android --target_arch=arm
 
-BUILD_DIR="../out/Release_android"
+BUILD_DIR="../out/Debug_android"
 
 cd "$BUILD_DIR/apks"
 APKSIGNER=$(find "$ROOT_DIR/src/third_party/android_sdk" -name apksigner -type f | head -n 1)
