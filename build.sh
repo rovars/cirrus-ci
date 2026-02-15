@@ -21,6 +21,10 @@ cd src/brave
 sed -i '/android_test_exception_deps = \[/,/\]/c\android_test_exception_deps = \[\]' android/android_browser_tests.gni
 sed -i '/android_test_exception_sources = \[/,/\]/c\android_test_exception_sources = \[\]' android/android_browser_tests.gni
 
+# Remove extension tests that cause toolkit_views assertion failure on Android
+sed -i '/"\/\/brave\/browser\/extensions",/d' test/BUILD.gn
+sed -i '/"\/\/brave\/browser\/extensions:test_support",/d' test/BUILD.gn
+
 npm install
 
 cat > "$ROOT_DIR/siso_helper.sh" << 'EOF'
