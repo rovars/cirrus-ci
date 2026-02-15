@@ -16,6 +16,9 @@ mkdir -p src
 git clone -q --depth=1 https://github.com/brave/brave-core.git src/brave
 cd src/brave
 
+# Apply GN fix for enable_brave_news:false
+git apply "$ROOT_DIR/rom/script/chromium/fix_gn_error.patch" || echo "Failed to apply GN patch, manual fix might be needed"
+
 npm install
 
 cat > "$ROOT_DIR/siso_helper.sh" << 'EOF'
