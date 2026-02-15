@@ -57,7 +57,7 @@ find "$ROOT_DIR/src/brave/src/brave/script" -name "*.py" -exec chmod +x {} + || 
 find "$ROOT_DIR/src/brave/src/buildtools" -type f -not -name "*.gn" -not -name "*.gni" -exec chmod +x {} + || true
 
 echo "Starting build..."
-npm run build -- --target_os=android --target_arch=arm --siso \
+npm run build -- --target_os=android --target_arch=arm \
   --gn="use_siso:true" \
   --gn="use_remoteexec:true" \
   --gn="use_reclient:false" \
