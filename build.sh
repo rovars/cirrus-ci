@@ -8,6 +8,12 @@ mkdir -p src
 git clone -q --depth=1 https://github.com/brave/brave-core.git -b 1.87.x src/brave
 cd src/brave
 
+# Minimal .env for RBE and Siso
+cat > .env << EOF
+use_remoteexec=true
+use_siso=true
+EOF
+
 # Fix GN assertion errors by removing forced assertions for disabled features
 find . -name "BUILD.gn" -exec sed -i 's/assert(enable_brave_ads)/# removed/g' {} +
 find . -name "BUILD.gn" -exec sed -i 's/assert(enable_brave_news)/# removed/g' {} +
@@ -40,7 +46,7 @@ if [ -z "$RBE_API_KEY" ]; then
   exit 1
 fi
 
-export SISO_REAPI_ADDRESS="${rbe_service:-nano.buildbuddy.io:443}"
+export SISO_REAPI_ADDRESS="nano.buildbuddy.io:443"
 export SISO_REAPI_INSTANCE="default"
 export SISO_CREDENTIAL_HELPER="$ROOT_DIR/siso_helper.sh"
 export SISO_CACHE_DIR="${siso_cache_dir:-/tmp/siso-cache}"
@@ -58,11 +64,8 @@ find "$ROOT_DIR/src/buildtools" -type f -not -name "*.gn" -not -name "*.gni" -ex
 
 echo "Starting build..."
 npm run build -- --target_os=android --target_arch=arm \
-  --gn="use_remoteexec:true" \
-  --gn="use_siso:true" \
   --gn="enable_ai_chat:false" \
   --gn="enable_ai_rewriter:false" \
-  --gn="enable_brave_news:false" \
   --gn="enable_brave_ads:false" \
   --gn="enable_brave_rewards:false" \
   --gn="enable_brave_wallet:false" \
