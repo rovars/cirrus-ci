@@ -1,9 +1,6 @@
 #!/bin/bash
 set -ex
 
-sudo apt-get -qq update > /dev/null 2>&1
-sudo apt-get -qq install -y git python-is-python3 curl pkg-config > /dev/null 2>&1
-
 ROOT_DIR="$(pwd)"
 ROM_REPO_DIR="$ROOT_DIR/rom"
 
@@ -18,8 +15,6 @@ fi
 mkdir -p src
 git clone -q --depth=1 https://github.com/brave/brave-core.git src/brave
 cd src/brave
-
-sudo chown -R $(whoami):$(whoami) /usr/local/lib/python3.* /usr/local/bin || true
 
 npm install
 
@@ -92,16 +87,17 @@ brave_stats_api_key=${brave_stats_api_key:-dummy_stats_key}
 safebrowsing_api_endpoint=${safebrowsing_api_endpoint:-https://localhost}
 is_official_build=${is_official_build:-false}
 allow_unset_env_config_flags=${allow_unset_env_config_flags:-true}
+# Disable AFDO and PGO to avoid missing profile errors
+call_afdo=false
+chrome_pgo_phase=0
+enable_chrome_android_internal_profiles=false
 EOF
 
 echo "Running npm run init..."
 npm run init -- --target_os=android --target_arch=arm --no-history
 
-echo "Installing build deps..."
-sudo "$ROOT_DIR/src/build/install-build-deps.sh" --android --no-prompt > /dev/null 2>&1
-
 echo "Starting build..."
-npm run build -- --target_os=android --target_arch=arm Release
+npm run build -- --target_os=android --target_arch=arm Release --gn="call_afdo:false" --gn="chrome_pgo_phase:0" --gn="enable_chrome_android_internal_profiles:false"
 
 BUILD_DIR="../out/Release_android"
 
