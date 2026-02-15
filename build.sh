@@ -17,9 +17,14 @@ git clone -q --depth=1 https://github.com/brave/brave-core.git src/brave
 cd src/brave
 
 # THE NUCLEAR FIX: Completely disconnect tests from the build graph
-# This prevents GN from evaluating problematic desktop-only dependencies on Android
-sed -i 's/brave_all_unit_tests_deps += \[/brave_all_unit_tests_deps = \[\] #/g' BUILD.gn
+# Safely empty any assignment/addition to the test dependency lists
+sed -i 's/brave_all_unit_tests_deps = \[/brave_all_unit_tests_deps = \[\] #/g' BUILD.gn
+sed -i 's/brave_all_unit_tests_deps += \[/brave_all_unit_tests_deps += \[\] #/g' BUILD.gn
 sed -i 's/deps += \[ ":brave_browser_tests" \]/deps += \[\] #/g' BUILD.gn
+
+# Additional safety: Remove everything inside the test dependency lists to prevent syntax errors
+# This replaces any multi-line block of brave_all_unit_tests_deps with a no-op
+sed -i '/brave_all_unit_tests_deps += \[/,/\]/c\brave_all_unit_tests_deps += \[\]' BUILD.gn
 
 # Additional safety for the android test exception list
 sed -i '/android_test_exception_deps = \[/,/\]/c\android_test_exception_deps = \[\]' android/android_browser_tests.gni
