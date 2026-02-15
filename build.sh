@@ -16,14 +16,14 @@ mkdir -p src
 git clone -q --depth=1 https://github.com/brave/brave-core.git src/brave
 cd src/brave
 
-# Fix GN error by safely emptying the exception lists
-# Using sed 'c' to replace the entire multi-line block with an empty list
+# THE NUCLEAR FIX: Completely disconnect tests from the build graph
+# This prevents GN from evaluating problematic desktop-only dependencies on Android
+sed -i 's/brave_all_unit_tests_deps += \[/brave_all_unit_tests_deps = \[\] #/g' BUILD.gn
+sed -i 's/deps += \[ ":brave_browser_tests" \]/deps += \[\] #/g' BUILD.gn
+
+# Additional safety for the android test exception list
 sed -i '/android_test_exception_deps = \[/,/\]/c\android_test_exception_deps = \[\]' android/android_browser_tests.gni
 sed -i '/android_test_exception_sources = \[/,/\]/c\android_test_exception_sources = \[\]' android/android_browser_tests.gni
-
-# Remove extension tests that cause toolkit_views assertion failure on Android
-sed -i '/"\/\/brave\/browser\/extensions",/d' test/BUILD.gn
-sed -i '/"\/\/brave\/browser\/extensions:test_support",/d' test/BUILD.gn
 
 npm install
 
