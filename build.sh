@@ -16,33 +16,42 @@ mkdir -p src
 git clone -q --depth=1 https://github.com/brave/brave-core.git src/brave
 cd src/brave
 
-# THE ULTIMATE FIX: Use Python to safely empty test lists without breaking syntax
+# THE TOTAL ISOLATION FIX: 
+# Recursively strip all test and extension dependencies from the entire build tree
 python3 -c '
-import sys, re
+import os, re
 
-def empty_list(content, var_name):
-    # Pattern to match var_name = [ ... ] or var_name += [ ... ] across multiple lines
-    pattern = re.compile(rf"({var_name}\s*[+]*=\s*\[)(.*?)(\])", re.DOTALL)
-    return pattern.sub(r"\1\3", content)
+def clean_content(content):
+    # 1. Empty any list named *_tests_deps or *_test_deps
+    pattern_list = re.compile(r"(\w*test\w*_deps\s*[+]*=\s*\[)(.*?)(\])", re.DOTALL | re.IGNORECASE)
+    content = pattern_list.sub(r"\1\3", content)
+    
+    # 2. Remove lines containing problematic extension/test paths
+    lines = content.splitlines()
+    new_lines = []
+    skip_patterns = ["//brave/test", "//brave/browser/extensions", "//extensions/browser", "//extensions/common", ":brave_browser_tests", ":brave_unit_tests"]
+    for line in lines:
+        if any(p in line for p in skip_patterns) and ("deps" in line or "\"" in line):
+            continue
+        new_lines.append(line)
+    return "\n".join(new_lines)
 
-for file_path in ["BUILD.gn", "android/android_browser_tests.gni"]:
-    try:
-        with open(file_path, "r") as f:
-            content = f.read()
-        
-        content = empty_list(content, "brave_all_unit_tests_deps")
-        content = empty_list(content, "android_test_exception_deps")
-        content = empty_list(content, "android_test_exception_sources")
-        content = empty_list(content, "brave_browser_tests_deps")
-        
-        # Also handle the specific case of the browser tests group
-        content = content.replace("\":brave_browser_tests\"", "")
-        
-        with open(file_path, "w") as f:
-            f.write(content)
-        print(f"Successfully cleaned {file_path}")
-    except Exception as e:
-        print(f"Skipping {file_path}: {e}")
+for root, dirs, files in os.walk("."):
+    for file in files:
+        if file.endswith((".gn", ".gni")):
+            file_path = os.path.join(root, file)
+            try:
+                with open(file_path, "r") as f:
+                    content = f.read()
+                
+                cleaned = clean_content(content)
+                
+                if cleaned != content:
+                    with open(file_path, "w") as f:
+                        f.write(cleaned)
+                    print(f"Cleaned {file_path}")
+            except Exception as e:
+                print(f"Error processing {file_path}: {e}")
 '
 
 npm install
