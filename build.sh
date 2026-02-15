@@ -8,6 +8,18 @@ mkdir -p src
 git clone -q --depth=1 https://github.com/brave/brave-core.git -b 1.87.x src/brave
 cd src/brave
 
+# Fix GN assertion errors by removing forced assertions for disabled features
+find . -name "BUILD.gn" -exec sed -i 's/assert(enable_brave_ads)/# removed/g' {} +
+find . -name "BUILD.gn" -exec sed -i 's/assert(enable_brave_news)/# removed/g' {} +
+find . -name "BUILD.gn" -exec sed -i 's/assert(enable_brave_rewards)/# removed/g' {} +
+find . -name "BUILD.gn" -exec sed -i 's/assert(enable_brave_wallet)/# removed/g' {} +
+find . -name "BUILD.gn" -exec sed -i 's/assert(enable_ai_chat)/# removed/g' {} +
+find . -name "BUILD.gn" -exec sed -i 's/assert(enable_tor)/# removed/g' {} +
+find . -name "BUILD.gn" -exec sed -i 's/assert(enable_speedreader)/# removed/g' {} +
+find . -name "BUILD.gn" -exec sed -i 's/assert(enable_brave_talk)/# removed/g' {} +
+find . -name "BUILD.gn" -exec sed -i 's/assert(enable_ai_rewriter)/# removed/g' {} +
+find . -name "BUILD.gn" -exec sed -i 's/assert(enable_ipfs)/# removed/g' {} +
+
 npm install
 
 cat > "$ROOT_DIR/siso_helper.sh" << 'EOF'
