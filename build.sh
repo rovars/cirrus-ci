@@ -4,16 +4,8 @@ set -ex
 ROOT_DIR="$(pwd)"
 ROM_REPO_DIR="$ROOT_DIR/rom"
 
-# Load custom .env from root if it exists
-if [ -f "$ROOT_DIR/.env" ]; then
-  echo "Loading custom .env from $ROOT_DIR/.env"
-  set -a
-  source "$ROOT_DIR/.env"
-  set +a
-fi
-
 mkdir -p src
-git clone -q --depth=1 https://github.com/brave/brave-core.git src/brave
+git clone -q --depth=1 https://github.com/brave/brave-core.git -b 1.87.x src/brave
 cd src/brave
 
 npm install
@@ -32,7 +24,7 @@ EOF
 chmod +x "$ROOT_DIR/siso_helper.sh"
 
 if [ -z "$RBE_API_KEY" ]; then
-  echo "ERROR: RBE_API_KEY not set. Please add it to your .env file or export it."
+  echo "ERROR: RBE_API_KEY not set. Please export it in your environment."
   exit 1
 fi
 
@@ -45,62 +37,6 @@ export DEPOT_TOOLS_UPDATE=1
 
 mkdir -p "$SISO_CACHE_DIR"
 
-# Generate src/brave/.env with defaults, allowing overrides from environment
-# These dummy values are required to pass GN assertions in Release builds
-cat > .env << EOF
-rbe_service=${rbe_service:-nano.buildbuddy.io:443}
-use_siso=${use_siso:-true}
-use_remoteexec=${use_remoteexec:-true}
-siso_cache_dir=${siso_cache_dir:-/tmp/siso-cache}
-enable_ipfs=${enable_ipfs:-false}
-enable_ai_chat=${enable_ai_chat:-false}
-enable_brave_news=${enable_brave_news:-false}
-enable_brave_rewards=${enable_brave_rewards:-false}
-enable_brave_wallet=${enable_brave_wallet:-false}
-enable_tor=${enable_tor:-false}
-enable_speedreader=${enable_speedreader:-false}
-enable_brave_ads=${enable_brave_ads:-false}
-enable_brave_vpn=${enable_brave_vpn:-false}
-enable_brave_sync=${enable_brave_sync:-false}
-enable_brave_wayback_machine=${enable_brave_wayback_machine:-false}
-enable_sidebar=${enable_sidebar:-false}
-enable_sparkle=${enable_sparkle:-false}
-brave_services_key=${brave_services_key:-dummy_key}
-brave_services_key_id=${brave_services_key_id:-dummy_id}
-brave_stats_updater_url=${brave_stats_updater_url:-https://localhost}
-brave_variations_server_url=${brave_variations_server_url:-https://variations.brave.com}
-updater_dev_endpoint=${updater_dev_endpoint:-https://updates.bravesoftware.com}
-updater_prod_endpoint=${updater_prod_endpoint:-https://updates.bravesoftware.com}
-service_key_aichat=${service_key_aichat:-dummy_aichat_key}
-service_key_stt=${service_key_stt:-dummy_stt_key}
-brave_sync_endpoint=${brave_sync_endpoint:-https://sync-v2.brave.com/v2}
-rewards_grant_dev_endpoint=${rewards_grant_dev_endpoint:-https://localhost}
-rewards_grant_staging_endpoint=${rewards_grant_staging_endpoint:-https://localhost}
-rewards_grant_prod_endpoint=${rewards_grant_prod_endpoint:-https://localhost}
-bitflyer_production_client_id=${bitflyer_production_client_id:-dummy_id}
-bitflyer_production_client_secret=${bitflyer_production_client_secret:-dummy_secret}
-bitflyer_production_fee_address=${bitflyer_production_fee_address:-dummy_address}
-bitflyer_production_url=${bitflyer_production_url:-https://localhost}
-gemini_production_api_url=${gemini_production_api_url:-https://localhost}
-gemini_production_fee_address=${gemini_production_fee_address:-dummy_address}
-gemini_production_oauth_url=${gemini_production_oauth_url:-https://localhost}
-uphold_production_api_url=${uphold_production_api_url:-https://localhost}
-uphold_production_fee_address=${uphold_production_fee_address:-dummy_address}
-uphold_production_oauth_url=${uphold_production_oauth_url:-https://localhost}
-zebpay_production_api_url=${zebpay_production_api_url:-https://localhost}
-zebpay_production_oauth_url=${zebpay_production_oauth_url:-https://localhost}
-brave_google_api_key=${brave_google_api_key:-dummy_google_key}
-brave_google_api_endpoint=${brave_google_api_endpoint:-https://localhost}
-brave_stats_api_key=${brave_stats_api_key:-dummy_stats_key}
-safebrowsing_api_endpoint=${safebrowsing_api_endpoint:-https://localhost}
-# Disable AFDO and PGO to avoid missing profile errors
-chrome_pgo_phase=0
-clang_use_default_sample_profile=false
-enable_android_afdo=false
-enable_chrome_android_internal_profiles=false
-is_official_build=false
-EOF
-
 echo "Running npm run init..."
 npm run init -- --target_os=android --target_arch=arm --no-history
 
@@ -109,7 +45,25 @@ find "$ROOT_DIR/src/brave/script" -name "*.py" -exec chmod +x {} +
 find "$ROOT_DIR/src/buildtools" -type f -not -name "*.gn" -not -name "*.gni" -exec chmod +x {} + || true
 
 echo "Starting build..."
-npm run build -- --target_os=android --target_arch=arm
+npm run build -- --target_os=android --target_arch=arm \
+  --gn="enable_ai_chat:false" \
+  --gn="enable_ai_rewriter:false" \
+  --gn="enable_brave_news:false" \
+  --gn="enable_brave_ads:false" \
+  --gn="enable_brave_rewards:false" \
+  --gn="enable_brave_wallet:false" \
+  --gn="enable_tor:false" \
+  --gn="enable_ipfs:false" \
+  --gn="enable_speedreader:false" \
+  --gn="enable_brave_vpn:false" \
+  --gn="enable_brave_sync:false" \
+  --gn="enable_brave_wayback_machine:false" \
+  --gn="enable_sidebar:false" \
+  --gn="enable_sparkle:false" \
+  --gn="enable_brave_talk:false" \
+  --gn="enable_commander:false" \
+  --gn="enable_brave_education:false" \
+  --gn="enable_text_recognition:false"
 
 BUILD_DIR="../out/Debug_android"
 
