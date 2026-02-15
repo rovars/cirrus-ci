@@ -99,7 +99,7 @@ mkdir -p "$ROOT_DIR/src/chrome/android/profiles"
 touch "$ROOT_DIR/src/chrome/android/profiles/afdo.prof"
 
 echo "Running npm run init..."
-npm run init -- --target_os=android --target_arch=arm --no-history --gn="is_official_build:false" --gn="call_afdo:false" --gn="chrome_pgo_phase:0"
+npm run init -- --target_os=android --target_arch=arm --no-history
 
 echo "Starting build..."
 npm run build -- --target_os=android --target_arch=arm Release --gn="is_official_build:false" --gn="call_afdo:false" --gn="chrome_pgo_phase:0" --gn="clang_use_default_sample_profile:false" --gn="enable_android_afdo:false"
