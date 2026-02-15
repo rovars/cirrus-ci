@@ -16,8 +16,10 @@ mkdir -p src
 git clone -q --depth=1 https://github.com/brave/brave-core.git src/brave
 cd src/brave
 
-# Remove offending browser tests from exception list to fix GN error
-sed -i '/:browser_tests/d' android/android_browser_tests.gni
+# Fix GN error by emptying the exception lists instead of deleting lines
+# This ensures structural integrity of the .gni file
+sed -i 's/android_test_exception_deps = \[/android_test_exception_deps = \[\] #/g' android/android_browser_tests.gni
+sed -i 's/android_test_exception_sources = \[/android_test_exception_sources = \[\] #/g' android/android_browser_tests.gni
 
 npm install
 
