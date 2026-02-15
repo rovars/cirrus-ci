@@ -16,19 +16,34 @@ mkdir -p src
 git clone -q --depth=1 https://github.com/brave/brave-core.git src/brave
 cd src/brave
 
-# THE NUCLEAR FIX: Completely disconnect tests from the build graph
-# Safely empty any assignment/addition to the test dependency lists
-sed -i 's/brave_all_unit_tests_deps = \[/brave_all_unit_tests_deps = \[\] #/g' BUILD.gn
-sed -i 's/brave_all_unit_tests_deps += \[/brave_all_unit_tests_deps += \[\] #/g' BUILD.gn
-sed -i 's/deps += \[ ":brave_browser_tests" \]/deps += \[\] #/g' BUILD.gn
+# THE ULTIMATE FIX: Use Python to safely empty test lists without breaking syntax
+python3 -c '
+import sys, re
 
-# Additional safety: Remove everything inside the test dependency lists to prevent syntax errors
-# This replaces any multi-line block of brave_all_unit_tests_deps with a no-op
-sed -i '/brave_all_unit_tests_deps += \[/,/\]/c\brave_all_unit_tests_deps += \[\]' BUILD.gn
+def empty_list(content, var_name):
+    # Pattern to match var_name = [ ... ] or var_name += [ ... ] across multiple lines
+    pattern = re.compile(rf"({var_name}\s*[+]*=\s*\[)(.*?)(\])", re.DOTALL)
+    return pattern.sub(r"\1\3", content)
 
-# Additional safety for the android test exception list
-sed -i '/android_test_exception_deps = \[/,/\]/c\android_test_exception_deps = \[\]' android/android_browser_tests.gni
-sed -i '/android_test_exception_sources = \[/,/\]/c\android_test_exception_sources = \[\]' android/android_browser_tests.gni
+for file_path in ["BUILD.gn", "android/android_browser_tests.gni"]:
+    try:
+        with open(file_path, "r") as f:
+            content = f.read()
+        
+        content = empty_list(content, "brave_all_unit_tests_deps")
+        content = empty_list(content, "android_test_exception_deps")
+        content = empty_list(content, "android_test_exception_sources")
+        content = empty_list(content, "brave_browser_tests_deps")
+        
+        # Also handle the specific case of the browser tests group
+        content = content.replace("\":brave_browser_tests\"", "")
+        
+        with open(file_path, "w") as f:
+            f.write(content)
+        print(f"Successfully cleaned {file_path}")
+    except Exception as e:
+        print(f"Skipping {file_path}: {e}")
+'
 
 npm install
 
