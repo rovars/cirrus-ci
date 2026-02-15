@@ -1,126 +1,128 @@
 #!/bin/bash
 
-# Import automation features from Docker environment
-source /opt/cirrus_env
+set -e
 
-setup_src() {
-    git clone -q https://github.com/rovars/rom xx
-    source xx/script/build_brave.sh
-    exit 1
+VANADIUM_TAG=${1:-"145.0.7632.45.1"}
+TARGET_CPU="arm64"
+ROOT_DIR="$(pwd)"
+ROM_REPO_DIR="$ROOT_DIR/rom"
 
-    repo init -u https://github.com/LineageOS/android.git -b lineage-18.1 --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
+# Load custom .env from root if it exists
+if [ -f "$ROOT_DIR/.env" ]; then
+  echo "Loading custom .env from $ROOT_DIR/.env"
+  set -a
+  source "$ROOT_DIR/.env"
+  set +a
+fi
 
-    git clone -q https://codeberg.org/lin18-microG/local_manifests -b lineage-18.1 .repo/local_manifests
-
-    rm -rf .repo/local_manifests/setup*
-    mv xx/script/device.xml .repo/local_manifests/
-
-    run_retry repo sync -j8 -c --no-clone-bundle --no-tags
-
-    rm -rf external/AOSmium-prebuilt 
-    rm -rf external/hardened_malloc
-    rm -rf prebuilts/AuroraStore
-    rm -rf prebuilts/prebuiltapks
-    rm -rf packages/overlays/CaptivePortal204
-
-    rm -rf external/chromium-webview
-    git clone -q https://github.com/LineageOS/android_external_chromium-webview external/chromium-webview -b master --depth=1
-
-    rm -rf lineage-sdk
-    git clone https://github.com/bimuafaq/android_lineage-sdk lineage-sdk -b lineage-18.1 --depth=1
-
-    rm -rf build/make
-    git clone https://github.com/bimuafaq/android_build_make build/make -b lineage-18.1 --depth=1
-
-    rm -rf system/core
-    git clone https://github.com/bimuafaq/android_system_core system/core -b lineage-18.1 --depth=1
-
-    rm -rf vendor/lineage
-    git clone https://github.com/bimuafaq/android_vendor_lineage vendor/lineage -b lineage-18.1 --depth=1
-
-    rm -rf frameworks/base
-    git clone https://github.com/bimuafaq/android_frameworks_base frameworks/base -b lineage-18.1 --depth=1
-    sed -i 's#\(<bool[^>]*name="config_cellBroadcastAppLinks"[^>]*>\)\s*true\s*\(</bool>\)#\1false\2#g' frameworks/base/core/res/res/values/config.xml
-    grep -n 'config_cellBroadcastAppLinks' frameworks/base/core/res/res/values/config.xml
-
-    rm -rf packages/apps/Settings
-    git clone https://github.com/bimuafaq/android_packages_apps_Settings packages/apps/Settings -b lineage-18.1 --depth=1
-
-    rm -rf packages/apps/Trebuchet
-    git clone https://github.com/rovars/android_packages_apps_Trebuchet packages/apps/Trebuchet -b wip --depth=1
-
-    rm -rf packages/apps/DeskClock
-    git clone https://github.com/rovars/android_packages_apps_DeskClock packages/apps/DeskClock -b exthm-11 --depth=1
-
-    rm -rf packages/apps/LineageParts
-    git clone https://github.com/bimuafaq/android_packages_apps_LineageParts packages/apps/LineageParts -b lineage-18.1 --depth=1
-
-    rm -rf frameworks/opt/telephony
-    git clone https://github.com/bimuafaq/android_frameworks_opt_telephony frameworks/opt/telephony -b lineage-18.1 --depth=1
-
-    patch -p1 < $PWD/xx/script/permissive.patch
-
-    source $PWD/xx/script/constify.sh
-
-    rm -rf kernel/realme/RMX2185
-    git clone https://github.com/rovars/kernel_realme_RMX2185 kernel/realme/RMX2185 --depth=5
-    cd kernel/realme/RMX2185
-    git revert --no-edit a435473e6a45d3b319e793f40fb4cf9c1c269568
-    cd -
+cat > "$ROOT_DIR/siso_helper.sh" << 'EOF'
+#!/bin/bash
+cat << HELPER
+{
+  "headers": {
+    "x-buildbuddy-api-key": ["${RBE_API_KEY}"]
+  },
+  "token": "dummy"
 }
+HELPER
+EOF
+chmod +x "$ROOT_DIR/siso_helper.sh"
 
-build_src() {
-    source build/envsetup.sh
-    rbe_setup
+if [ -z "$RBE_API_KEY" ]; then
+  echo "ERROR: RBE_API_KEY not set. Please add it to your .env file or export it."
+  exit 1
+fi
 
-    export KBUILD_BUILD_USER=nobody
-    export KBUILD_BUILD_HOST=android-build
-    export BUILD_USERNAME=nobody
-    export BUILD_HOSTNAME=android-build
+export SISO_REAPI_ADDRESS="nano.buildbuddy.io:443"
+export SISO_REAPI_INSTANCE="default_instance"
+export SISO_PROFILER=1
+export SISO_CREDENTIAL_HELPER="$ROOT_DIR/siso_helper.sh"
+export SISO_FALLBACK=true
 
-    export OWN_KEYS_DIR="$PWD/xx/keys"
-    sudo ln -sf "$OWN_KEYS_DIR/releasekey.pk8" "$OWN_KEYS_DIR/testkey.pk8"
-    sudo ln -sf "$OWN_KEYS_DIR/releasekey.x509.pem" "$OWN_KEYS_DIR/testkey.x509.pem"
+export DEPOT_TOOLS_UPDATE=1
+export GCLIENT_SUPPRESS_GIT_VERSION_WARNING=1
+export PATH="$ROOT_DIR/depot_tools:$PATH"
 
-    lunch lineage_RMX2185-user
-    # source $PWD/xx/script/m.sh system || exit 1
-    mka bacon
-}
+git clone -q https://chromium.googlesource.com/chromium/tools/depot_tools.git "$ROOT_DIR/depot_tools"
 
-upload_src() {
-    local release_file=$(find out/target/product -name "*-RMX*.zip" -print -quit)
-    local release_name=$(basename "$release_file" .zip)
-    local release_tag=$(date +%Y%m%d)
-    local repo_releases="bimuafaq/releases"
+git clone -q --depth=1 https://github.com/GrapheneOS/Vanadium.git "$ROOT_DIR/Vanadium"
+cd "$ROOT_DIR/Vanadium"
 
-    UPLOAD_GH=false
+cat <<EOF > .gclient
+solutions = [
+  {
+    "name": "src",
+    "url": "https://chromium.googlesource.com/chromium/src.git",
+    "managed": False,
+    "custom_vars": {
+      "rbe_instance": "default_instance",
+      "reapi_address": "nano.buildbuddy.io:443",
+    },
+  },
+]
+target_os = ["android"]
+EOF
 
-    if [[ -f "$release_file" ]]; then
-        if [[ "${UPLOAD_GH}" == "true" && -n "$GITHUB_TOKEN" ]]; then
-            echo "$GITHUB_TOKEN" > tokenpat.txt
-            gh auth login --with-token < tokenpat.txt
-            rm tokenpat.txt
-            tg_post "Uploading to GitHub Releases..."
-            gh release create "$release_tag" -t "$release_name" -R "$repo_releases" -F "xx/script/notes.txt" || true
-            if gh release upload "$release_tag" "$release_file" -R "$repo_releases" --clobber; then
-                tg_post "GitHub Release upload successful: <a href=\"https://github.com/$repo_releases/releases/tag/$release_tag\">$release_name</a>"
-            else
-                tg_post "GitHub Release upload failed"
-            fi
-        fi
+gclient sync --nohooks --no-history -j 8
 
-        unzip -q xx/config.zip -d ~/.config
-        tg_post "Uploading build result to Telegram..."
-        if timeout 15m telegram-upload "$release_file" --to "$TG_CHAT_ID" --caption "$CIRRUS_COMMIT_MESSAGE"; then
-            tg_post "Telegram upload successful"
-        else
-            tg_post "telegram-upload failed"
-            return 1
-        fi
-    else
-        tg_post "Build file not found"
-        return 0
-    fi
-}
+cd src
+# Create dummy afdo.prof
+mkdir -p chrome/android/profiles
+touch chrome/android/profiles/afdo.prof
 
-main "$@"
+CHROMIUM_VERSION=$(echo "$VANADIUM_TAG" | cut -d'.' -f1-4)
+git fetch --depth=1 origin "refs/tags/$CHROMIUM_VERSION:refs/tags/$CHROMIUM_VERSION"
+git checkout "$CHROMIUM_VERSION"
+git am --3way --whitespace=nowarn --keep-non-patch ../patches/*.patch
+
+gclient sync -D --no-history --with_branch_heads --with_tags -j 8
+gclient runhooks
+
+SCRIPT_DIR="$ROM_REPO_DIR/script/chromium"
+if [ -f "$SCRIPT_DIR/rov.keystore" ]; then
+    CERT_DIGEST=$(keytool -export-cert -alias rov -keystore "$SCRIPT_DIR/rov.keystore" -storepass rovars | sha256sum | cut -d' ' -f1)
+else
+    CERT_DIGEST="000000"
+fi
+
+BUILD_DIR="out/Default"
+mkdir -p "$BUILD_DIR"
+cat <<EOF > "$BUILD_DIR/args.gn"
+target_os = "android"
+target_cpu = "$TARGET_CPU"
+trichrome_certdigest = "$CERT_DIGEST"
+symbol_level = 0
+blink_symbol_level = 0
+v8_symbol_level = 0
+is_component_build = false
+use_remoteexec = true
+use_siso = true
+is_official_build = false
+is_debug = false
+android_static_analysis = "off"
+is_clang = true
+treat_warnings_as_errors = false
+chrome_pgo_phase = 0
+enable_android_afdo = false
+enable_chrome_android_internal_profiles = false
+EOF
+
+chrt -b 0 autoninja -C "$BUILD_DIR" chrome_public_apk
+
+[ -f "$ROM_REPO_DIR/config.zip" ] && unzip -q "$ROM_REPO_DIR/config.zip" -d ~/.config
+
+cd "$BUILD_DIR/apks"
+APKSIGNER=$(find ../../../third_party/android_sdk/public/build-tools -name apksigner -type f | head -n 1)
+
+if [ -f "$SCRIPT_DIR/rov.keystore" ]; then
+    $APKSIGNER sign --ks "$SCRIPT_DIR/rov.keystore" --ks-pass pass:rovars --ks-key-alias rov --in ChromePublic.apk --out Vanadium-Monolithic.apk
+    FINAL_APK="Vanadium-Monolithic.apk"
+else
+    FINAL_APK="ChromePublic.apk"
+fi
+
+ARCHIVE_FILE="Vanadium-Monolithic-${VANADIUM_TAG}-${TARGET_CPU}-$(date +%Y%m%d).tar.gz"
+tar -czf "$ROOT_DIR/$ARCHIVE_FILE" "$FINAL_APK"
+
+cd "$ROOT_DIR"
+timeout 15m telegram-upload "$ARCHIVE_FILE" --to "$TG_CHAT_ID"
