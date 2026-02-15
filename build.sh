@@ -22,19 +22,30 @@ python3 -c '
 import os, re
 
 def clean_content(content):
+    # Skip patterns that we want to get rid of
+    skip_patterns = [
+        r"\"//brave/test[^\"]*\"",
+        r"\"//brave/browser/extensions[^\"]*\"",
+        r"\"//extensions/browser[^\"]*\"",
+        r"\"//extensions/common[^\"]*\"",
+        r"\":brave_browser_tests\"",
+        r"\":brave_unit_tests\""
+    ]
+    
     # 1. Empty any list named *_tests_deps or *_test_deps
     pattern_list = re.compile(r"(\w*test\w*_deps\s*[+]*=\s*\[)(.*?)(\])", re.DOTALL | re.IGNORECASE)
     content = pattern_list.sub(r"\1\3", content)
     
-    # 2. Remove lines containing problematic extension/test paths
-    lines = content.splitlines()
-    new_lines = []
-    skip_patterns = ["//brave/test", "//brave/browser/extensions", "//extensions/browser", "//extensions/common", ":brave_browser_tests", ":brave_unit_tests"]
-    for line in lines:
-        if any(p in line for p in skip_patterns) and ("deps" in line or "\"" in line):
-            continue
-        new_lines.append(line)
-    return "\n".join(new_lines)
+    # 2. Use a safer approach to remove specific dependencies inside lists
+    # Instead of deleting lines, we replace the problematic strings with empty comments
+    for p in skip_patterns:
+        content = re.sub(p, "# removed", content)
+    
+    # 3. Clean up empty lines or trailing commas that might have been left behind
+    content = content.replace(",\n    # removed", "")
+    content = content.replace("# removed,", "")
+    
+    return content
 
 for root, dirs, files in os.walk("."):
     for file in files:
