@@ -58,6 +58,8 @@ find "$ROOT_DIR/src/buildtools" -type f -not -name "*.gn" -not -name "*.gni" -ex
 
 echo "Starting build..."
 npm run build -- --target_os=android --target_arch=arm \
+  --gn="use_remoteexec:true" \
+  --gn="use_siso:true" \
   --gn="enable_ai_chat:false" \
   --gn="enable_ai_rewriter:false" \
   --gn="enable_brave_news:false" \
