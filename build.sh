@@ -35,7 +35,7 @@ export PATH="$ROOT_DIR/depot_tools:$PATH"
 
 git clone -q --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git "$ROOT_DIR/depot_tools"
 
-VANADIUM_TAG=$(git ls-remote --tags --sort="v:refname" https://github.com/GrapheneOS/Vanadium.git | tail -n1 | sed 's/.*\///')
+VANADIUM_TAG=$(git ls-remote --tags --sort="v:refname" https://github.com/GrapheneOS/Vanadium.git | tail -n1 | sed 's/.*\///; s/\^{}//')
 git clone -q --depth=1 https://github.com/GrapheneOS/Vanadium.git -b "$VANADIUM_TAG" "$ROOT_DIR/Vanadium"
 cd "$ROOT_DIR/Vanadium"
 
