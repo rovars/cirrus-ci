@@ -10,7 +10,6 @@ cd src/brave
 
 # Fix GN assertion errors by removing forced assertions for disabled features
 find . -name "BUILD.gn" -exec sed -i 's/assert(enable_brave_ads)/# removed/g' {} +
-find . -name "BUILD.gn" -exec sed -i 's/assert(enable_brave_news)/# removed/g' {} +
 find . -name "BUILD.gn" -exec sed -i 's/assert(enable_brave_rewards)/# removed/g' {} +
 find . -name "BUILD.gn" -exec sed -i 's/assert(enable_brave_wallet)/# removed/g' {} +
 find . -name "BUILD.gn" -exec sed -i 's/assert(enable_ai_chat)/# removed/g' {} +
@@ -58,7 +57,7 @@ find "$ROOT_DIR/src/buildtools" -type f -not -name "*.gn" -not -name "*.gni" -ex
 
 echo "Starting build..."
 npm run build -- --target_os=android --target_arch=arm \
-  --gn="use_siso=true" \
+  --gn="use_siso:true" \
   --gn="enable_ai_chat:false" \
   --gn="enable_ai_rewriter:false" \
   --gn="enable_brave_ads:false" \
