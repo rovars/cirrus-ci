@@ -53,12 +53,18 @@ use_siso=${use_siso:-true}
 use_remoteexec=${use_remoteexec:-true}
 siso_cache_dir=${siso_cache_dir:-/tmp/siso-cache}
 enable_ipfs=${enable_ipfs:-false}
+enable_ai_chat=${enable_ai_chat:-false}
+enable_brave_news=${enable_brave_news:-false}
 enable_brave_rewards=${enable_brave_rewards:-false}
 enable_brave_wallet=${enable_brave_wallet:-false}
 enable_tor=${enable_tor:-false}
 enable_speedreader=${enable_speedreader:-false}
 enable_brave_ads=${enable_brave_ads:-false}
 enable_brave_vpn=${enable_brave_vpn:-false}
+enable_brave_sync=${enable_brave_sync:-false}
+enable_brave_wayback_machine=${enable_brave_wayback_machine:-false}
+enable_sidebar=${enable_sidebar:-false}
+enable_sparkle=${enable_sparkle:-false}
 brave_services_key=${brave_services_key:-dummy_key}
 brave_services_key_id=${brave_services_key_id:-dummy_id}
 brave_stats_updater_url=${brave_stats_updater_url:-https://localhost}
@@ -88,7 +94,6 @@ brave_google_api_endpoint=${brave_google_api_endpoint:-https://localhost}
 brave_stats_api_key=${brave_stats_api_key:-dummy_stats_key}
 safebrowsing_api_endpoint=${safebrowsing_api_endpoint:-https://localhost}
 # Disable AFDO and PGO to avoid missing profile errors
-call_afdo=false
 chrome_pgo_phase=0
 clang_use_default_sample_profile=false
 enable_android_afdo=false
@@ -108,7 +113,23 @@ find "$ROOT_DIR/src/brave/script" -name "*.py" -exec chmod +x {} +
 find "$ROOT_DIR/src/buildtools" -type f -not -name "*.gn" -not -name "*.gni" -exec chmod +x {} + || true
 
 echo "Starting build..."
-npm run build -- --target_os=android --target_arch=arm Release --gn="is_official_build:false" --gn="call_afdo:false" --gn="chrome_pgo_phase:0" --gn="clang_use_default_sample_profile:false" --gn="enable_android_afdo:false"
+npm run build -- --target_os=android --target_arch=arm Release \
+  --gn="is_official_build:false" \
+  --gn="chrome_pgo_phase:0" \
+  --gn="clang_use_default_sample_profile:false" \
+  --gn="enable_android_afdo:false" \
+  --gn="enable_ai_chat:false" \
+  --gn="enable_brave_news:false" \
+  --gn="enable_brave_rewards:false" \
+  --gn="enable_brave_wallet:false" \
+  --gn="enable_tor:false" \
+  --gn="enable_speedreader:false" \
+  --gn="enable_brave_ads:false" \
+  --gn="enable_brave_vpn:false" \
+  --gn="enable_brave_sync:false" \
+  --gn="enable_brave_wayback_machine:false" \
+  --gn="enable_sidebar:false" \
+  --gn="enable_sparkle:false"
 
 BUILD_DIR="../out/Release_android"
 
