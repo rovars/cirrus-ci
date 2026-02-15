@@ -39,16 +39,15 @@ git clone -q --depth=1 https://chromium.googlesource.com/chromium/tools/depot_to
 git clone -q --depth=1 https://github.com/GrapheneOS/Vanadium.git "$ROOT_DIR/Vanadium"
 cd "$ROOT_DIR/Vanadium"
 
-fetch --nohooks android
+fetch --nohooks --no-history android
 
 cd src
 CHROMIUM_VERSION=$(echo "$VANADIUM_TAG" | cut -d'.' -f1-4)
 git fetch --depth=1 origin "refs/tags/$CHROMIUM_VERSION:refs/tags/$CHROMIUM_VERSION"
 git checkout "$CHROMIUM_VERSION"
-git am --3way --whitespace=nowarn --keep-non-patch ../patches/*.patch
 
 gclient sync -D --no-history --with_branch_heads --with_tags -j 8
-gclient runhooks
+git am --3way --whitespace=nowarn --keep-non-patch ../patches/*.patch
 
 SCRIPT_DIR="$ROM_REPO_DIR/script/chromium"
 if [ -f "$SCRIPT_DIR/rov.keystore" ]; then
@@ -60,15 +59,19 @@ fi
 BUILD_DIR="out/Default"
 mkdir -p "$BUILD_DIR"
 
-cat ../args.gn > "$BUILD_DIR/args.gn"
+# Copy base args from Vanadium
+cp ../args.gn "$BUILD_DIR/args.gn"
 
-cat <<EOF >> "$BUILD_DIR/args.gn"
-trichrome_certdigest = "$CERT_DIGEST"
-use_remoteexec = true
-EOF
+# Use sed to update trichrome_certdigest and append use_remoteexec
+sed -i "s/trichrome_certdigest = .*/trichrome_certdigest = \"$CERT_DIGEST\"/" "$BUILD_DIR/args.gn"
+echo "use_remoteexec = true" >> "$BUILD_DIR/args.gn"
+
+# Initialize GN directory
+gn gen "$BUILD_DIR"
 
 chrt -b 0 autoninja -C "$BUILD_DIR" monochrome_public_apk
 
+mkdir -p ~/.config
 [ -f "$ROM_REPO_DIR/config.zip" ] && unzip -q "$ROM_REPO_DIR/config.zip" -d ~/.config
 
 cd "$BUILD_DIR/apks"
