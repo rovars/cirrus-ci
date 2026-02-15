@@ -41,6 +41,7 @@ fi
 
 export SISO_REAPI_ADDRESS="nano.buildbuddy.io:443"
 export SISO_REAPI_INSTANCE="default"
+export SISO_PROFILER=1
 export SISO_CREDENTIAL_HELPER="$ROOT_DIR/siso_helper.sh"
 export SISO_CACHE_DIR="${siso_cache_dir:-/tmp/siso-cache}"
 export SISO_FALLBACK=true
@@ -52,12 +53,14 @@ echo "Running npm run init..."
 npm run init -- --target_os=android --target_arch=arm --no-history
 
 echo "Ensuring scripts are executable..."
-find "$ROOT_DIR/src/brave/script" -name "*.py" -exec chmod +x {} +
-find "$ROOT_DIR/src/buildtools" -type f -not -name "*.gn" -not -name "*.gni" -exec chmod +x {} + || true
+find "$ROOT_DIR/src/brave/src/brave/script" -name "*.py" -exec chmod +x {} + || true
+find "$ROOT_DIR/src/brave/src/buildtools" -type f -not -name "*.gn" -not -name "*.gni" -exec chmod +x {} + || true
 
 echo "Starting build..."
-npm run build -- --target_os=android --target_arch=arm \
+npm run build -- --target_os=android --target_arch=arm --siso \
   --gn="use_siso:true" \
+  --gn="use_remoteexec:true" \
+  --gn="use_reclient:false" \
   --gn="enable_ai_chat:false" \
   --gn="enable_ai_rewriter:false" \
   --gn="enable_brave_ads:false" \
