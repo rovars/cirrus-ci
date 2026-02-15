@@ -8,12 +8,6 @@ mkdir -p src
 git clone -q --depth=1 https://github.com/brave/brave-core.git -b 1.87.x src/brave
 cd src/brave
 
-# Minimal .env for RBE and Siso
-cat > .env << EOF
-use_remoteexec=true
-use_siso=true
-EOF
-
 # Fix GN assertion errors by removing forced assertions for disabled features
 find . -name "BUILD.gn" -exec sed -i 's/assert(enable_brave_ads)/# removed/g' {} +
 find . -name "BUILD.gn" -exec sed -i 's/assert(enable_brave_news)/# removed/g' {} +
@@ -64,6 +58,7 @@ find "$ROOT_DIR/src/buildtools" -type f -not -name "*.gn" -not -name "*.gni" -ex
 
 echo "Starting build..."
 npm run build -- --target_os=android --target_arch=arm \
+  --gn="use_siso=true" \
   --gn="enable_ai_chat:false" \
   --gn="enable_ai_rewriter:false" \
   --gn="enable_brave_ads:false" \
