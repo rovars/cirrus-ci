@@ -85,19 +85,24 @@ brave_google_api_key=${brave_google_api_key:-dummy_google_key}
 brave_google_api_endpoint=${brave_google_api_endpoint:-https://localhost}
 brave_stats_api_key=${brave_stats_api_key:-dummy_stats_key}
 safebrowsing_api_endpoint=${safebrowsing_api_endpoint:-https://localhost}
-is_official_build=${is_official_build:-false}
-allow_unset_env_config_flags=${allow_unset_env_config_flags:-true}
 # Disable AFDO and PGO to avoid missing profile errors
 call_afdo=false
 chrome_pgo_phase=0
+clang_use_default_sample_profile=false
+enable_android_afdo=false
 enable_chrome_android_internal_profiles=false
+is_official_build=false
 EOF
 
+# Create a dummy afdo.prof file just in case GN still expects it
+mkdir -p "$ROOT_DIR/src/chrome/android/profiles"
+touch "$ROOT_DIR/src/chrome/android/profiles/afdo.prof"
+
 echo "Running npm run init..."
-npm run init -- --target_os=android --target_arch=arm --no-history
+npm run init -- --target_os=android --target_arch=arm --no-history --gn="is_official_build:false" --gn="call_afdo:false" --gn="chrome_pgo_phase:0"
 
 echo "Starting build..."
-npm run build -- --target_os=android --target_arch=arm Release --gn="call_afdo:false" --gn="chrome_pgo_phase:0" --gn="enable_chrome_android_internal_profiles:false"
+npm run build -- --target_os=android --target_arch=arm Release --gn="is_official_build:false" --gn="call_afdo:false" --gn="chrome_pgo_phase:0" --gn="clang_use_default_sample_profile:false" --gn="enable_android_afdo:false"
 
 BUILD_DIR="../out/Release_android"
 
