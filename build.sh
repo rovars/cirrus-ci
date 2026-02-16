@@ -62,7 +62,7 @@ CHROMIUM_VERSION=$(echo "$VANADIUM_TAG" | cut -d'.' -f1-4)
 git fetch --depth=1 origin "refs/tags/$CHROMIUM_VERSION:refs/tags/$CHROMIUM_VERSION"
 git checkout "$CHROMIUM_VERSION"
 
-gclient sync -D --with_branch_heads --with_tags --jobs 16
+gclient sync --delete_unused_deps --no-history
 git am --3way --whitespace=nowarn --keep-non-patch ../patches/*.patch
 gclient runhooks
 
