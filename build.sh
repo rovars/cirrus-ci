@@ -86,12 +86,10 @@ sed -i "s/v8_drumbrake_bounds_checks = .*/v8_drumbrake_bounds_checks = false/" "
 echo "use_remoteexec=true" >> "$BUILD_DIR/args.gn"
 echo "use_reclient=false" >> "$BUILD_DIR/args.gn"
 echo "use_siso=true" >> "$BUILD_DIR/args.gn"
-echo "include_32_bit_webview=true" >> "$BUILD_DIR/args.gn"
-sed -i "s/target_cpu = \".*\"/target_cpu = \"arm\"/" "$BUILD_DIR/args.gn"
 
 gn gen "$BUILD_DIR"
 
-chrt -b 0 autoninja -C "$BUILD_DIR" chrome_public_apk
+chrt -b 0 autoninja -C "$BUILD_DIR" monochrome_public_apk
 
 mkdir -p ~/.config
 [ -f "$ROM_REPO_DIR/config.zip" ] && unzip -q "$ROM_REPO_DIR/config.zip" -d ~/.config
@@ -100,7 +98,7 @@ cd "$BUILD_DIR/apks"
 APKSIGNER=$(find ../../../third_party/android_sdk/public/build-tools -name apksigner -type f | head -n 1)
 
 if [ -f "$SCRIPT_DIR/rov.keystore" ]; then
-    for apk in ChromePublic.apk; do
+    for apk in MonochromePublic.apk; do
         if [ -f "$apk" ]; then
             "$APKSIGNER" sign --ks "$SCRIPT_DIR/rov.keystore" --ks-pass pass:rovars --ks-key-alias rov --in "$apk" --out "Signed-$apk"
         fi
@@ -110,7 +108,7 @@ else
     ARCHIVE_CONTENT="*.apk"
 fi
 
-ARCHIVE_FILE="Vanadium-Chrome-Public-${VANADIUM_TAG}-arm64-$(date +%Y%m%d).tar.gz"
+ARCHIVE_FILE="Vanadium-Monochrome-Public-${VANADIUM_TAG}-arm64-$(date +%Y%m%d).tar.gz"
 tar -czf "$ROOT_DIR/$ARCHIVE_FILE" $ARCHIVE_CONTENT
 
 cd "$ROOT_DIR"
