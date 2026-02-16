@@ -5,7 +5,7 @@ env:
   GITHUB_TOKEN: "ENCRYPTED[!55a825eae5c6b48595000403feb93a1e434b2f6de64ff689cfc8df0079370cfd777f7a3f304e78ec524fd06e2d3e3ac5!]"
  
 task:
-  name: "Build Chromium"
+  name: "Build Vanadium"
   timeout_in: 120m
   container:
     image: ghcr.io/rovars/docker:chromium
