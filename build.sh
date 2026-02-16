@@ -5,8 +5,6 @@ source /opt/cirrus_env
 
 setup_src() {
     git clone -q https://github.com/rovars/rom xx
-    source xx/script/build_brave.sh
-    exit 1
 
     repo init -u https://github.com/LineageOS/android.git -b lineage-18.1 --groups=all,-notdefault,-darwin,-mips --git-lfs --depth=1
 
@@ -71,7 +69,8 @@ setup_src() {
 
 build_src() {
     source build/envsetup.sh
-    rbe_setup
+    rbe_env_setup
+    # ccache_env_setup
 
     export KBUILD_BUILD_USER=nobody
     export KBUILD_BUILD_HOST=android-build
@@ -83,8 +82,9 @@ build_src() {
     sudo ln -sf "$OWN_KEYS_DIR/releasekey.x509.pem" "$OWN_KEYS_DIR/testkey.x509.pem"
 
     lunch lineage_RMX2185-user
-    # source $PWD/xx/script/m.sh system || exit 1
-    mka bacon
+    # source $PWD/xx/script/mmm.sh system || exit 1
+    
+    mka bacon -j90
 }
 
 upload_src() {
