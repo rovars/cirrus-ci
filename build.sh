@@ -70,6 +70,7 @@ setup_src() {
 build_src() {
     source build/envsetup.sh
     rbe_env_setup
+    export USE_RBE=true
     # ccache_env_setup
 
     export KBUILD_BUILD_USER=nobody
