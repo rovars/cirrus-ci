@@ -62,7 +62,7 @@ CHROMIUM_VERSION=$(echo "$VANADIUM_TAG" | cut -d'.' -f1-4)
 git fetch --depth=1 origin "refs/tags/$CHROMIUM_VERSION:refs/tags/$CHROMIUM_VERSION"
 git checkout "$CHROMIUM_VERSION"
 
-gclient sync -D --no-history --nohooks
+gclient sync -D --nohooks --no-history
 git am --3way --whitespace=nowarn --keep-non-patch ../patches/*.patch
 gclient runhooks
 
@@ -85,6 +85,7 @@ sed -i "s/v8_drumbrake_bounds_checks = .*/v8_drumbrake_bounds_checks = false/" "
 echo "use_remoteexec=true" >> "$BUILD_DIR/args.gn"
 echo "use_reclient=false" >> "$BUILD_DIR/args.gn"
 echo "use_siso=true" >> "$BUILD_DIR/args.gn"
+sed -i "s/target_cpu = \".*\"/target_cpu = \"arm\"/" "$BUILD_DIR/args.gn"
 
 gn gen "$BUILD_DIR"
 
