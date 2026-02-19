@@ -80,8 +80,8 @@ cp ../args.gn "$BUILD_DIR/args.gn"
 
 sed -i "s/trichrome_certdigest = .*/trichrome_certdigest = \"$CERT_DIGEST\"/" "$BUILD_DIR/args.gn"
 sed -i "s/config_apk_certdigest = .*/config_apk_certdigest = \"$CERT_DIGEST\"/" "$BUILD_DIR/args.gn"
-sed -i "s/v8_enable_drumbrake = .*/v8_enable_drumbrake = false/" "$BUILD_DIR/args.gn"
-sed -i "s/v8_drumbrake_bounds_checks = .*/v8_drumbrake_bounds_checks = false/" "$BUILD_DIR/args.gn"
+# sed -i "s/v8_enable_drumbrake = .*/v8_enable_drumbrake = false/" "$BUILD_DIR/args.gn"
+# sed -i "s/v8_drumbrake_bounds_checks = .*/v8_drumbrake_bounds_checks = false/" "$BUILD_DIR/args.gn"
 
 echo "use_remoteexec=true" >> "$BUILD_DIR/args.gn"
 echo "use_reclient=false" >> "$BUILD_DIR/args.gn"
